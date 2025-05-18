@@ -1,10 +1,15 @@
 package atmo_check_core.model;
 
-import lombok.extern.slf4j.Slf4j;
+
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Slf4j
+import java.util.List;
+
+@Getter
+@Setter
 @Document(collection = "stations")
 public class Station {
 
