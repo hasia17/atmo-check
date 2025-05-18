@@ -1,4 +1,4 @@
-module atmo-check-openaq
+module openaq-data
 
 go 1.24.3
 
