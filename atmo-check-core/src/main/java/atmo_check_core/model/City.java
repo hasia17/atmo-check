@@ -1,6 +1,5 @@
 package atmo_check_core.model;
 
-
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -11,20 +10,15 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(collection = "stations")
-public class Station {
-
+@Document(collection = "cities")
+public class City {
     @Id
-    private Integer id;
-    private String stationName;
-    private Double gegrLat;
-    private Double gegrLon;
-    private String addressStreet;
+    private String id;
+    private String name;
+    private String communeName;
+    private String districtName;
+    private String provinceName;
 
     @DBRef
-    private List<Sensor> sensors;
-
-    @DBRef
-    private AirQualityData airQualityData;
-
+    private List<Station> stations;
 }

@@ -7,9 +7,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 @Slf4j
-@Document(collection = "airQualityData")
-public class AirQualityData {
+@Document(collection = "airQualityValues")
+public class AirQualityValue {
     @Id
     private String id;
-    private LocalDateTime lastUpdateDate;
+    private LocalDateTime date;
+    private Double value;
 }
