@@ -1,0 +1,43 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Gios-data API
+  description: API to manage air data from gios
+servers:
+  - url: http://localhost:8080/gios-data/
+paths:
+  /stations:
+    get:
+      summary: Get list with all stations
+      operationId: getAllStations
+      tags:
+        - stations
+      responses:
+        '200':
+          description: All station list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StationDTO"
+components:
+  schemas:
+    StationDTO:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        name:
+          type: string
+        addressStreet:
+          type: string
+        id:
+          type: integer
+        gegrLat:
+          type: number
+          format: double
+        gegrLon:
+          type: number
+          format: double
