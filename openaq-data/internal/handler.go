@@ -16,8 +16,8 @@ func NewDataHandler(service *Service) *DataHandler {
 	}
 }
 
-func (h *DataHandler) HandleGetData(c fiber.Ctx) error {
-	data, err := h.service.FetchData("wrzeszcz")
+func (h *DataHandler) HandleGetData(c fiber.Ctx, location string) error {
+	data, err := h.service.FetchData(location)
 	if err != nil {
 		log.Printf("Error fetching data: %v", err)
 		return fiber.NewError(fiber.StatusInternalServerError, "Error fetching data")

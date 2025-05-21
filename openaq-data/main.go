@@ -23,6 +23,8 @@ func main() {
 	h := internal.NewDataHandler(s)
 
 	app := fiber.New()
-	app.Get("/", h.HandleGetData)
+	app.Get("/data", func(c fiber.Ctx) error {
+		return h.HandleGetData(c, c.Query("location"))
+	})
 	log.Fatal(app.Listen(":3000"))
 }
