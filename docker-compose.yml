@@ -1,0 +1,68 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    command:
+      - --api.dashboard=true
+      - --api.debug=true
+      - --log.level=INFO
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    ports:
+      - "27017:27017"
+
+  atmo-check-core:
+    build:
+      context: ./atmo-check-core
+      dockerfile: Dockerfile
+    container_name: atmo-check-core-app
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=atmo-check-db
+      - SERVER_PORT=8081
+    depends_on:
+      - mongodb
+    networks:
+      - traefik-network
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.atmo-check-core.rule=Host(`atmo-check-core.localhost`)"
+      - "traefik.http.routers.atmo-check-core.entrypoints=web"
+      - "traefik.http.services.atmo-check-core.loadbalancer.server.port=8081"
+      - "traefik.docker.network=traefik-network"
+
+networks:
+  traefik-network:
+    external: true
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
