@@ -7,10 +7,10 @@ import (
 )
 
 type DataHandler struct {
-	service *Service
+	service *DataService
 }
 
-func NewDataHandler(service *Service) *DataHandler {
+func NewDataHandler(service *DataService) *DataHandler {
 	return &DataHandler{
 		service: service,
 	}

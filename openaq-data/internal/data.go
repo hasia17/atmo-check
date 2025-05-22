@@ -13,7 +13,7 @@ const (
 	SrodmiescieId = 3359900
 )
 
-type reponse struct {
+type dataResponse struct {
 	Results []struct {
 		Locality    string `json:"locality"`
 		Name        string `json:"name"`
@@ -38,12 +38,13 @@ type reponse struct {
 	} `json:"results"`
 }
 
-type Service struct {
-	APIKey string
-	client *resty.Client
+type DataService struct {
+	APIKey          string
+	client          *resty.Client
+	locationService *LocationService
 }
 
-func NewService(apiKey string) *Service {
+func NewDataService(apiKey string, ls *LocationService) *DataService {
 	client := resty.New().
 		SetBaseURL("https://api.openaq.org/v3/").
 		SetHeader("Content-Type", "application/json")
@@ -51,20 +52,24 @@ func NewService(apiKey string) *Service {
 	if apiKey != "" {
 		client.SetHeader("X-API-Key", apiKey)
 	}
-	return &Service{
-		APIKey: apiKey,
-		client: client,
+	return &DataService{
+		APIKey:          apiKey,
+		client:          client,
+		locationService: ls,
 	}
 }
 
-func (s *Service) FetchData(l string) (*reponse, error) {
-	location, err := parseLocation(l)
+func (s *DataService) FetchData(l string) (*dataResponse, error) {
+	coords, err := s.locationService.FetchLocation(l)
 	if err != nil {
-		return nil, fmt.Errorf("invalid location: %w", err)
+		return nil, fmt.Errorf("error fetching location: %w", err)
 	}
 	resp, err := s.client.R().
-		SetResult(&reponse{}).
-		Get("locations/" + fmt.Sprint(location))
+		SetQueryParam("coordinates", fmt.Sprintf("%s,%s", coords.Lat, coords.Lon)).
+		SetQueryParam("radius", "10000").
+		SetQueryParam("limit", "10").
+		SetResult(&dataResponse{}).
+		Get("locations")
 
 	if err != nil {
 		return nil, err
@@ -73,24 +78,14 @@ func (s *Service) FetchData(l string) (*reponse, error) {
 		return nil, fmt.Errorf("API error: %s", resp.Status())
 	}
 
-	data := resp.Result().(*reponse)
+	data := resp.Result().(*dataResponse)
 	return data, nil
 }
 
-func parseLocation(location string) (int32, error) {
-	switch location {
-	case "wrzeszcz":
-		return WrzeszczId, nil
-	case "nowe-szkoty":
-		return NoweSzkotyId, nil
-	case "nowy-port":
-		return NowyPortId, nil
-	case "srodmiescie":
-		return SrodmiescieId, nil
-	default:
-		return 0, fmt.Errorf(
-			"unknown location: %s, possible values are: wrzeszcz, nowe-szkoty, nowy-port, srodmiescie",
-			location,
-		)
+func (s *DataService) FetchLocationCoords(location string) (*locationResponse, error) {
+	resp, err := s.locationService.FetchLocation(location)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching location: %w", err)
 	}
+	return resp, nil
 }

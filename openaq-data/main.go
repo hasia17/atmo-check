@@ -18,8 +18,8 @@ func main() {
 	if v := os.Getenv("OPENAQ_API_KEY"); v != "" {
 		apiKey = v
 	}
-
-	s := internal.NewService(apiKey)
+	ls := internal.NewLocationService()
+	s := internal.NewDataService(apiKey, ls)
 	h := internal.NewDataHandler(s)
 
 	app := fiber.New()
