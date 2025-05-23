@@ -4,7 +4,7 @@ info:
   title: Gios-data API
   description: API to manage air data from gios
 servers:
-  - url: http://localhost:8080/gios-data/
+  - url: http://localhost:8081/gios-data/
 paths:
   /stations:
     get:

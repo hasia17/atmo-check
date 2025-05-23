@@ -35,6 +35,8 @@ services:
       - "27017:27017"
 
   atmo-check-core:
+    ports:
+      - "8081:8081" 
     build:
       context: ./atmo-check-core
       dockerfile: Dockerfile
