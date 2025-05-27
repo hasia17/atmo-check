@@ -6,45 +6,47 @@ import (
 	"resty.dev/v3"
 )
 
-const (
-	WrzeszczId    = 3346528
-	NoweSzkotyId  = 3285962
-	NowyPortId    = 3285963
-	SrodmiescieId = 3359900
-)
+type locationResponse struct {
+	Results []location `json:"results"`
+}
 
-type dataResponse struct {
-	Results []struct {
-		Locality    string `json:"locality"`
-		Name        string `json:"name"`
-		Coordinates struct {
-			Latitude  float64 `json:"latitude"`
-			Longitude float64 `json:"longitude"`
-		} `json:"coordinates"`
-		Country struct {
-			Code string `json:"code"`
-			Name string `json:"name"`
-		} `json:"country"`
-		Sensors []struct {
-			Id        int32  `json:"id"`
-			Name      string `json:"name"`
-			Parameter struct {
-				Id          int32  `json:"id"`
-				Name        string `json:"name"`
-				Units       string `json:"units"`
-				DisplayName string `json:"displayName"`
-			} `json:"parameter"`
-		} `json:"sensors"`
-	} `json:"results"`
+type location struct {
+	Id       int32  `json:"id"`
+	Name     string `json:"name"`
+	Locality string `json:"locality"`
+	Timezone string `json:"timezone"`
+	Country  struct {
+		Id   int32  `json:"id"`
+		Code string `json:"code"`
+		Name string `json:"name"`
+	} `json:"country"`
+}
+
+type measurementResponse struct {
+	Results []measurement `json:"results"`
+}
+type measurement struct {
+	DateTime struct {
+		Utc   string `json:"utc"`
+		Local string `json:"local"`
+	} `json:"datetime"`
+	Value       float64 `json:"value"`
+	Coordinates struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	} `json:"coordinates"`
+	SensorsId   int32 `json:"sensorsId"`
+	LocationsId int32 `json:"locationsId"`
 }
 
 type DataService struct {
-	APIKey          string
-	client          *resty.Client
-	locationService *LocationService
+	APIKey       string
+	client       *resty.Client
+	locations    []location                 // TODO: store locations in database
+	measurements map[location][]measurement // TODO: store measurements in database
 }
 
-func NewDataService(apiKey string, ls *LocationService) *DataService {
+func NewDataService(apiKey string) *DataService {
 	client := resty.New().
 		SetBaseURL("https://api.openaq.org/v3/").
 		SetHeader("Content-Type", "application/json")
@@ -53,39 +55,47 @@ func NewDataService(apiKey string, ls *LocationService) *DataService {
 		client.SetHeader("X-API-Key", apiKey)
 	}
 	return &DataService{
-		APIKey:          apiKey,
-		client:          client,
-		locationService: ls,
+		APIKey:       apiKey,
+		client:       client,
+		locations:    []location{},
+		measurements: make(map[location][]measurement),
 	}
 }
 
-func (s *DataService) FetchData(l string) (*dataResponse, error) {
-	coords, err := s.locationService.FetchLocation(l)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching location: %w", err)
-	}
+func (s *DataService) FetchLocations() error {
+	var data locationResponse
 	resp, err := s.client.R().
-		SetQueryParam("coordinates", fmt.Sprintf("%s,%s", coords.Lat, coords.Lon)).
-		SetQueryParam("radius", "10000").
+		SetQueryParam("iso", "PL").
 		SetQueryParam("limit", "10").
-		SetResult(&dataResponse{}).
+		SetResult(&data).
 		Get("locations")
 
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("failed to fetch locations: %w", err)
 	}
 	if resp.IsError() {
-		return nil, fmt.Errorf("API error: %s", resp.Status())
+		return fmt.Errorf("API error: %s", resp.Status())
 	}
 
-	data := resp.Result().(*dataResponse)
-	return data, nil
+	s.locations = data.Results
+	return nil
 }
 
-func (s *DataService) FetchLocationCoords(location string) (*locationResponse, error) {
-	resp, err := s.locationService.FetchLocation(location)
-	if err != nil {
-		return nil, fmt.Errorf("error fetching location: %w", err)
+func (s *DataService) FetchMeasurements() error {
+	for _, loc := range s.locations {
+		var data measurementResponse
+		resp, err := s.client.R().
+			SetResult(&data).
+			Get(fmt.Sprintf("locations/%d/latest", loc.Id))
+
+		if err != nil {
+			return fmt.Errorf("failed to fetch measurements for location %s: %w", loc.Name, err)
+		}
+		if resp.IsError() {
+			return fmt.Errorf("API error for location %s: %s", loc.Name, resp.Status())
+		}
+
+		s.measurements[loc] = data.Results
 	}
-	return resp, nil
+	return nil
 }

@@ -18,13 +18,12 @@ func main() {
 	if v := os.Getenv("OPENAQ_API_KEY"); v != "" {
 		apiKey = v
 	}
-	ls := internal.NewLocationService()
-	s := internal.NewDataService(apiKey, ls)
+	s := internal.NewDataService(apiKey)
 	h := internal.NewDataHandler(s)
 
 	app := fiber.New()
 	app.Get("/data", func(c fiber.Ctx) error {
-		return h.HandleGetData(c, c.Query("location"))
+		return h.HandleGetData(c)
 	})
 	log.Fatal(app.Listen(":3000"))
 }
