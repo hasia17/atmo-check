@@ -18,7 +18,9 @@ public class Sensor {
     @DBRef
     private Param param;
 
+    private Integer stationId;
+
     @DBRef
-    private List<AirQualityValue> values;
+    private List<Measurement> values;
 
 }

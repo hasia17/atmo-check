@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Document(collection = "airQualityValues")
-public class AirQualityValue {
+@Document(collection = "measurements")
+public class Measurement {
     @Id
     private String id;
     private LocalDateTime date;

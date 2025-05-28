@@ -12,15 +12,168 @@ paths:
       operationId: getAllStations
       tags:
         - stations
+      parameters:
+        - name: city
+          in: query
+          description: Filter stations by city name
+          required: false
+          schema:
+            type: string
+        - name: province
+          in: query
+          description: Filter stations by province
+          required: false
+          schema:
+            type: string
+        - name: lat
+          in: query
+          description: Latitude for proximity search
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: lon
+          in: query
+          description: Longitude for proximity search
+          required: false
+          schema:
+            type: number
+            format: double
+        - name: radius
+          in: query
+          description: Search radius in kilometers (used with lat/lon)
+          required: false
+          schema:
+            type: number
+            format: double
+            default: 10
       responses:
         '200':
-          description: All station list
+          description: All station list or filtered stations
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/StationDTO"
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stations/{stationId}:
+    get:
+      summary: Get station by ID
+      operationId: getStationById
+      tags:
+        - stations
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          description: Station ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Station details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationDTO"
+        '404':
+          description: Station not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stations/{stationId}/sensors:
+    get:
+      summary: Get list of sensors for specific station
+      operationId: getSensorsByStationId
+      tags:
+        - sensors
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          description: Station ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of sensors for the station
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SensorDTO"
+        '404':
+          description: Station not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /sensors/{sensorId}/data:
+    get:
+      summary: Get measurement data for specific sensor
+      operationId: getSensorData
+      tags:
+        - sensors
+      parameters:
+        - name: sensorId
+          in: path
+          required: true
+          description: Sensor ID
+          schema:
+            type: integer
+        - name: from
+          in: query
+          description: Start date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: End date (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          description: Maximum number of records to return
+          required: false
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: Sensor measurement data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SensorDataResponse"
+        '404':
+          description: Sensor not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '400':
+          description: Bad request - invalid date format or parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     StationDTO:
@@ -29,15 +182,107 @@ components:
         - id
         - name
       properties:
-        name:
-          type: string
-        addressStreet:
-          type: string
         id:
           type: integer
+          example: 114
+        name:
+          type: string
+          example: "Kraków Aleja Krasińskiego"
+        addressStreet:
+          type: string
+          example: "ul. Aleja Krasińskiego 50"
         gegrLat:
           type: number
           format: double
+          example: 50.057678
         gegrLon:
           type: number
           format: double
+          example: 19.926189
+        city:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 102
+            name:
+              type: string
+              example: "Kraków"
+            commune:
+              type: object
+              properties:
+                communeName:
+                  type: string
+                  example: "Kraków"
+                districtName:
+                  type: string
+                  example: "krakowski"
+                provinceName:
+                  type: string
+                  example: "MAŁOPOLSKIE"
+
+    SensorDTO:
+      type: object
+      required:
+        - id
+        - stationId
+      properties:
+        id:
+          type: integer
+          example: 642
+        stationId:
+          type: integer
+          example: 114
+        param:
+          type: object
+          properties:
+            paramName:
+              type: string
+              example: "pył zawieszony PM10"
+            paramFormula:
+              type: string
+              example: "PM10"
+            paramCode:
+              type: string
+              example: "PM10"
+            idParam:
+              type: integer
+              example: 3
+
+    SensorDataResponse:
+      type: object
+      properties:
+        key:
+          type: string
+          example: "PM10"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/MeasurementValue"
+
+    MeasurementValue:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+          example: "2024-01-15 10:00:00"
+        value:
+          type: number
+          format: double
+          example: 23.45
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Resource not found"
+        message:
+          type: string
+          example: "Station with ID 999 does not exist"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
