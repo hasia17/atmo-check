@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
-	"openaq-data/internal"
 	"os"
+	"os/signal"
+	"syscall"
+
+	"openaq-data/internal"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
@@ -14,16 +18,47 @@ func main() {
 		log.Println("No .env file found, proceeding without it.")
 	}
 
-	apiKey := ""
-	if v := os.Getenv("OPENAQ_API_KEY"); v != "" {
-		apiKey = v
+	apiKey := os.Getenv("OPENAQ_API_KEY")
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		log.Fatal("MONGO_URI is required")
 	}
-	s := internal.NewDataService(apiKey)
-	h := internal.NewDataHandler(s)
 
+	s, err := internal.NewDataService(apiKey, mongoURI)
+	if err != nil {
+		log.Fatalf("Failed to create data service: %v", err)
+	}
+	defer s.Close()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	go func() {
+		if err := s.Run(ctx); err != nil {
+			log.Printf("Data service run failed: %v", err)
+		}
+	}()
+
+	h := internal.NewDataHandler(s)
 	app := fiber.New()
 	app.Get("/data", func(c fiber.Ctx) error {
 		return h.HandleGetData(c)
 	})
-	log.Fatal(app.Listen(":3000"))
+
+	go func() {
+		if err := app.Listen(":3000"); err != nil {
+			log.Printf("Server failed: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("Shutting down...")
+
+	if err := app.Shutdown(); err != nil {
+		log.Printf("Server shutdown failed: %v", err)
+	}
+
+	if err := s.Close(); err != nil {
+		log.Printf("Data service close failed: %v", err)
+	}
 }

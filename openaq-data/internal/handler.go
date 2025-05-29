@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -15,16 +17,6 @@ func NewDataHandler(service *DataService) *DataHandler {
 }
 
 func (h *DataHandler) HandleGetData(c fiber.Ctx) error {
-	h.service.FetchLocations()
-	h.service.FetchMeasurements()
-	var retData []measurement
-	for _, loc := range h.service.locations {
-		data := h.service.measurements[loc]
-		if len(data) > 0 {
-			for _, m := range data {
-				retData = append(retData, m)
-			}
-		}
-	}
-	return c.JSON(retData)
+	fmt.Println("Handling GET /data request")
+	return nil
 }

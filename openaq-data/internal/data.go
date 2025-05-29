@@ -1,72 +1,108 @@
 package internal
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"resty.dev/v3"
 )
+
+type location struct {
+	Id       int32  `json:"id"       bson:"_id"`
+	Name     string `json:"name"     bson:"name"`
+	Locality string `json:"locality" bson:"locality"`
+	Timezone string `json:"timezone" bson:"timezone"`
+	Country  struct {
+		Id   int32  `json:"id" bson:"id"`
+		Code string `json:"code" bson:"code"`
+		Name string `json:"name" bson:"name"`
+	} `json:"country"  bson:"country"`
+}
 
 type locationResponse struct {
 	Results []location `json:"results"`
 }
 
-type location struct {
-	Id       int32  `json:"id"`
-	Name     string `json:"name"`
-	Locality string `json:"locality"`
-	Timezone string `json:"timezone"`
-	Country  struct {
-		Id   int32  `json:"id"`
-		Code string `json:"code"`
-		Name string `json:"name"`
-	} `json:"country"`
+type measurement struct {
+	DateTime struct {
+		Utc   string `json:"utc" bson:"utc"`
+		Local string `json:"local" bson:"local"`
+	} `json:"datetime"    bson:"datetime"`
+	Timestamp   time.Time `json:"-"           bson:"timestamp"`
+	Value       float64   `json:"value"       bson:"value"`
+	Parameter   string    `json:"parameter"   bson:"parameter"`
+	Coordinates struct {
+		Latitude  float64 `json:"latitude" bson:"latitude"`
+		Longitude float64 `json:"longitude" bson:"longitude"`
+	} `json:"coordinates" bson:"coordinates"`
+	SensorsId   int32 `json:"sensorsId"   bson:"sensorsId"`
+	LocationsId int32 `json:"locationsId" bson:"locationsId"`
 }
 
 type measurementResponse struct {
 	Results []measurement `json:"results"`
 }
-type measurement struct {
-	DateTime struct {
-		Utc   string `json:"utc"`
-		Local string `json:"local"`
-	} `json:"datetime"`
-	Value       float64 `json:"value"`
-	Coordinates struct {
-		Latitude  float64 `json:"latitude"`
-		Longitude float64 `json:"longitude"`
-	} `json:"coordinates"`
-	SensorsId   int32 `json:"sensorsId"`
-	LocationsId int32 `json:"locationsId"`
-}
 
 type DataService struct {
-	APIKey       string
-	client       *resty.Client
-	locations    []location                 // TODO: store locations in database
-	measurements map[location][]measurement // TODO: store measurements in database
+	APIKey string
+	client *resty.Client
+	store  *Store
 }
 
-func NewDataService(apiKey string) *DataService {
+func NewDataService(apiKey, mongoURI string) (*DataService, error) {
 	client := resty.New().
 		SetBaseURL("https://api.openaq.org/v3/").
 		SetHeader("Content-Type", "application/json")
-
 	if apiKey != "" {
 		client.SetHeader("X-API-Key", apiKey)
 	}
+
+	s, err := NewStore(mongoURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create store: %w", err)
+	}
+
 	return &DataService{
-		APIKey:       apiKey,
-		client:       client,
-		locations:    []location{},
-		measurements: make(map[location][]measurement),
+		APIKey: apiKey,
+		client: client,
+		store:  s,
+	}, nil
+}
+
+func (s *DataService) Run(ctx context.Context) error {
+	if err := s.FetchLocations(); err != nil {
+		return fmt.Errorf("initial locations fetch failed: %w", err)
+	}
+
+	ticker := time.NewTicker(1 * time.Hour)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+			if err := s.FetchMeasurements(); err != nil {
+				log.Printf("Failed to fetch measurements: %v", err)
+			} else {
+				log.Printf("Measurements updated at %s", time.Now().Format(time.RFC3339))
+			}
+		}
 	}
 }
 
 func (s *DataService) FetchLocations() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	var data locationResponse
 	resp, err := s.client.R().
-		SetQueryParam("iso", "PL").
-		SetQueryParam("limit", "10").
+		SetQueryParams(map[string]string{
+			"iso":   "PL",
+			"limit": "1000",
+		}).
 		SetResult(&data).
 		Get("locations")
 
@@ -77,25 +113,49 @@ func (s *DataService) FetchLocations() error {
 		return fmt.Errorf("API error: %s", resp.Status())
 	}
 
-	s.locations = data.Results
+	for _, loc := range data.Results {
+		if err := s.store.StoreLocation(ctx, loc); err != nil {
+			log.Printf("Failed to upsert location %d: %v", loc.Id, err)
+		}
+	}
 	return nil
 }
 
 func (s *DataService) FetchMeasurements() error {
-	for _, loc := range s.locations {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	locations, err := s.store.GetLocations(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch locations from store: %w", err)
+	}
+
+	for _, loc := range locations {
 		var data measurementResponse
 		resp, err := s.client.R().
 			SetResult(&data).
 			Get(fmt.Sprintf("locations/%d/latest", loc.Id))
-
 		if err != nil {
-			return fmt.Errorf("failed to fetch measurements for location %s: %w", loc.Name, err)
+			log.Printf("Failed to fetch measurements for location %s: %v", loc.Name, err)
+			continue
 		}
 		if resp.IsError() {
-			return fmt.Errorf("API error for location %s: %s", loc.Name, resp.Status())
+			log.Printf("API error for location %s: %s", loc.Name, resp.Status())
+			continue
 		}
 
-		s.measurements[loc] = data.Results
+		for _, m := range data.Results {
+			if err := s.store.StoreMeasurement(ctx, m); err != nil {
+				log.Printf("Failed to insert measurement for location %s: %v", loc.Name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func (s *DataService) Close() error {
+	if s.store != nil {
+		return s.store.Close()
 	}
 	return nil
 }
