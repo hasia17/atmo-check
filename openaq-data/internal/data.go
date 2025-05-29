@@ -72,7 +72,7 @@ func NewDataService(apiKey, mongoURI string) (*DataService, error) {
 }
 
 func (s *DataService) Run(ctx context.Context) error {
-	if err := s.FetchLocations(); err != nil {
+	if err := s.FetchLocations(ctx); err != nil {
 		return fmt.Errorf("initial locations fetch failed: %w", err)
 	}
 
@@ -84,7 +84,7 @@ func (s *DataService) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			if err := s.FetchMeasurements(); err != nil {
+			if err := s.FetchMeasurements(ctx); err != nil {
 				log.Printf("Failed to fetch measurements: %v", err)
 			} else {
 				log.Printf("Measurements updated at %s", time.Now().Format(time.RFC3339))
@@ -93,10 +93,7 @@ func (s *DataService) Run(ctx context.Context) error {
 	}
 }
 
-func (s *DataService) FetchLocations() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *DataService) FetchLocations(ctx context.Context) error {
 	var data locationResponse
 	resp, err := s.client.R().
 		SetQueryParams(map[string]string{
@@ -121,10 +118,7 @@ func (s *DataService) FetchLocations() error {
 	return nil
 }
 
-func (s *DataService) FetchMeasurements() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (s *DataService) FetchMeasurements(ctx context.Context) error {
 	locations, err := s.store.GetLocations(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch locations from store: %w", err)
