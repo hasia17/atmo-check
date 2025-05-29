@@ -34,13 +34,13 @@ services:
     ports:
       - "27017:27017"
 
-  atmo-check-core:
+  gios-data:
     ports:
       - "8081:8081" 
     build:
-      context: ./atmo-check-core
+      context: ./gios-data
       dockerfile: Dockerfile
-    container_name: atmo-check-core-app
+    container_name: gios-data-app
     restart: unless-stopped
     environment:
       - SPRING_PROFILES_ACTIVE=docker
@@ -55,9 +55,9 @@ services:
       - app-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.atmo-check-core.rule=Host(`atmo-check-core.localhost`)"
-      - "traefik.http.routers.atmo-check-core.entrypoints=web"
-      - "traefik.http.services.atmo-check-core.loadbalancer.server.port=8081"
+      - "traefik.http.routers.gios-data.rule=Host(`gios-data.localhost`)"
+      - "traefik.http.routers.gios-data.entrypoints=web"
+      - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
       - "traefik.docker.network=traefik-network"
 
 networks:

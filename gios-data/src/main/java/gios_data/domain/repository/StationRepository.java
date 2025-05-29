@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface StationRepository extends MongoRepository<Station, String> {
+    Station findById(Integer id);
 }

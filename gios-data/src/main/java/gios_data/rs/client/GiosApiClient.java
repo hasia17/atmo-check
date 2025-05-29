@@ -66,7 +66,7 @@ public class GiosApiClient {
      * Pobiera wszystkie stacje z API GIOS
      * Uruchamiane raz dziennie o 2:00
      */
-    @Scheduled(cron = "0 0 2 * * *")
+//    @Scheduled(cron = "0 0 2 * * *")
     public void updateStations() {
         log.info("Starting stations update from GIOS API");
         try {
@@ -117,7 +117,7 @@ public class GiosApiClient {
      * Aktualizuje sensory dla wszystkich stacji
      * Uruchamiane raz dziennie o 3:00
      */
-    @Scheduled(cron = "0 0 3 * * *")
+//    @Scheduled(cron = "0 0 3 * * *")
     public void updateAllSensors() {
         log.info("Starting sensors update for all stations");
         try {

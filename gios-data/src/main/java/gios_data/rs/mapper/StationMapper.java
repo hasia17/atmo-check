@@ -6,8 +6,9 @@ import org.mapstruct.Mapper;
 
 import java.util.List;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface StationMapper {
 
     List<StationDTO> map(List<Station> stations);
+    StationDTO map(Station station);
 }
