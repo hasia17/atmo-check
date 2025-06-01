@@ -23,7 +23,4 @@ public class Station {
     @DBRef
     private List<Sensor> sensors;
 
-    @DBRef
-    private AirQualityData airQualityData;
-
 }

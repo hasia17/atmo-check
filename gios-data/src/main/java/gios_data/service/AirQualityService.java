@@ -2,8 +2,6 @@ package gios_data.service;
 
 import gios_data.rs.client.GiosApiClient;
 import gios_data.domain.model.Station;
-import gios_data.domain.repository.AirQualityDataRepository;
-import gios_data.domain.repository.MeasurementRepository;
 import gios_data.domain.repository.SensorRepository;
 import gios_data.domain.repository.StationRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +18,6 @@ public class AirQualityService {
     private final GiosApiClient giosApiService;
     private final StationRepository stationRepository;
     private final SensorRepository sensorRepository;
-    private final AirQualityDataRepository airQualityDataRepository;
-    private final MeasurementRepository airQualityIndexRepository;
 
 
     public void updateStations() {
