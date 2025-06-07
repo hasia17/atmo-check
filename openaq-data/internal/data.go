@@ -76,6 +76,12 @@ func (s *DataService) Run(ctx context.Context) error {
 		return fmt.Errorf("initial locations fetch failed: %w", err)
 	}
 
+	if err := s.FetchMeasurements(ctx); err != nil {
+		log.Printf("Failed to fetch measurements: %v", err)
+	} else {
+		log.Printf("Measurements updated at %s", time.Now().Format(time.RFC3339))
+	}
+
 	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 
@@ -143,6 +149,8 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 				log.Printf("Failed to insert measurement for location %s: %v", loc.Name, err)
 			}
 		}
+		// openaq rate limit is 60 requests per minute
+		<-time.After(1 * time.Second)
 	}
 	return nil
 }
