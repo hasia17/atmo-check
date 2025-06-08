@@ -41,9 +41,8 @@ func main() {
 
 	h := internal.NewDataHandler(s)
 	app := fiber.New()
-	app.Get("/data", func(c fiber.Ctx) error {
-		return h.HandleGetData(c)
-	})
+	app.Get("/locations", h.HandleGetLocations)
+	app.Get("/locations/:id/measurements", h.HandleGetMeasurementsByLocation)
 
 	go func() {
 		if err := app.Listen(":3000"); err != nil {

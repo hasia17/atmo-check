@@ -39,7 +39,7 @@ func NewStore(mongoURI string) (*Store, error) {
 	}, nil
 }
 
-func (s *Store) StoreLocation(ctx context.Context, location location) error {
+func (s *Store) StoreLocation(ctx context.Context, location openAQLocation) error {
 	_, err := s.locationsColl.UpdateOne(ctx,
 		bson.M{"_id": location.Id},
 		bson.M{"$set": location},
@@ -51,21 +51,21 @@ func (s *Store) StoreLocation(ctx context.Context, location location) error {
 	return nil
 }
 
-func (s *Store) GetLocations(ctx context.Context) ([]location, error) {
+func (s *Store) GetLocations(ctx context.Context) ([]openAQLocation, error) {
 	cursor, err := s.locationsColl.Find(ctx, bson.M{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch locations: %w", err)
 	}
 	defer cursor.Close(ctx)
 
-	var locations []location
+	var locations []openAQLocation
 	if err := cursor.All(ctx, &locations); err != nil {
 		return nil, fmt.Errorf("failed to decode locations: %w", err)
 	}
 	return locations, nil
 }
 
-func (s *Store) StoreMeasurement(ctx context.Context, m measurement) error {
+func (s *Store) StoreMeasurement(ctx context.Context, m openAQMeasurement) error {
 	t, err := time.Parse(time.RFC3339, m.DateTime.Utc)
 	if err != nil {
 		return fmt.Errorf("failed to parse timestamp: %w", err)
@@ -73,16 +73,37 @@ func (s *Store) StoreMeasurement(ctx context.Context, m measurement) error {
 	m.Timestamp = t
 
 	_, err = s.measuresColl.InsertOne(ctx, bson.M{
-		"timestamp": m.Timestamp,
-		"metadata": bson.M{
-			"location_id": m.LocationsId,
-			"parameter":   m.Parameter,
-		},
+		"timestamp":   m.Timestamp,
+		"location_id": m.LocationsId,
+		"sensors_id":  m.SensorsId,
 		"value":       m.Value,
 		"coordinates": m.Coordinates,
-		"sensorsId":   m.SensorsId,
 	})
 	return err
+}
+
+func (s *Store) GetMeasurementsByLocation(ctx context.Context, locationID int32, limit int64) ([]openAQMeasurement, error) {
+	filter := bson.M{"metadata.location_id": locationID}
+	opts := options.Find().SetSort(
+		bson.D{{
+			Key:   "timestamp",
+			Value: -1,
+		}},
+	)
+	if limit > 0 {
+		opts.SetLimit(limit)
+	}
+	cursor, err := s.measuresColl.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var measurements []openAQMeasurement
+	if err := cursor.All(ctx, &measurements); err != nil {
+		return nil, err
+	}
+	return measurements, nil
 }
 
 func (s *Store) Close() error {

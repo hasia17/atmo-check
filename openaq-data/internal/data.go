@@ -9,7 +9,7 @@ import (
 	"resty.dev/v3"
 )
 
-type location struct {
+type openAQLocation struct {
 	Id       int32  `json:"id"       bson:"_id"`
 	Name     string `json:"name"     bson:"name"`
 	Locality string `json:"locality" bson:"locality"`
@@ -19,20 +19,29 @@ type location struct {
 		Code string `json:"code" bson:"code"`
 		Name string `json:"name" bson:"name"`
 	} `json:"country"  bson:"country"`
+	Sensors []struct {
+		Id        int32  `json:"id" bson:"_id"`
+		Name      string `json:"name" bson:"name"`
+		Parameter struct {
+			Id          int32  `json:"id" bson:"id"`
+			Name        string `json:"name" bson:"name"`
+			Units       string `json:"units" bson:"units"`
+			DisplayName string `json:"displayName" bson:"displayName"`
+		} `json:"parameter" bson:"parameter"`
+	}
 }
 
-type locationResponse struct {
-	Results []location `json:"results"`
+type openAQLocationResponse struct {
+	Results []openAQLocation `json:"results"`
 }
 
-type measurement struct {
+type openAQMeasurement struct {
 	DateTime struct {
 		Utc   string `json:"utc" bson:"utc"`
 		Local string `json:"local" bson:"local"`
 	} `json:"datetime"    bson:"datetime"`
 	Timestamp   time.Time `json:"-"           bson:"timestamp"`
 	Value       float64   `json:"value"       bson:"value"`
-	Parameter   string    `json:"parameter"   bson:"parameter"`
 	Coordinates struct {
 		Latitude  float64 `json:"latitude" bson:"latitude"`
 		Longitude float64 `json:"longitude" bson:"longitude"`
@@ -41,8 +50,8 @@ type measurement struct {
 	LocationsId int32 `json:"locationsId" bson:"locationsId"`
 }
 
-type measurementResponse struct {
-	Results []measurement `json:"results"`
+type openAQMeasurementResponse struct {
+	Results []openAQMeasurement `json:"results"`
 }
 
 type DataService struct {
@@ -100,7 +109,7 @@ func (s *DataService) Run(ctx context.Context) error {
 }
 
 func (s *DataService) FetchLocations(ctx context.Context) error {
-	var data locationResponse
+	var data openAQLocationResponse
 	resp, err := s.client.R().
 		SetQueryParams(map[string]string{
 			"iso":   "PL",
@@ -131,7 +140,7 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 	}
 
 	for _, loc := range locations {
-		var data measurementResponse
+		var data openAQMeasurementResponse
 		resp, err := s.client.R().
 			SetResult(&data).
 			Get(fmt.Sprintf("locations/%d/latest", loc.Id))
