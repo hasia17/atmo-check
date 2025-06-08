@@ -2,7 +2,6 @@ package gios_data.service;
 
 import gios_data.rs.client.GiosApiClient;
 import gios_data.domain.model.Station;
-import gios_data.domain.repository.SensorRepository;
 import gios_data.domain.repository.StationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,13 +16,11 @@ public class AirQualityService {
 
     private final GiosApiClient giosApiService;
     private final StationRepository stationRepository;
-    private final SensorRepository sensorRepository;
 
 
     public void updateStations() {
         log.info("Stations update started");
-        List<Station> stations = giosApiService.fetchAllStations();
-        stationRepository.saveAll(stations);
-        log.info("{} stations were updated successfully", stations.size());
+        giosApiService.updateStationsFromGios();
+        log.info("stations were updated successfully");
     }
 }

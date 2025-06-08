@@ -15,9 +15,6 @@ public class Sensor {
     @Id
     private Integer id;
 
-    @DBRef
-    private Param param;
-
     private Integer stationId;
 
     @DBRef
