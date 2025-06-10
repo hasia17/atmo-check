@@ -20,7 +20,8 @@ public class AirQualityService {
 
     public void updateStations() {
         log.info("Stations update started");
-        giosApiService.updateStationsFromGios();
+//        giosApiService.updateStationsFromGios();
+        giosApiService.updateMeasurementsFromGios();
         log.info("stations were updated successfully");
     }
 }
