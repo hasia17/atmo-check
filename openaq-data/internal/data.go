@@ -10,25 +10,25 @@ import (
 )
 
 type openAQLocation struct {
-	Id       int32  `json:"id"       bson:"_id"`
-	Name     string `json:"name"     bson:"name"`
-	Locality string `json:"locality" bson:"locality"`
-	Timezone string `json:"timezone" bson:"timezone"`
+	Id       int32  `json:"id"`
+	Name     string `json:"name"`
+	Locality string `json:"locality"`
+	Timezone string `json:"timezone"`
 	Country  struct {
-		Id   int32  `json:"id" bson:"id"`
-		Code string `json:"code" bson:"code"`
-		Name string `json:"name" bson:"name"`
-	} `json:"country"  bson:"country"`
+		Id   int32  `json:"id"`
+		Code string `json:"code"`
+		Name string `json:"name"`
+	} `json:"country"`
 	Sensors []struct {
-		Id        int32  `json:"id" bson:"_id"`
-		Name      string `json:"name" bson:"name"`
+		Id        int32  `json:"id"`
+		Name      string `json:"name"`
 		Parameter struct {
-			Id          int32  `json:"id" bson:"id"`
-			Name        string `json:"name" bson:"name"`
-			Units       string `json:"units" bson:"units"`
-			DisplayName string `json:"displayName" bson:"displayName"`
-		} `json:"parameter" bson:"parameter"`
-	}
+			Id          int32  `json:"id"`
+			Name        string `json:"name"`
+			Units       string `json:"units"`
+			DisplayName string `json:"displayName"`
+		} `json:"parameter"`
+	} `json:"sensors"`
 }
 
 type openAQLocationResponse struct {
@@ -36,18 +36,19 @@ type openAQLocationResponse struct {
 }
 
 type openAQMeasurement struct {
-	DateTime struct {
-		Utc   string `json:"utc" bson:"utc"`
-		Local string `json:"local" bson:"local"`
-	} `json:"datetime"    bson:"datetime"`
-	Timestamp   time.Time `json:"-"           bson:"timestamp"`
-	Value       float64   `json:"value"       bson:"value"`
+	Date struct {
+		Utc   string `json:"utc"`
+		Local string `json:"local"`
+	} `json:"datetime"`
+	Value       float64 `json:"value"`
 	Coordinates struct {
-		Latitude  float64 `json:"latitude" bson:"latitude"`
-		Longitude float64 `json:"longitude" bson:"longitude"`
-	} `json:"coordinates" bson:"coordinates"`
-	SensorsId   int32 `json:"sensorsId"   bson:"sensorsId"`
-	LocationsId int32 `json:"locationsId" bson:"locationsId"`
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	} `json:"coordinates"`
+	Parameter struct {
+		Id int32 `json:"id"`
+	} `json:"parameter"`
+	LocationId int32 `json:"locationId"`
 }
 
 type openAQMeasurementResponse struct {
@@ -125,9 +126,34 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 		return fmt.Errorf("API error: %s", resp.Status())
 	}
 
-	for _, loc := range data.Results {
-		if err := s.store.StoreLocation(ctx, loc); err != nil {
-			log.Printf("Failed to upsert location %d: %v", loc.Id, err)
+	for _, apiLoc := range data.Results {
+		location := Location{
+			ID:       apiLoc.Id,
+			Name:     apiLoc.Name,
+			Locality: apiLoc.Locality,
+			Timezone: apiLoc.Timezone,
+			Country: Country{
+				ID:   apiLoc.Country.Id,
+				Code: apiLoc.Country.Code,
+				Name: apiLoc.Country.Name,
+			},
+			Sensors: []Sensor{},
+		}
+		for _, apiSensor := range apiLoc.Sensors {
+			sensor := Sensor{
+				ID:   apiSensor.Id,
+				Name: apiSensor.Name,
+				Parameter: Parameter{
+					ID:          apiSensor.Parameter.Id,
+					Name:        apiSensor.Parameter.Name,
+					Units:       apiSensor.Parameter.Units,
+					DisplayName: apiSensor.Parameter.DisplayName,
+				},
+			}
+			location.Sensors = append(location.Sensors, sensor)
+		}
+		if err := s.store.StoreLocation(ctx, location); err != nil {
+			log.Printf("Failed to upsert location %d: %v", location.ID, err)
 		}
 	}
 	return nil
@@ -140,26 +166,53 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 	}
 
 	for _, loc := range locations {
-		var data openAQMeasurementResponse
-		resp, err := s.client.R().
-			SetResult(&data).
-			Get(fmt.Sprintf("locations/%d/latest", loc.Id))
-		if err != nil {
-			log.Printf("Failed to fetch measurements for location %s: %v", loc.Name, err)
-			continue
-		}
-		if resp.IsError() {
-			log.Printf("API error for location %s: %s", loc.Name, resp.Status())
-			continue
-		}
+		for _, sensor := range loc.Sensors {
+			var apiData openAQMeasurementResponse
+			resp, err := s.client.R().
+				SetQueryParams(map[string]string{
+					"parameter_id": fmt.Sprintf("%d", sensor.Parameter.ID),
+				}).
+				SetResult(&apiData).
+				Get(fmt.Sprintf("locations/%d/latest", loc.ID))
 
-		for _, m := range data.Results {
-			if err := s.store.StoreMeasurement(ctx, m); err != nil {
-				log.Printf("Failed to insert measurement for location %s: %v", loc.Name, err)
+			if err != nil {
+				log.Printf("Failed to fetch measurements for location %s, sensor %s: %v", loc.Name, sensor.Name, err)
+				continue
 			}
+			if resp.IsError() {
+				log.Printf("API error for location %s, sensor %s: %s", loc.Name, sensor.Name, resp.Status())
+				continue
+			}
+
+			for _, m := range apiData.Results {
+				parsedTime, err := time.Parse(time.RFC3339Nano, m.Date.Utc)
+				if err != nil {
+					parsedTime, err = time.Parse(time.RFC3339, m.Date.Utc)
+					if err != nil {
+						log.Printf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err)
+						continue
+					}
+				}
+				measurement := Measurement{
+					DateTime: MeasurementDateTime{
+						UTC:   m.Date.Utc,
+						Local: m.Date.Local,
+					},
+					Timestamp: parsedTime,
+					Value:     m.Value,
+					Coordinates: Coordinates{
+						Latitude:  m.Coordinates.Latitude,
+						Longitude: m.Coordinates.Longitude,
+					},
+					SensorID:   sensor.ID,
+					LocationID: loc.ID,
+				}
+				if err := s.store.StoreMeasurement(ctx, measurement); err != nil {
+					log.Printf("Failed to insert measurement for location %s, sensor %s: %v", loc.Name, sensor.Name, err)
+				}
+			}
+			<-time.After(1 * time.Second)
 		}
-		// openaq rate limit is 60 requests per minute
-		<-time.After(1 * time.Second)
 	}
 	return nil
 }
