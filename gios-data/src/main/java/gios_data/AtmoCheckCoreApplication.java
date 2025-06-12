@@ -18,6 +18,6 @@ public class AtmoCheckCoreApplication  implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		myService.updateStations();
+//		myService.updateStations();
 	}
 }

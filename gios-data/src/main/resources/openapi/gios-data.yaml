@@ -12,56 +12,15 @@ paths:
       operationId: getAllStations
       tags:
         - stations
-      parameters:
-        - name: city
-          in: query
-          description: Filter stations by city name
-          required: false
-          schema:
-            type: string
-        - name: province
-          in: query
-          description: Filter stations by province
-          required: false
-          schema:
-            type: string
-        - name: lat
-          in: query
-          description: Latitude for proximity search
-          required: false
-          schema:
-            type: number
-            format: double
-        - name: lon
-          in: query
-          description: Longitude for proximity search
-          required: false
-          schema:
-            type: number
-            format: double
-        - name: radius
-          in: query
-          description: Search radius in kilometers (used with lat/lon)
-          required: false
-          schema:
-            type: number
-            format: double
-            default: 10
       responses:
         '200':
-          description: All station list or filtered stations
+          description: All station list
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/StationDTO"
-        '400':
-          description: Bad request - invalid parameters
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /stations/{stationId}:
     get:
@@ -73,9 +32,8 @@ paths:
         - name: stationId
           in: path
           required: true
-          description: Station ID
           schema:
-            type: integer
+            type: string
       responses:
         '200':
           description: Station details
@@ -90,28 +48,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /stations/{stationId}/sensors:
+  /stations/{stationId}/parameters:
     get:
-      summary: Get list of sensors for specific station
-      operationId: getSensorsByStationId
+      summary: Get parameters for a station
+      operationId: getStationParameters
       tags:
-        - sensors
+        - parameters
       parameters:
         - name: stationId
           in: path
           required: true
-          description: Station ID
           schema:
-            type: integer
+            type: string
       responses:
         '200':
-          description: List of sensors for the station
+          description: List of parameters for the station
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SensorDTO"
+                  $ref: "#/components/schemas/ParameterDTO"
         '404':
           description: Station not found
           content:
@@ -119,36 +76,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /sensors/{sensorId}/data:
+  /stations/{stationId}/measurements:
     get:
-      summary: Get measurement data for specific sensor
-      operationId: getSensorData
+      summary: Get measurement data for a station
+      operationId: getStationMeasurements
       tags:
-        - sensors
+        - measurements
       parameters:
-        - name: sensorId
+        - name: stationId
           in: path
           required: true
-          description: Sensor ID
           schema:
-            type: integer
+            type: string
+        - name: parameterId
+          in: query
+          required: false
+          schema:
+            type: string
         - name: from
           in: query
-          description: Start date (YYYY-MM-DD)
           required: false
           schema:
             type: string
-            format: date
+            format: date-time
         - name: to
           in: query
-          description: End date (YYYY-MM-DD)
           required: false
           schema:
             type: string
-            format: date
+            format: date-time
         - name: limit
           in: query
-          description: Maximum number of records to return
           required: false
           schema:
             type: integer
@@ -156,19 +114,15 @@ paths:
             maximum: 1000
       responses:
         '200':
-          description: Sensor measurement data
+          description: Measurement data for station
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SensorDataResponse"
+                type: array
+                items:
+                  $ref: "#/components/schemas/MeasurementDTO"
         '404':
-          description: Sensor not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        '400':
-          description: Bad request - invalid date format or parameters
+          description: Station or measurements not found
           content:
             application/json:
               schema:
@@ -178,100 +132,69 @@ components:
   schemas:
     StationDTO:
       type: object
-      required:
-        - id
-        - name
       properties:
         id:
-          type: integer
-          example: 114
+          type: string
+          example: "12345"
         name:
           type: string
-          example: "Kraków Aleja Krasińskiego"
-        addressStreet:
+          example: "Warszawa - Marszałkowska"
+        location:
           type: string
-          example: "ul. Aleja Krasińskiego 50"
+          example: "Marszałkowska 100, Warszawa"
         gegrLat:
           type: number
           format: double
-          example: 50.057678
+          example: 52.2297
         gegrLon:
           type: number
           format: double
-          example: 19.926189
-        city:
-          type: object
-          properties:
-            id:
-              type: integer
-              example: 102
-            name:
-              type: string
-              example: "Kraków"
-            commune:
-              type: object
-              properties:
-                communeName:
-                  type: string
-                  example: "Kraków"
-                districtName:
-                  type: string
-                  example: "krakowski"
-                provinceName:
-                  type: string
-                  example: "MAŁOPOLSKIE"
-
-    SensorDTO:
-      type: object
-      required:
-        - id
-        - stationId
-      properties:
-        id:
-          type: integer
-          example: 642
-        stationId:
-          type: integer
-          example: 114
-        param:
-          type: object
-          properties:
-            paramName:
-              type: string
-              example: "pył zawieszony PM10"
-            paramFormula:
-              type: string
-              example: "PM10"
-            paramCode:
-              type: string
-              example: "PM10"
-            idParam:
-              type: integer
-              example: 3
-
-    SensorDataResponse:
-      type: object
-      properties:
-        key:
-          type: string
-          example: "PM10"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/MeasurementValue"
-
-    MeasurementValue:
-      type: object
-      properties:
-        date:
+          example: 21.0122
+        lastUpdated:
           type: string
           format: date-time
-          example: "2024-01-15 10:00:00"
+          example: "2024-01-15T10:00:00"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterDTO"
+
+    ParameterDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "PM10"
+        name:
+          type: string
+          example: "pył zawieszony PM10"
+        unit:
+          type: string
+          example: "µg/m³"
+        description:
+          type: string
+          example: "Stężenie pyłu zawieszonego PM10"
+
+    MeasurementDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "m123"
+        stationId:
+          type: string
+          example: "12345"
+        parameterId:
+          type: string
+          example: "PM10"
         value:
           type: number
           format: double
-          example: 23.45
-          nullable: true
+          example: 35.7
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00"
 
     ErrorResponse:
       type: object
@@ -281,7 +204,7 @@ components:
           example: "Resource not found"
         message:
           type: string
-          example: "Station with ID 999 does not exist"
+          example: "Station with ID 999 not found"
         timestamp:
           type: string
           format: date-time

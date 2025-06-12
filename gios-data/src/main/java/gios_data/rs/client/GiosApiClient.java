@@ -4,6 +4,7 @@ import gios_data.domain.model.*;
 import gios_data.domain.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ public class GiosApiClient {
     private static final String SENSORS_ENDPOINT = "/station/sensors/";
     private static final String DATA_ENDPOINT = "/data/getData/";
     private static final int DATA_RETENTION_DAYS = 30; // Keep measurements for 30 days
-    private static final int MAX_MEASUREMENTS_PER_SENSOR = 1000; // Limit measurements per sensor
+    private static final int MAX_MEASUREMENTS_PER_SENSOR = 10; // Limit measurements per sensor
     private final RestTemplate restTemplate;
     private final StationRepository stationRepository;
     private final MeasurementRepository measurementRepository;
@@ -38,6 +39,12 @@ public class GiosApiClient {
         this.stationRepository = stationRepository;
         this.measurementRepository = measurementRepository;
     }
+
+//    @PostConstruct
+//    public void init() {
+//        updateStationsFromGios();
+//        updateMeasurementsFromGios();
+//    }
 
 
     @Scheduled(cron = "0 0 2 * * ?") // Daily at 2:00 AM
