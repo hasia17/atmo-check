@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,9 +25,13 @@ func main() {
 		log.Fatal("MONGO_URI is required")
 	}
 
-	s, err := internal.NewDataService(apiKey, mongoURI)
+	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug, // move this to the future config file
+	}))
+	s, err := internal.NewDataService(apiKey, mongoURI, l)
 	if err != nil {
-		log.Fatalf("Failed to create data service: %v", err)
+		l.Error("Failed to create data service", "error", err)
+		os.Exit(1)
 	}
 	defer s.Close()
 
@@ -35,18 +40,23 @@ func main() {
 
 	go func() {
 		if err := s.Run(ctx); err != nil {
-			log.Printf("Data service run failed: %v", err)
+			l.Error("Data service stopped with error", "error", err)
+			cancel()
+			return
 		}
 	}()
 
-	h := internal.NewDataHandler(s)
+	h := internal.NewDataHandler(s, l)
 	app := fiber.New()
 	app.Get("/locations", h.HandleGetLocations)
+	app.Get("/locations/:id", h.HandleGetLocationByID)
 	app.Get("/locations/:id/measurements", h.HandleGetMeasurementsByLocation)
 
 	go func() {
 		if err := app.Listen(":3000"); err != nil {
-			log.Printf("Server failed: %v", err)
+			l.Error("Failed to start server", "error", err)
+			cancel()
+			return
 		}
 	}()
 
@@ -54,10 +64,10 @@ func main() {
 	log.Println("Shutting down...")
 
 	if err := app.Shutdown(); err != nil {
-		log.Printf("Server shutdown failed: %v", err)
+		l.Error("Failed to shutdown server", "error", err)
 	}
 
 	if err := s.Close(); err != nil {
-		log.Printf("Data service close failed: %v", err)
+		l.Error("Failed to close data service", "error", err)
 	}
 }

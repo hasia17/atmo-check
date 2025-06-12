@@ -94,6 +94,18 @@ func (s *Store) GetMeasurementsByLocation(ctx context.Context, locationID int32,
 	return measurements, nil
 }
 
+func (s *Store) GetLocationByID(ctx context.Context, id int32) (*Location, error) {
+	var location Location
+	err := s.locationsColl.FindOne(ctx, bson.M{"_id": id}).Decode(&location)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch location by id: %w", err)
+	}
+	return &location, nil
+}
+
 func (s *Store) Close() error {
 	if s.mongoClient != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

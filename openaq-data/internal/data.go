@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"time"
 
 	"resty.dev/v3"
@@ -59,9 +60,10 @@ type DataService struct {
 	APIKey string
 	client *resty.Client
 	store  *Store
+	logger *slog.Logger
 }
 
-func NewDataService(apiKey, mongoURI string) (*DataService, error) {
+func NewDataService(apiKey, mongoURI string, l *slog.Logger) (*DataService, error) {
 	client := resty.New().
 		SetBaseURL("https://api.openaq.org/v3/").
 		SetHeader("Content-Type", "application/json")
@@ -78,10 +80,12 @@ func NewDataService(apiKey, mongoURI string) (*DataService, error) {
 		APIKey: apiKey,
 		client: client,
 		store:  s,
+		logger: l,
 	}, nil
 }
 
 func (s *DataService) Run(ctx context.Context) error {
+	s.logger.Info("Starting DataService...")
 	if err := s.FetchLocations(ctx); err != nil {
 		return fmt.Errorf("initial locations fetch failed: %w", err)
 	}
@@ -100,6 +104,7 @@ func (s *DataService) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
+			s.logger.Info("Fetching locations and measurements...")
 			if err := s.FetchMeasurements(ctx); err != nil {
 				log.Printf("Failed to fetch measurements: %v", err)
 			} else {
@@ -110,6 +115,7 @@ func (s *DataService) Run(ctx context.Context) error {
 }
 
 func (s *DataService) FetchLocations(ctx context.Context) error {
+	s.logger.Info("Fetching locations from OpenAQ API...")
 	var data openAQLocationResponse
 	resp, err := s.client.R().
 		SetQueryParams(map[string]string{
@@ -153,13 +159,14 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 			location.Sensors = append(location.Sensors, sensor)
 		}
 		if err := s.store.StoreLocation(ctx, location); err != nil {
-			log.Printf("Failed to upsert location %d: %v", location.ID, err)
+			s.logger.Error("Failed to store location", slog.String("location", location.Name), slog.Any("error", err))
 		}
 	}
 	return nil
 }
 
 func (s *DataService) FetchMeasurements(ctx context.Context) error {
+	s.logger.Info("Fetching measurements from OpenAQ API...")
 	locations, err := s.store.GetLocations(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch locations from store: %w", err)
@@ -208,7 +215,11 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 					LocationID: loc.ID,
 				}
 				if err := s.store.StoreMeasurement(ctx, measurement); err != nil {
-					log.Printf("Failed to insert measurement for location %s, sensor %s: %v", loc.Name, sensor.Name, err)
+					s.logger.Error("Failed to store measurement",
+						slog.String("location", loc.Name),
+						slog.String("sensor", sensor.Name),
+						slog.Any("measurement", measurement),
+						slog.Any("error", err))
 				}
 			}
 			<-time.After(1 * time.Second)

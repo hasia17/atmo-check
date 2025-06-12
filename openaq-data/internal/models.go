@@ -2,7 +2,6 @@ package internal
 
 import "time"
 
-// Location represents a location with air quality sensors.
 type Location struct {
 	ID       int32    `json:"id"                 bson:"_id"`
 	Name     string   `json:"name"               bson:"name"`
@@ -12,21 +11,18 @@ type Location struct {
 	Sensors  []Sensor `json:"sensors,omitempty"  bson:"sensors,omitempty"`
 }
 
-// Country represents a country.
 type Country struct {
 	ID   int32  `json:"id"   bson:"id"`
 	Code string `json:"code" bson:"code"`
 	Name string `json:"name" bson:"name"`
 }
 
-// Sensor represents a sensor at a location.
 type Sensor struct {
 	ID        int32     `json:"id"        bson:"_id"`
 	Name      string    `json:"name"      bson:"name"`
 	Parameter Parameter `json:"parameter" bson:"parameter"`
 }
 
-// Parameter represents a measured parameter.
 type Parameter struct {
 	ID          int32  `json:"id"          bson:"id"`
 	Name        string `json:"name"        bson:"name"`
@@ -34,7 +30,6 @@ type Parameter struct {
 	DisplayName string `json:"displayName" bson:"displayName"`
 }
 
-// Measurement represents an air quality measurement.
 type Measurement struct {
 	DateTime    MeasurementDateTime `json:"datetime"    bson:"datetime"`
 	Timestamp   time.Time           `json:"-"           bson:"timestamp"`
@@ -44,13 +39,11 @@ type Measurement struct {
 	LocationID  int32               `json:"locationId"  bson:"locationId"`
 }
 
-// MeasurementDateTime represents the date and time of a measurement.
 type MeasurementDateTime struct {
 	UTC   string `json:"utc"   bson:"utc"`
 	Local string `json:"local" bson:"local"`
 }
 
-// Coordinates represents geographical coordinates.
 type Coordinates struct {
 	Latitude  float64 `json:"latitude"  bson:"latitude"`
 	Longitude float64 `json:"longitude" bson:"longitude"`
