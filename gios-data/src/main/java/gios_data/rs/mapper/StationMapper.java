@@ -1,6 +1,6 @@
 package gios_data.rs.mapper;
 
-import com.example.model.StationDTO;
+import gios.data.model.StationDTO;
 import gios_data.domain.model.Station;
 import org.mapstruct.Mapper;
 

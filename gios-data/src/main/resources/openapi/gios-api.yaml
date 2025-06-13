@@ -1,0 +1,4401 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Interfejs programistyczny aplikacji (API)",
+    "description": "\u003Cimg  alt ='logo' src = '/pjp-api/images/logo.jpg'\u003E\n\n\u003Cb\u003EUtworzenie usług API portalu Jakość Powietrza Głównego Inspektoratu Ochrony Środowiska sfinansowano ze środków Narodowego Funduszu Ochrony Środowiska i Gospodarki Wodnej.\u003C/b\u003E\n\nInterfejs API portalu Jakość Powietrza GIOŚ umożliwia dostęp do danych dotyczących jakości powietrza w Polsce, wytwarzanych w ramach Państwowego Monitoringu Środowiska i gromadzonych w systemie informatycznym EKOINFONET. Udostępniane dane mogą ulegać zmianie w późniejszym czasie.\n\nKorzystając z API akceptują Państwo warunki zawarte w Regulaminie portalu. Użytkownik ponownie wykorzystujący informacje sektora publicznego udostępniane na portalu Jakość Powietrza zobowiązany jest w sposób czytelny i wyraźny wskazać źródło pozyskania informacji.\n\nPoniższa lista opisuje usługi sieciowe API GIOŚ w standardzie REST wykorzystujące zapytanie HTTP GET. Dane udostępniane są w formacie JSON-LD.",
+    "contact": {
+      "name": "API - GŁÓWNY INSPEKTORAT OCHRONY ŚRODOWISKA ",
+      "email": "api@gios.gov.pl"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.gios.gov.pl",
+      "description": "serwer"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Agregaty pomiarów",
+      "description": "Usługa sieciowa udostępniająca agregaty ze stanowisk automatycznych za 3 ostatnie doby w podziale na województwa i powiaty:\n1. Agregat Maksimum ze średnich 8-godzinnych z 1-godzinnych wyników pomiarów pyłu zawieszonego PM10;\n2. Agregat Średnia 24-godzinna z 1-godzinnych wyników pomiarów pyłu zawieszonego PM10"
+    },
+    {
+      "name": "Archiwalne dane pomiarowe",
+      "description": "Usługa sieciowa udostępniająca archiwalne dane pomiarowe na podstawie podanego identyfikatora stanowiska pomiarowego. Wyniki pomiarów jednogodzinnych udostępniane są zawsze w czasie CET (UTC+ 01:00, czas środkowoeuropejski zimowy)."
+    },
+    {
+      "name": "Bieżące dane pomiarowe",
+      "description": "Usługa sieciowa udostępniająca dane pomiarowe na podstawie podanego identyfikatora stanowiska pomiarowego, od ostatniej pełnej godziny do trzeciej doby wstecz. Wyniki pomiarów udostępniane są w czasie lokalnym, tj. latem w czasie CEST (UTC+ 02:00, czas środkowoeuropejski letni), zimą w czasie CET (UTC+ 01:00, czas środkowoeuropejski zimowy)."
+    },
+    {
+      "name": "Indeks jakości powietrza",
+      "description": "Usługa sieciowa udostępniająca indeks jakości powietrza na podstawie podanego identyfikatora stacji pomiarowej. "
+    },
+    {
+      "name": "Informacje o przekroczeniu",
+      "description": "Usługa sieciowa udostępniająca aktywne informacje o przekroczeniu poziomu informowania, alarmowego, dopuszczalnego i docelowego zanieczyszczeń z uwzględnieniem danych i parametrów."
+    },
+    {
+      "name": "Mapy rozkładów stężeń zanieczyszczeń",
+      "description": "Usługa sieciowa udostępniająca dane prezentowane na mapach rozkładów stężeń (https://powietrze.gios.gov.pl/pjp/maps/modeling) w formacie JSON-LD. Usługa zwraca do pobrania plik zgodnie z wybranym rokiem, typem wskaźnika i wskaźnikiem."
+    },
+    {
+      "name": "Metadane",
+      "description": "Usługa sieciowa udostępniająca metadane stacji pomiarowych: kod stacji, międzynarodowy kod stacji, nazwa stacji, stary kod stacji, data uruchomienia, data zamknięcia, typ stacji, typ obszaru, rodzaj stacji, województwo, miejscowość, ulica, współrzędne geograficzne (WGS84 φ N, WGS84 λ E) oraz metadane stanowisk pomiarowych: kod stanowiska, kod stacji, nazwa stacji, stary kod stacji, wskaźnik – kod, wskaźnik, czas uśredniania, typ pomiaru, data uruchomienia, data zamknięcia, województwo, nazwa strefy"
+    },
+    {
+      "name": "Stacje pomiarowe i stanowiska pomiarowe",
+      "description": "Usługa sieciowa udostępniająca listę stanowisk pomiarowych i stacji  "
+    },
+    {
+      "name": "Statystyki roczne ",
+      "description": "Statystyki roczne od roku 2000 dla SO2, NO2, NOx, CO, O3, C6H6, PM10, PM2,5, Pb(PM10), As(PM10), Cd(PM10), Ni(PM10), BaP(PM10), WWA(PM10), Jony(PM2,5), Hg(TGM), formaldehyd, depozycja, wraz z ich parametrami"
+    }
+  ],
+  "paths": {
+    "/pjp-api/v1/rest/aggregate/getAggregatePm10Data": {
+      "get": {
+        "tags": [
+          "Agregaty pomiarów"
+        ],
+        "summary": "getAggregatePm10Data",
+        "description": "Usługa sieciowa udostępniająca agregaty ze stanowisk automatycznych za 3 ostatnie doby w podziale na województwa i powiaty:\n1. Agregat Maksimum ze średnich 8-godzinnych z 1-godzinnych wyników pomiarów pyłu zawieszonego PM10;\n2. Agregat Średnia 24-godzinna z 1-godzinnych wyników pomiarów pyłu zawieszonego PM10\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/aggregate/getAggregatePm10Data.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/aggregate/getAggregatePm10Data",
+        "operationId": "getAggregatePm10DataUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę atrybutu znakiem minus. Parametr jest opcjonalny. \u003Cbr /\u003EDomyślne sortowanie odbywa się rosnąco po atrybutach Kod stanowiska oraz Data. \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Województwo - parametr dla nazwy województwa, \u003Cbr /\u003E Powiat - parametr dla nazwy powiatu ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[powiat]",
+            "in": "query",
+            "description": "Powiat np. Katowice, Zabrze, Bielsko-Biała,  Warszawa, limanowski, ostrołęcki, olkuski. W przypadku wyboru kilku powiatów należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[wojewodztwo]",
+            "in": "query",
+            "description": "Województwo np. ŚLĄSKIE, WARMIŃSKO-MAZURSKIE, KUJAWSKO-POMORSKIE, MAŁOPOLSKIE. W przypadku wyboru kilku województw należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosAggregatePM10DataDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/levels/getInformationAboutExceeding": {
+      "get": {
+        "tags": [
+          "Informacje o przekroczeniu"
+        ],
+        "summary": "getInformationAboutExceeding",
+        "description": "Usługa sieciowa udostępniająca aktywne informacje o przekroczeniu poziomu informowania, alarmowego, dopuszczalnego i docelowego zanieczyszczeń \n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/levels/getInformationAboutExceeding.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/levels/getInformationAboutExceeding",
+        "operationId": "getInformationAboutExceedingUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny. Domyśle sortowanie odbywa się malejąco po  parametrze Data i godzina.\u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Województwo - parametr dla nazwy województwa.\u003Cbr /\u003EData - parametr dla Data i godzina",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[wojewodztwo]",
+            "in": "query",
+            "description": "Województwo np. ŚLĄSKIE, WARMIŃSKO-MAZURSKIE, KUJAWSKO-POMORSKIE, MAŁOPOLSKIE. W przypadku wyboru kilku województw należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosExceedingLdDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/aqindex/getIndex/{stationId}": {
+      "get": {
+        "tags": [
+          "Indeks jakości powietrza"
+        ],
+        "summary": "getIndex",
+        "description": "Usługa sieciowa udostępniająca indeks jakości powietrza na podstawie podanego identyfikatora stacji pomiarowej.\nhttps://api.gios.gov.pl/pjp-api/v1/rest/aqindex/getIndex/{stationId}\n\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/aqindex/getIndex/52",
+        "operationId": "getIndexUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.\nAby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stationId",
+            "in": "path",
+            "description": "Identyfikator stacji pomiarowej np. 52 \u003Cbr/\u003E Lista stacji i stanowisk pomiarowych wraz z ich id udostępniana jest poprzez usługi API \"Stacje pomiarowe i stanowiska pomiarowe”",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosAqIndexMetaDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/archivalData/getDataBySensor/{idSensor}": {
+      "get": {
+        "tags": [
+          "Archiwalne dane pomiarowe"
+        ],
+        "summary": "getArchivalDataBySensor",
+        "description": "Usługa sieciowa udostępniająca archiwalne wyniki pomiarów automatycznych i manualnych na podstawie podanego identyfikatora stanowiska pomiarowego dla dowolnego wybranego okresu czasu (max. 366 dni). Należy podać identyfikator stanowiska oraz wybrać zakres czasu: Data od i Data do lub Liczba dni wstecz od \n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/archivalData/getDataBySensor/{idSensor}.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https:///api.gios.gov.pl/pjp-api/v1/rest/archivalData/getDataBySensor/52?dayNumber=3",
+        "operationId": "getArchivalDataBySensorUsingGET",
+        "parameters": [
+          {
+            "name": "idSensor",
+            "in": "path",
+            "description": "Identyfikator stanowiska np. 52                \u003Cbr/\u003E Lista stacji i stanowisk pomiarowych wraz z ich id udostępniana jest poprzez usługi API \"Stacje pomiarowe i stanowiska pomiarowe” ",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę atrybutu znakiem minus. Parametr jest opcjonalny. \u003Cbr /\u003EDomyślne sortowanie odbywa się malejąco po atrybucie Data. \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Data - parametr dla daty \u003Cbr /\u003E ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "description": "Data od:                                             \u003Cbr /\u003E- dla stanowisk automatycznych (wyniki jednogodzinne ) należy określić datę uwzględniając dni i godziny zgodnie z przykładem: 2022-02-23 15:00  \u003Cbr /\u003E - dla stanowisk manualnych (wyniki średniodobowe) należy określić datę uwzględniając dni zgodnie z przykładem: 2022-02-23 00:00 ",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "description": "Data do:                                                                   \u003Cbr /\u003E- dla stanowisk automatycznych (wyniki jednogodzinne ) należy określić datę uwzględniając dni i godziny zgodnie z przykładem: 2022-02-25 11:00  \u003Cbr /\u003E- dla stanowisk manualnych (wyniki średniodobowe) należy określić datę uwzględniając dni zgodnie z przykładem: 2022-02-25 00:00",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayNumber",
+            "in": "query",
+            "description": "Liczba dni wstecz od dnia dzisiejszego np. 5 (dzień rozumiany jako 24 godziny wstecz od wywołania usługi)",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosArchivalDataDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/archivalData/getDataForAllStations": {
+      "get": {
+        "tags": [
+          "Archiwalne dane pomiarowe"
+        ],
+        "summary": "getArchivalDataForAllStations",
+        "description": "Usługa sieciowa udostępniająca archiwalne wyniki pomiarów automatycznych i manualnych ze wszystkich stacji w kraju dla dowolnego wybranego okresu czasu (max. 31 dni). Należy wybrać zakres czasu: Data od i Data do lub Liczba dni wstecz od \n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/archivalData/getDataForAllStations.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/archivalData/getDataForAllStations?dayNumber=2",
+        "operationId": "getArchivalDataForAllStationsUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę atrybutu znakiem minus. Parametr jest opcjonalny. \u003Cbr /\u003EDomyślne sortowanie odbywa się rosnąco po atrybutach Kod stanowiska oraz Data. \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Data - parametr dla daty, \u003Cbr /\u003EKod - parametr dla kodu stanowiska ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateFrom",
+            "in": "query",
+            "description": "Data od:                                             \u003Cbr /\u003Enależy określić datę uwzględniając dni i godziny zgodnie z przykładem: 2022-02-23 15:00",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dateTo",
+            "in": "query",
+            "description": "Data do:                                                                   \u003Cbr /\u003Enależy określić datę uwzględniając dni i godziny zgodnie z przykładem: 2022-02-25 11:00",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayNumber",
+            "in": "query",
+            "description": "Liczba dni wstecz od dnia dzisiejszego np. 5 (dzień rozumiany jako 24 godziny wstecz od wywołania usługi)",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosArchivalDataDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/archivalData/getDataForAllStationsByYearAndVoivodeship": {
+      "get": {
+        "tags": [
+          "Archiwalne dane pomiarowe"
+        ],
+        "summary": "getDataForAllStationsByYearAndVoivodeship",
+        "description": "Usługa sieciowa udostępniająca archiwalne wyniki pomiarów automatycznych i manualnych z wybranego roku kalendarzowego (również trwającego), dla wybranego zanieczyszczenia lub wszystkich łącznie, ze wszystkich stacji w wybranym województwie\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/archivalData/getDataForAllStationsByYearAndVoivodeship.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/archivalData/getDataForAllStationsByYearAndVoivodeship?year=2021&voivodeship=ŚLĄSKIE",
+        "operationId": "getDataForAllStationsByYearAndVoivodeshipUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę atrybutu znakiem minus. Parametr jest opcjonalny. \u003Cbr /\u003EDomyślne sortowanie odbywa się rosnąco po atrybutach Kod stanowiska oraz Data. \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Data - parametr dla daty, \u003Cbr /\u003EKod - parametr dla kodu stanowiska ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "description": "Rok np. 2020",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "voivodeship",
+            "in": "query",
+            "description": "Województwo np. ŚLĄSKIE, WARMIŃSKO-MAZURSKIE, KUJAWSKO-POMORSKIE, MAŁOPOLSKIE",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pollution",
+            "in": "query",
+            "description": "Dostępne zanieczyszczenia: 123trimetylobenzen, 124trimetylobenzen, 135trimetylobenzen, 13butadien, 1buten, 1penten, 2penten, As(PM10), As(cdepoz), BaA(PM10), BaA(cdepoz), BaP(PM10), BaP(cdepoz), BbF(PM10), BbF(cdepoz), BjF(PM10), BjF(cdepoz), BkF(PM10),\nBkF(cdepoz), C6H6, CO, Ca2+(PM2.5), Cd(PM10), Cd(cdepoz), Cl_(PM2.5), Cr(PM10), Cu(PM10), DBahA(PM10), DBahA(cdepoz), EC(PM2.5), HCl,\nHg(TGM), Hg(cdepoz), IP(PM10), IP(cdepoz), K+(PM2.5), Mg2+(PM2.5), NH3, NH4+(PM2.5), NO, NO2, NO3_(PM2.5), NOx,Na+(PM2.5), Ni(PM10),\nNi(cdepoz), O3,OC(PM2.5), PM10, PM2.5, Pb(PM10), SO2, SO42_(PM2.5), acetylen, cis2buten, etan, etylen, etylobenzen, formaldehyd, ibutan, iheksan, ioktan, ipentan, izopren, ksylen, mpksylen, nbutan, nheksan, nheptan, noktan, npentan, oksylen, propan, propen, toluen, trans2buten",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosArchivalDataDto"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/concentration/getDistributionsOfConcentrationsMap": {
+      "get": {
+        "tags": [
+          "Mapy rozkładów stężeń zanieczyszczeń"
+        ],
+        "summary": "getDistributionsOfConcentrationsMap",
+        "description": "Usługa sieciowa udostępniająca dane prezentowane na mapach rozkładów stężeń z wybranego roku kalendarzowego, dla wybranego zanieczyszczenia, w podziale na kryterium ochrony zdrowia i ochrony roślin.\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/concentration/getDistributionsOfConcentrationsMap.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca plik do pobrania, zawierający dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/concentration/getDistributionsOfConcentrationsMap?year=2020&indicatorType=OZ&indicator=PM10_sr_roczna",
+        "operationId": "getDistributionsOfConcentrationsMapUsingGET",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "description": "Rok - dostępne są dane od 2019 roku",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "indicatorType",
+            "in": "query",
+            "description": "Typ wskaźnika: OZ - Ochrona zdrowia, OR - Ochrona roślin",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "indicator",
+            "in": "query",
+            "description": "Wskaźnik ochrona zdrowia (OZ): PM10_sr_roczna, PM25_sr_roczna, NO2_sr_roczna, O3_3letnia, BaP_sr_roczna, SO2_25h_max, PM10_36_max, NO2_19h_max, SO2_4_max \u003C/br\u003EWskaźnik ochrona roślin (OR): SO2_sr_roczna, NOx_sr_roczna, O3_5letnia",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosConcentrationDistributionsDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/data/getData/{idSensor}": {
+      "get": {
+        "tags": [
+          "Bieżące dane pomiarowe"
+        ],
+        "summary": "getData",
+        "description": "Usługa sieciowa udostępniająca dane pomiarowe na podstawie podanego identyfikatora stanowiska pomiarowego typu automatycznego. Dla stanowiska typu manualnego wyniki pomiarów nie są dostępne na bieżąco, są one udostępniane po 4-8 tygodniach od poboru próby przez usługę API „Archiwalne dane pomiarowe”\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/data/getData/{idSensor}.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/data/getData/52",
+        "operationId": "getDataUsingGET",
+        "parameters": [
+          {
+            "name": "idSensor",
+            "in": "path",
+            "description": "Identyfikator stanowiska np. 52                          \u003Cbr/\u003E Lista stacji i stanowisk pomiarowych wraz z ich id udostępniana jest poprzez usługi API \"Stacje pomiarowe i stanowiska pomiarowe”",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę atrybutu znakiem minus. Parametr jest opcjonalny. \u003Cbr /\u003EDomyślne sortowanie odbywa się malejąco po atrybucie Data.    \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Data - parametr dla daty,    \u003Cbr /\u003E ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosCurrentDataDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/station/findAll": {
+      "get": {
+        "tags": [
+          "Stacje pomiarowe i stanowiska pomiarowe"
+        ],
+        "summary": "getAutomaticAndManualStation",
+        "description": "Usługa sieciowa udostępniająca listę stacji pomiarowych\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/station/findAll.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/station/findAll",
+        "operationId": "getAutomaticAndManualStationUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny.  \u003Cbr /\u003E Domyślne sortowanie odbywa się rosnąco po atrybucie Identyfikator stacji\u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Id - parametr dla identyfikatora stacji,\u003Cbr /\u003E ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosStationLd"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/station/sensors/{stationId}": {
+      "get": {
+        "tags": [
+          "Stacje pomiarowe i stanowiska pomiarowe"
+        ],
+        "summary": "getAutomaticAndManualSensors",
+        "description": "Usługa sieciowa udostępniająca listę stanowisk pomiarowych dostępnych na wybranej stacji pomiarowej\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/station/sensors/{stationId}.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/station/sensors/52",
+        "operationId": "getAutomaticAndManualSensorsUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwy atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny.  \u003Cbr /\u003E Domyślne sortowanie odbywa się rosnąco po atrybucie Identyfikator stanowiska. \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Id - parametr dla identyfikatora stanowiska\u003Cbr /\u003E ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stationId",
+            "in": "path",
+            "description": "Identyfikator stacji pomiarowej np. 52 \u003Cbr/\u003E Lista stacji i stanowisk pomiarowych wraz z ich id udostępniana jest poprzez usługi API \"Stacje pomiarowe i stanowiska pomiarowe”",
+            "required": true,
+            "style": "simple",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosSensorLd"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/metadata/sensors": {
+      "get": {
+        "tags": [
+          "Metadane"
+        ],
+        "summary": "getSensorsMetadata",
+        "description": "Usługa sieciowa udostępniająca metadane stanowisk pomiarowych: kod stanowiska, kod stacji, nazwa stacji, stary kod stacji, wskaźnik – kod, wskaźnik, czas uśredniania, typ pomiaru, data uruchomienia, data zamknięcia, województwo, nazwa strefy\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/metadata/sensors.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/metadata/sensors",
+        "operationId": "getSensorsMetadataUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny.  \u003Cbr /\u003E Domyślne sortowanie odbywa się rosnąco po atrybucie Kod stacji \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Kod - parametr dla Kodu stacji",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[typ-pomiaru]",
+            "in": "query",
+            "description": "Typ pomiaru: automatyczny lub manualny. W przypadku wyboru dwóch należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[kod-stacji]",
+            "in": "query",
+            "description": "Kod stacji np. DsBialka, DsBielGrot, DsBogChop, DsBoleslaMOB. W przypadku wyboru kilku kodów stacji należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosSensorMetaDataLdDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/metadata/stations": {
+      "get": {
+        "tags": [
+          "Metadane"
+        ],
+        "summary": "getStationMetadata",
+        "description": "Usługa sieciowa udostępniająca metadane stacji pomiarowych: kod stacji, międzynarodowy kod stacji, nazwa stacji, stary kod stacji, data uruchomienia, data zamknięcia, typ stacji, typ obszaru, rodzaj stacji, województwo, miejscowość, ulica, współrzędne geograficzne (WGS84 φ N, WGS84 λ E)\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/metadata/stations.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/metadata/stations",
+        "operationId": "getStationMetadataUsingGET",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny.  \u003Cbr /\u003E Domyślne sortowanie odbywa się rosnąco po atrybucie Kod stacji \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Kod - parametr dla Kodu stacji",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[miejscowosc]",
+            "in": "query",
+            "description": "Miejscowość np. Białka,Bielawa,Bogatynia,Brzeg Głogowski,Czarna Góra,Duszniki-Zdrój,Dzierżoniów . W przypadku wyboru dwóch należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[kod-stacji]",
+            "in": "query",
+            "description": "Kod stacji np. DsBialka, DsBielGrot, DsBogChop, DsBoleslaMOB. W przypadku wyboru kilku kodów stacji należy oddzielić je znakiem przecinka (,)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosStationMetaDataLdDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pjp-api/v1/rest/statistics/getStatisticsForPollutants": {
+      "get": {
+        "tags": [
+          "Statystyki roczne "
+        ],
+        "summary": "getStatistics",
+        "description": "Usługa sieciowa udostępniająca statystyki roczne od roku 2000 dla SO2, NO2, NOx, CO, O3, C6H6, PM10, PM2,5, Pb(PM10), As(PM10), Cd(PM10), Ni(PM10), BaP(PM10), WWA(PM10), Jony(PM2,5), Hg(TGM), formaldehyd, depozycja, wraz z ich parametrami\n\nhttps://api.gios.gov.pl/pjp-api/v1/rest/statistics/getStatisticsForPollutants.\nUsługa sieciowa typu REST wykorzystująca zapytanie HTTP GET. Udostępniająca dane w formacie JSON-LD.\n\nPrzykład zapytania: https://api.gios.gov.pl/pjp-api/v1/rest/statistics/getStatisticsForPollutants?indicator=O3",
+        "operationId": "getStatisticsUsingGET",
+        "parameters": [
+          {
+            "name": "indicator",
+            "in": "query",
+            "description": "SO2, NO2, NOx, CO, O3, C6H6, PM10, PM2,5, Pb(PM10), As(PM10), Cd(PM10), Ni(PM10), BaP(PM10), WWA(PM10), Jony(PM2,5), Hg(TGM), Formaldehyd, Depozycja",
+            "required": true,
+            "style": "form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający, którą stronę wyników chce pobrać użytkownik.\nNumer indeksu żądanej strony (liczony od zera). Domyślna wartość → 0.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Parametr mechanizmu stronicowania określający ilość wyników na stronie.\nJest to dodatnia liczba całkowita podawana z kluczem parametru.\nDomyślna wartość → 20, Maksymalna wartość → 500.",
+            "required": false,
+            "style": "form",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Parametr mechanizmu sortowania. Jako wartość przyjmuje nazwę atrybutu.                  Aby posortować w odwrotnej kolejności należy poprzedzić nazwę parametru znakiem minus. Parametr jest opcjonalny.  \u003Cbr /\u003E Domyślne sortowanie odbywa się rosnąco po atrybucie Województwo. \u003Cbr /\u003E Dostępne atrybuty:    \u003Cbr /\u003E Województwo - parametr dla nazwy województwa\u003Cbr /\u003E ",
+            "required": false,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter[wojewodztwo]",
+            "in": "query",
+            "description": "Województwo np. śląskie, kujawsko-pomorskie. Wartości parametrów należy oddzielać przecinkiem.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosStatisticsLdDTO"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Utworzono nowy zasób",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Zaakceptowano zapytanie, odpowiedź jeszcze nie jest gotowa",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Brak zawartości",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Przeniesiono na stałe",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Zobacz inne: odpowiedź na zapytanie dostępna pod innym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Nie modyfikowano od czasu wskazanego w zapytaniu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błędne żądanie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Brak autoryzacji",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Dostęp zabroniony",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nie znaleziono",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Nieodpowiednia metoda",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Nieakceptowalne – treść nie może zostać przygotowana w sposób zasygnalizowany nagłówkami",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Konflikt",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Zasób usunięty i już nigdy nie będzie dostępny pod tym adresem",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Zapytanie niepoprawne semantycznie",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Zbyt wiele zapytań w jednostce czasu",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Wewnętrzny błąd serwera",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Błąd bramki – serwer otrzymał niepoprawną odpowiedź od serwera nadrzędnego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Usługa czasowo niedostępna.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Przekroczony czas oczekiwania na odpowiedź serwera wewnętrznego.",
+            "content": {
+              "application/ld+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GiosDataException"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GiosAggregateDTO": {
+        "title": "GiosAggregateDTO",
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "string"
+          },
+          "Kod stanowiska": {
+            "type": "string"
+          },
+          "Maksimum ze średnich 8-godzinnych": {
+            "type": "number",
+            "format": "double"
+          },
+          "Powiat": {
+            "type": "string"
+          },
+          "Województwo": {
+            "type": "string"
+          },
+          "Średnia 24-godzinna z wyników 1-godzinnych": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "GiosAggregatePM10DataDTO": {
+        "title": "GiosAggregatePM10DataDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista danych zagregowanych": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosAggregateDTO"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosAqIndexMetaDTO": {
+        "title": "GiosAqIndexMetaDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "AqIndex": {
+            "$ref": "#/components/schemas/GiosStationAqIndexLdDTO"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosArchivalDataDto": {
+        "title": "GiosArchivalDataDto",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista archiwalnych wyników pomiarów": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosStationDataDTO"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosConcentrationDistributionsDTO": {
+        "title": "GiosConcentrationDistributionsDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosFeature"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosCurrentDataDTO": {
+        "title": "GiosCurrentDataDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista danych pomiarowych": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosDataDTOLd"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosDataDTOLd": {
+        "title": "GiosDataDTOLd",
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "string"
+          },
+          "Kod stanowiska": {
+            "type": "string"
+          },
+          "Wartość": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "GiosDataException": {
+        "title": "GiosDataException",
+        "type": "object",
+        "properties": {
+          "error_code": {
+            "type": "string"
+          },
+          "error_help": {
+            "type": "string"
+          },
+          "error_reason": {
+            "type": "string"
+          },
+          "error_result": {
+            "type": "string"
+          },
+          "error_solution": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosExceedingDTO": {
+        "title": "GiosExceedingDTO",
+        "type": "object",
+        "properties": {
+          "Czas trwania": {
+            "type": "string"
+          },
+          "Data i godzina": {
+            "type": "string"
+          },
+          "Dodatkowe informacje": {
+            "type": "string"
+          },
+          "Informacje dotyczące obszaru przekroczenia": {
+            "type": "string"
+          },
+          "Informacje o podjętych ograniczeniach": {
+            "type": "string"
+          },
+          "Informacje w sprawie grup ludności objętych ryzykiem": {
+            "type": "string"
+          },
+          "Liczba mieszkańców": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Obszar geograficzny, na którym spodziewane są przekroczenia": {
+            "type": "string"
+          },
+          "Odnośnik do strony internetowej z informacjami": {
+            "type": "string"
+          },
+          "Odnośnik do strony internetowej z planem działań": {
+            "type": "string"
+          },
+          "Opis prawdopodobnych symptomów": {
+            "type": "string"
+          },
+          "Prognoza zmian stężeń": {
+            "type": "string"
+          },
+          "Przyczyny przekroczenia": {
+            "type": "string"
+          },
+          "Stanowisko pomiarowe": {
+            "type": "string"
+          },
+          "Strefa": {
+            "type": "string"
+          },
+          "Typ normy": {
+            "type": "string"
+          },
+          "Wartość maksymalnego stężenia (µg/m3)": {
+            "type": "number",
+            "format": "double"
+          },
+          "Wskazanie, gdzie można uzyskać dalsze informacje": {
+            "type": "string"
+          },
+          "Zalecane środki ostrożności": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosExceedingLdDTO": {
+        "title": "GiosExceedingLdDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Przekroczenia": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosExceedingDTO"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosFeature": {
+        "title": "GiosFeature",
+        "type": "object",
+        "properties": {
+          "geometry": {
+            "$ref": "#/components/schemas/GiosGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/GiosProperties"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosGeometry": {
+        "title": "GiosGeometry",
+        "type": "object",
+        "properties": {
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosProperties": {
+        "title": "GiosProperties",
+        "type": "object",
+        "properties": {
+          "nazwa_wska": {
+            "type": "string"
+          },
+          "rok": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "typ_wskaz": {
+            "type": "string"
+          },
+          "wartosc": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "GiosSensorLd": {
+        "title": "GiosSensorLd",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista stanowisk pomiarowych dla podanej stacji": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosSensorLdDTO"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosSensorLdDTO": {
+        "title": "GiosSensorLdDTO",
+        "type": "object",
+        "properties": {
+          "Id wskaźnika": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Identyfikator stacji": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Identyfikator stanowiska": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Wskaźnik": {
+            "type": "string"
+          },
+          "Wskaźnik - kod": {
+            "type": "string"
+          },
+          "Wskaźnik - wzór": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosSensorMetaDataLdDTO": {
+        "title": "GiosSensorMetaDataLdDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista metadanych stanowisk pomiarowych": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosSensorMetadata"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosSensorMetadata": {
+        "title": "GiosSensorMetadata",
+        "type": "object",
+        "properties": {
+          "Czas uśredniania": {
+            "type": "string"
+          },
+          "Data uruchomienia": {
+            "type": "string"
+          },
+          "Data zamknięcia": {
+            "type": "string"
+          },
+          "Kod stacji": {
+            "type": "string"
+          },
+          "Kod stanowiska": {
+            "type": "string"
+          },
+          "Nazwa stacji": {
+            "type": "string"
+          },
+          "Nazwa strefy": {
+            "type": "string"
+          },
+          "Nr": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Stary Kod stacji": {
+            "type": "string"
+          },
+          "Typ pomiaru": {
+            "type": "string"
+          },
+          "Województwo": {
+            "type": "string"
+          },
+          "Wskaźnik": {
+            "type": "string"
+          },
+          "Wskaźnik - kod": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosStationAqIndexLdDTO": {
+        "title": "GiosStationAqIndexLdDTO",
+        "type": "object",
+        "properties": {
+          "Data danych źródłowych, z których policzono wartość indeksu dla wskaźnika NO2": {
+            "type": "string"
+          },
+          "Data danych źródłowych, z których policzono wartość indeksu dla wskaźnika O3": {
+            "type": "string"
+          },
+          "Data danych źródłowych, z których policzono wartość indeksu dla wskaźnika PM10": {
+            "type": "string"
+          },
+          "Data danych źródłowych, z których policzono wartość indeksu dla wskaźnika PM2.5": {
+            "type": "string"
+          },
+          "Data danych źródłowych, z których policzono wartość indeksu dla wskaźnika SO2": {
+            "type": "string"
+          },
+          "Data danych źródłowych, z których policzono wartość indeksu dla wskaźnika st": {
+            "type": "string"
+          },
+          "Data wykonania obliczeń indeksu": {
+            "type": "string"
+          },
+          "Data wykonania obliczeń indeksu dla wskaźnika NO2": {
+            "type": "string"
+          },
+          "Data wykonania obliczeń indeksu dla wskaźnika O3": {
+            "type": "string"
+          },
+          "Data wykonania obliczeń indeksu dla wskaźnika PM10": {
+            "type": "string"
+          },
+          "Data wykonania obliczeń indeksu dla wskaźnika PM2.5": {
+            "type": "string"
+          },
+          "Data wykonania obliczeń indeksu dla wskaźnika SO2": {
+            "type": "string"
+          },
+          "Identyfikator stacji pomiarowej": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Kod zanieczyszczenia krytycznego": {
+            "type": "string",
+            "enum": [
+              "OZON",
+              "PYL"
+            ]
+          },
+          "Nazwa kategorii indeksu": {
+            "type": "string"
+          },
+          "Nazwa kategorii indeksu dla wskażnika NO2": {
+            "type": "string"
+          },
+          "Nazwa kategorii indeksu dla wskażnika O3": {
+            "type": "string"
+          },
+          "Nazwa kategorii indeksu dla wskażnika PM10": {
+            "type": "string"
+          },
+          "Nazwa kategorii indeksu dla wskażnika PM2.5": {
+            "type": "string"
+          },
+          "Nazwa kategorii indeksu dla wskażnika SO2": {
+            "type": "string"
+          },
+          "Status indeksu ogólnego dla stacji pomiarowej": {
+            "type": "boolean"
+          },
+          "Wartość indeksu": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Wartość indeksu dla wskaźnika NO2": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Wartość indeksu dla wskaźnika O3": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Wartość indeksu dla wskaźnika PM10": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Wartość indeksu dla wskaźnika PM2.5": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Wartość indeksu dla wskaźnika SO2": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "GiosStationDataDTO": {
+        "title": "GiosStationDataDTO",
+        "type": "object",
+        "properties": {
+          "Data": {
+            "type": "string"
+          },
+          "Kod stanowiska": {
+            "type": "string"
+          },
+          "Nazwa stacji": {
+            "type": "string"
+          },
+          "Wartość": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "GiosStationLd": {
+        "title": "GiosStationLd",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista stacji pomiarowych": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosStationLdDTO"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosStationLdDTO": {
+        "title": "GiosStationLdDTO",
+        "type": "object",
+        "properties": {
+          "Gmina": {
+            "type": "string"
+          },
+          "Identyfikator miasta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Identyfikator stacji": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Kod stacji": {
+            "type": "string"
+          },
+          "Nazwa miasta": {
+            "type": "string"
+          },
+          "Nazwa stacji": {
+            "type": "string"
+          },
+          "Powiat": {
+            "type": "string"
+          },
+          "Ulica": {
+            "type": "string"
+          },
+          "WGS84 λ E": {
+            "type": "string"
+          },
+          "WGS84 φ N": {
+            "type": "string"
+          },
+          "Województwo": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosStationMetaDataLdDTO": {
+        "title": "GiosStationMetaDataLdDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista metadanych stacji pomiarowych": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GiosStationMetadata"
+            }
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GiosStationMetadata": {
+        "title": "GiosStationMetadata",
+        "type": "object",
+        "properties": {
+          "Adres": {
+            "type": "string"
+          },
+          "Data uruchomienia": {
+            "type": "string"
+          },
+          "Data zamknięcia": {
+            "type": "string"
+          },
+          "Kod międzynarodowy": {
+            "type": "string"
+          },
+          "Kod stacji": {
+            "type": "string"
+          },
+          "Miejscowość": {
+            "type": "string"
+          },
+          "Nazwa stacji": {
+            "type": "string"
+          },
+          "Nr": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "Rodzaj stacji": {
+            "type": "string"
+          },
+          "Stary Kod stacji": {
+            "type": "string"
+          },
+          "Typ obszaru": {
+            "type": "string"
+          },
+          "Typ stacji": {
+            "type": "string"
+          },
+          "WGS84 λ E": {
+            "type": "string"
+          },
+          "WGS84 φ N": {
+            "type": "string"
+          },
+          "Województwo": {
+            "type": "string"
+          }
+        }
+      },
+      "GiosStatisticsLdDTO": {
+        "title": "GiosStatisticsLdDTO",
+        "type": "object",
+        "properties": {
+          "@context": {
+            "type": "object"
+          },
+          "Lista statystyk": {
+            "type": "object"
+          },
+          "links": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "meta": {
+            "type": "object"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    }
+  }
+}

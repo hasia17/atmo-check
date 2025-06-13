@@ -1,10 +1,9 @@
 package gios_data.rs.controller;
 
-import com.example.model.MeasurementDTO;
-import com.example.model.ParameterDTO;
-import com.example.model.StationDTO;
+import gios.data.model.MeasurementDTO;
+import gios.data.model.ParameterDTO;
+import gios.data.model.StationDTO;
 import gios_data.domain.model.Measurement;
-import gios_data.domain.model.Parameter;
 import gios_data.domain.model.Station;
 import gios_data.domain.repository.MeasurementRepository;
 import gios_data.domain.repository.StationRepository;

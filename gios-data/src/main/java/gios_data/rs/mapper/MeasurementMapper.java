@@ -1,6 +1,6 @@
 package gios_data.rs.mapper;
 
-import com.example.model.MeasurementDTO;
+import gios.data.model.MeasurementDTO;
 import gios_data.domain.model.Measurement;
 import org.mapstruct.Mapper;
 

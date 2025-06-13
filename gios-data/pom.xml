@@ -134,6 +134,7 @@
 						<goals>
 							<goal>generate</goal>
 						</goals>
+						<id>gios-data</id>
 						<configuration>
 							<!-- Ścieżka do specyfikacji Swagger/OpenAPI -->
 							<inputSpec>${project.basedir}/src/main/resources/openapi/gios-data.yaml</inputSpec>
@@ -142,9 +143,38 @@
 							<generatorName>spring</generatorName>
 
 							<!-- Pakiet dla wygenerowanych klas -->
-							<apiPackage>com.example.api</apiPackage>
-							<modelPackage>com.example.model</modelPackage>
-							<invokerPackage>com.example.invoker</invokerPackage>
+							<apiPackage>gios.data.api</apiPackage>
+							<modelPackage>gios.data.model</modelPackage>
+							<invokerPackage>gios.data.invoker</invokerPackage>
+
+							<!-- Konfiguracja Spring -->
+							<configOptions>
+								<interfaceOnly>true</interfaceOnly>
+								<delegatePattern>true</delegatePattern>
+								<dateLibrary>java8</dateLibrary>
+								<java8>true</java8>
+								<openApiNullable>false</openApiNullable>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
+							</configOptions>
+						</configuration>
+					</execution>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<id>gios-api</id>
+						<configuration>
+							<!-- Ścieżka do specyfikacji Swagger/OpenAPI -->
+							<inputSpec>${project.basedir}/src/main/resources/openapi/gios-api.yaml</inputSpec>
+
+							<!-- Generator Spring -->
+							<generatorName>spring</generatorName>
+
+							<!-- Pakiet dla wygenerowanych klas -->
+							<apiPackage>ext.gios.api.api</apiPackage>
+							<modelPackage>ext.gios.api.model</modelPackage>
+							<invokerPackage>ext.gios.api.invoker</invokerPackage>
 
 							<!-- Konfiguracja Spring -->
 							<configOptions>

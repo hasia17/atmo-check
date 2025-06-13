@@ -3,8 +3,6 @@ package gios_data.rs.client;
 import gios_data.domain.model.*;
 import gios_data.domain.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -24,7 +22,7 @@ public class GiosApiClient {
     private static final String SENSORS_ENDPOINT = "/station/sensors/";
     private static final String DATA_ENDPOINT = "/data/getData/";
     private static final int DATA_RETENTION_DAYS = 30; // Keep measurements for 30 days
-    private static final int MAX_MEASUREMENTS_PER_SENSOR = 10; // Limit measurements per sensor
+    private static final int MAX_MEASUREMENTS_PER_SENSOR = 1; // Limit measurements per sensor
     private final RestTemplate restTemplate;
     private final StationRepository stationRepository;
     private final MeasurementRepository measurementRepository;
@@ -32,19 +30,12 @@ public class GiosApiClient {
     @Autowired
     public GiosApiClient(
             RestTemplate restTemplate,
-            ObjectMapper objectMapper,
             StationRepository stationRepository,
             MeasurementRepository measurementRepository) {
         this.restTemplate = restTemplate;
         this.stationRepository = stationRepository;
         this.measurementRepository = measurementRepository;
     }
-
-//    @PostConstruct
-//    public void init() {
-//        updateStationsFromGios();
-//        updateMeasurementsFromGios();
-//    }
 
 
     @Scheduled(cron = "0 0 2 * * ?") // Daily at 2:00 AM
@@ -60,7 +51,7 @@ public class GiosApiClient {
 
             for (Station station : stations) {
                 try {
-                    // Fetch sensors for this station0
+                    // Fetch sensors for this station
                     List<Parameter> parameters = fetchParametersForStation(Integer.valueOf(station.getId()));
 
                     if (parameters.isEmpty()) {
@@ -81,8 +72,8 @@ public class GiosApiClient {
                         if (!parametersEqual(existing.getParameters(), parameters)) {
                             existing.setParameters(parameters);
                             existing.setName(station.getName());
-                            existing.setGegrLat(station.getGegrLat());
-                            existing.setGegrLon(station.getGegrLon());
+                            existing.setGeoLat(station.getGeoLat());
+                            existing.setGeoLon(station.getGeoLon());
                             existing.setLastUpdated(LocalDateTime.now());
 
                             stationRepository.save(existing);
@@ -126,8 +117,8 @@ public class GiosApiClient {
                     Station station = new Station();
                     station.setId(stationNode.path("id").asText());
                     station.setName(stationNode.path("stationName").asText());
-                    station.setGegrLat(stationNode.path("gegrLat").asDouble());
-                    station.setGegrLon(stationNode.path("gegrLon").asDouble());
+                    station.setGeoLat(stationNode.path("gegrLat").asDouble());
+                    station.setGeoLon(stationNode.path("gegrLon").asDouble());
 
                     stations.add(station);
 
