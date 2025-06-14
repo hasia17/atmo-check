@@ -1,5 +1,9 @@
 package gios_data.domain.model;
 
+
+import lombok.Getter;
+
+@Getter
 public class MeasurementContext {
     private final String stationId;
     private final String parameterId;
@@ -8,6 +12,4 @@ public class MeasurementContext {
         this.stationId = stationId;
         this.parameterId = parameterId;
     }
-    public String getStationId() { return stationId; }
-    public String getParameterId() { return parameterId; }
 }

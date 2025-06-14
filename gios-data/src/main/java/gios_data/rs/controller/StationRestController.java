@@ -15,12 +15,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -124,25 +123,25 @@ public class StationRestController {
     public ResponseEntity<List<MeasurementDTO>> getStationMeasurements(
             @PathVariable String stationId,
             @RequestParam(required = false) String parameterId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(required = false, defaultValue = "100") Integer limit
     ) {
         if (!stationRepository.existsById(stationId)) {
             return ResponseEntity.notFound().build();
         }
 
-        List<Measurement> measurements = measurementRepository.findAll().stream()
-                .filter(m -> m.getStationId().equals(stationId))
-                .filter(m -> parameterId == null || parameterId.equals(m.getParameterId()))
-                .filter(m -> from == null || !m.getTimestamp().isBefore(from))
-                .filter(m -> to == null || !m.getTimestamp().isAfter(to))
-                .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
-                .limit(limit)
+        List<Measurement> measurements;
+        Pageable pageable = PageRequest.of(0, limit);
+
+        if (parameterId != null && !parameterId.isEmpty()) {
+            measurements = measurementRepository.findByStationIdAndParameterIdOrderByTimestampDesc(stationId, parameterId, pageable);
+        } else {
+            measurements = measurementRepository.findByStationIdOrderByTimestampDesc(stationId, pageable);
+        }
+
+        List<MeasurementDTO> dtos = measurements.stream()
+                .map(measurementMapper::map)
                 .toList();
 
-        return ResponseEntity.ok(
-                measurements.stream().map(measurementMapper::map).collect(Collectors.toList())
-        );
+        return ResponseEntity.ok(dtos);
     }
 }

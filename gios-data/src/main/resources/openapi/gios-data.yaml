@@ -78,7 +78,7 @@ paths:
 
   /stations/{stationId}/measurements:
     get:
-      summary: Get measurement data for a station
+      summary: Get latest measurement data for a station (optionally filtered by parameter)
       operationId: getStationMeasurements
       tags:
         - measurements
@@ -93,18 +93,6 @@ paths:
           required: false
           schema:
             type: string
-        - name: from
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - name: to
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
         - name: limit
           in: query
           required: false
@@ -114,7 +102,7 @@ paths:
             maximum: 1000
       responses:
         '200':
-          description: Measurement data for station
+          description: Latest measurement data for station
           content:
             application/json:
               schema:
