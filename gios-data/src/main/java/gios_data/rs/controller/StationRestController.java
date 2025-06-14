@@ -105,7 +105,7 @@ public class StationRestController {
         return stationRepository.findById(stationId)
                 .map(station -> {
                     List<ParameterDTO> parameterDTOs = station.getParameters().stream()
-                            .map(parameterMapper::map)
+                            .map(parameterMapper::map) // To mapuje Model -> DTO
                             .collect(Collectors.toList());
                     return ResponseEntity.ok(parameterDTOs);
                 })

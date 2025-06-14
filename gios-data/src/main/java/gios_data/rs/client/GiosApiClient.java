@@ -1,8 +1,13 @@
 package gios_data.rs.client;
 
+import ext.gios.api.model.GiosDataDTOLd;
+import ext.gios.api.model.GiosSensorLdDTO;
+import ext.gios.api.model.GiosStationLdDTO;
 import gios_data.domain.model.*;
 import gios_data.domain.repository.*;
-import com.fasterxml.jackson.databind.JsonNode;
+import gios_data.rs.mapper.MeasurementMapper;
+import gios_data.rs.mapper.ParameterMapper;
+import gios_data.rs.mapper.StationMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -26,15 +31,21 @@ public class GiosApiClient {
     private final RestTemplate restTemplate;
     private final StationRepository stationRepository;
     private final MeasurementRepository measurementRepository;
+    private final StationMapper stationMapper;
+    private final ParameterMapper parameterMapper;
+    private final MeasurementMapper measurementMapper;
 
     @Autowired
     public GiosApiClient(
             RestTemplate restTemplate,
             StationRepository stationRepository,
-            MeasurementRepository measurementRepository) {
+            MeasurementRepository measurementRepository, StationMapper stationMapper, ParameterMapper parameterMapper, MeasurementMapper measurementMapper) {
         this.restTemplate = restTemplate;
         this.stationRepository = stationRepository;
         this.measurementRepository = measurementRepository;
+        this.stationMapper = stationMapper;
+        this.parameterMapper = parameterMapper;
+        this.measurementMapper = measurementMapper;
     }
 
 
@@ -51,8 +62,7 @@ public class GiosApiClient {
 
             for (Station station : stations) {
                 try {
-                    // Fetch sensors for this station
-                    List<Parameter> parameters = fetchParametersForStation(Integer.valueOf(station.getId()));
+                    List<Parameter> parameters = fetchParametersForStation(Long.valueOf(station.getId()));
 
                     if (parameters.isEmpty()) {
                         log.warn("No parameters found for station: {}", station.getName());
@@ -62,13 +72,11 @@ public class GiosApiClient {
                     station.setParameters(parameters);
                     station.setLastUpdated(LocalDateTime.now());
 
-                    // Check if station exists
                     Optional<Station> existingStation = stationRepository.findById(station.getId());
 
                     if (existingStation.isPresent()) {
                         Station existing = existingStation.get();
 
-                        // Check if parameters changed
                         if (!parametersEqual(existing.getParameters(), parameters)) {
                             existing.setParameters(parameters);
                             existing.setName(station.getName());
@@ -103,92 +111,32 @@ public class GiosApiClient {
     }
 
     public List<Station> fetchAllStations() {
-        log.debug("Fetching all stations from GIOS API");
-
         String url = BASE_URL + STATIONS_ENDPOINT;
-        JsonNode jsonResponse = restTemplate.getForObject(url, JsonNode.class);
-        List<Station> stations = new ArrayList<>();
+        GiosStationLdDTO[] giosDtos = restTemplate.getForObject(url, GiosStationLdDTO[].class);
 
-        if (jsonResponse != null && jsonResponse.isArray()) {
-            log.debug("Processing {} stations from API response", jsonResponse.size());
-
-            for (JsonNode stationNode : jsonResponse) {
-                try {
-                    Station station = new Station();
-                    station.setId(stationNode.path("id").asText());
-                    station.setName(stationNode.path("stationName").asText());
-                    station.setGeoLat(stationNode.path("gegrLat").asDouble());
-                    station.setGeoLon(stationNode.path("gegrLon").asDouble());
-
-                    stations.add(station);
-
-                } catch (Exception e) {
-                    log.error("Error parsing station data: {}", e.getMessage());
-                }
-            }
+        if (giosDtos != null) {
+            log.debug("Fetched {} stations from GIOS API", giosDtos.length);
+            return stationMapper.mapGiosList(Arrays.asList(giosDtos));
         } else {
-            log.warn("Invalid or empty response from GIOS stations API");
+            log.warn("No stations fetched from GIOS API");
+            return Collections.emptyList();
         }
-
-        log.debug("Successfully parsed {} stations", stations.size());
-        return stations;
     }
 
-    private List<Parameter> fetchParametersForStation(Integer stationId) {
+    private List<Parameter> fetchParametersForStation(Long stationId) {
         log.debug("Fetching parameters for station ID: {}", stationId);
 
         String url = BASE_URL + SENSORS_ENDPOINT + stationId;
-        List<Parameter> parameters = new ArrayList<>();
+        GiosSensorLdDTO[] sensors = restTemplate.getForObject(url, GiosSensorLdDTO[].class);
 
-        try {
-            JsonNode jsonResponse = restTemplate.getForObject(url, JsonNode.class);
-
-            if (jsonResponse != null && jsonResponse.isArray()) {
-                for (JsonNode sensorNode : jsonResponse) {
-                    try {
-                        Parameter parameter = new Parameter();
-                        parameter.setId(sensorNode.path("id").asText());
-
-                        JsonNode paramNode = sensorNode.path("param");
-                        parameter.setName(paramNode.path("paramName").asText());
-                        parameter.setDescription(paramNode.path("paramFormula").asText());
-                        parameter.setUnit(getUnitForParameterCode(paramNode.path("paramCode").asText()));
-
-                        parameters.add(parameter);
-
-                    } catch (Exception e) {
-                        log.error("Error parsing sensor data for station {}: {}", stationId, e.getMessage());
-                    }
-                }
-            }
-
+        if (sensors != null) {
+            List<Parameter> parameters = parameterMapper.map(Arrays.asList(sensors));
             log.debug("Found {} parameters for station {}", parameters.size(), stationId);
-
-        } catch (Exception e) {
-            log.error("Failed to fetch parameters for station {}: {}", stationId, e.getMessage());
+            return parameters;
+        } else {
+            log.warn("No parameters fetched for station {}", stationId);
+            return Collections.emptyList();
         }
-
-        return parameters;
-    }
-
-    private String getUnitForParameterCode(String paramCode) {
-        if (paramCode == null || paramCode.isEmpty()) {
-            return "";
-        }
-
-        return switch (paramCode.toUpperCase()) {
-            case "PM10", "PM2.5", "SO2", "NO2", "CO", "O3", "C6H6" -> "μg/m³";
-            case "TEMP", "TEMPERATURE" -> "°C";
-            case "HUMIDITY" -> "%";
-            case "PRESSURE" -> "hPa";
-            case "WIND_SPEED" -> "m/s";
-            case "WIND_DIRECTION" -> "°";
-            case "RAINFALL" -> "mm";
-            default -> {
-                log.debug("Unknown parameter code: {}", paramCode);
-                yield "";
-            }
-        };
     }
 
     private boolean parametersEqual(List<Parameter> existing, List<Parameter> updated) {
@@ -248,8 +196,8 @@ public class GiosApiClient {
                     stationsProcessed++;
 
                     log.info("Measurements updated for station {}", station.getName());
-                    // Small delay to avoid overwhelming the API
-//                    Thread.sleep(200);
+//                     Small delay to avoid overwhelming the API
+                    Thread.sleep(200);
 
                 } catch (Exception e) {
                     log.error("Error processing measurements for station {}: {}",
@@ -287,7 +235,7 @@ public class GiosApiClient {
                 }
 
                 // Small delay between parameters
-//                Thread.sleep(50);
+                Thread.sleep(50);
 
             } catch (Exception e) {
                 log.error("Error fetching measurements for station {} parameter {}: {}",
@@ -303,79 +251,38 @@ public class GiosApiClient {
         log.debug("Fetching measurements for station {} parameter {}", stationId, parameterId);
 
         String url = BASE_URL + DATA_ENDPOINT + parameterId;
-        List<Measurement> measurements = new ArrayList<>();
+        GiosDataDTOLd[] dtos = restTemplate.getForObject(url, GiosDataDTOLd[].class);
 
-        try {
-            JsonNode jsonResponse = restTemplate.getForObject(url, JsonNode.class);
-
-            if (jsonResponse != null) {
-                JsonNode valuesNode = jsonResponse.path("values");
-
-                if (valuesNode.isArray()) {
-                    LocalDateTime cutoffDate = LocalDateTime.now().minusDays(DATA_RETENTION_DAYS);
-                    int count = 0;
-
-                    for (JsonNode valueNode : valuesNode) {
-                        try {
-                            // Parse date
-                            String dateStr = valueNode.path("date").asText();
-                            LocalDateTime timestamp = parseGiosDate(dateStr);
-
-                            // Skip old measurements
-                            if (timestamp.isBefore(cutoffDate)) {
-                                continue;
-                            }
-
-                            // Parse value
-                            JsonNode valueField = valueNode.path("value");
-                            if (valueField.isNull() || valueField.asText().isEmpty()) {
-                                continue; // Skip null/empty values
-                            }
-
-                            Double value = valueField.asDouble();
-                            if (value.isNaN() || value.isInfinite()) {
-                                continue; // Skip invalid values
-                            }
-
-                            Measurement measurement = new Measurement();
-                            measurement.setStationId(stationId);
-                            measurement.setParameterId(parameterId);
-                            measurement.setValue(value);
-                            measurement.setTimestamp(timestamp);
-
-                            measurements.add(measurement);
-                            count++;
-
-                            // Limit measurements per parameter to avoid memory issues
-                            if (count >= MAX_MEASUREMENTS_PER_SENSOR) {
-                                log.debug("Reached max measurements limit for parameter {}", parameterId);
-                                break;
-                            }
-
-                        } catch (Exception e) {
-                            log.debug("Error parsing measurement value: {}", e.getMessage());
-                        }
-                    }
-
-                    log.debug("Fetched {} valid measurements for parameter {}", measurements.size(), parameterId);
-                }
-            }
-
-        } catch (Exception e) {
-            log.error("Failed to fetch measurements for parameter {}: {}", parameterId, e.getMessage());
+        if (dtos == null) {
+            log.warn("No measurements fetched for parameter {}", parameterId);
+            return Collections.emptyList();
         }
+
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(DATA_RETENTION_DAYS);
+        MeasurementContext context = new MeasurementContext(stationId, parameterId);
+
+        List<Measurement> measurements = Arrays.stream(dtos)
+                .filter(dto -> (dto.getData() != null)
+                        && (dto.getWartość() != null)
+                        && !dto.getWartość().isNaN()
+                        && !dto.getWartość().isInfinite()
+                        && isAfterCutoff(dto.getData(), cutoffDate)
+                )
+                .limit(MAX_MEASUREMENTS_PER_SENSOR)
+                .map(dto -> measurementMapper.map(dto, context))
+                .toList();
+
+        log.debug("Fetched {} valid measurements for parameter {}", measurements.size(), parameterId);
 
         return measurements;
     }
 
-    private LocalDateTime parseGiosDate(String dateStr) {
+    private boolean isAfterCutoff(String dateStr, LocalDateTime cutoff) {
         try {
-            // GIOS API uses format: "2025-06-07 14:00:00"
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            return LocalDateTime.parse(dateStr, formatter);
+            LocalDateTime ts = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            return ts.isAfter(cutoff);
         } catch (Exception e) {
-            log.error("Error parsing date: {}", dateStr);
-            throw new RuntimeException("Invalid date format: " + dateStr, e);
+            return false;
         }
     }
 
@@ -414,19 +321,5 @@ public class GiosApiClient {
         } catch (Exception e) {
             log.error("Error during old measurements cleanup", e);
         }
-    }
-
-    // Method to get latest measurement for station and parameter
-    public Optional<Measurement> getLatestMeasurement(String stationId, String parameterId) {
-        return measurementRepository
-                .findFirstByStationIdAndParameterIdOrderByTimestampDesc(stationId, parameterId);
-    }
-
-    // Method to get measurements for station in time range
-    public List<Measurement> getMeasurementsInRange(String stationId,
-                                                    LocalDateTime from,
-                                                    LocalDateTime to) {
-        return measurementRepository
-                .findByStationIdAndTimestampBetweenOrderByTimestampDesc(stationId, from, to);
     }
 }
