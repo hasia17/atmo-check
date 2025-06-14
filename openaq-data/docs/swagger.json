@@ -1,0 +1,250 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/stations": {
+            "get": {
+                "description": "Returns a list of all stations",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stations"
+                ],
+                "summary": "Get all stations",
+                "operationId": "getStations",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/internal.Station"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stations/{id}": {
+            "get": {
+                "description": "Returns a station by its ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stations"
+                ],
+                "summary": "Get station by ID",
+                "operationId": "getStationById",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Station ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "$ref": "#/definitions/internal.Station"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stations/{id}/measurements": {
+            "get": {
+                "description": "Returns the latest measurement for each parameter at a specific station",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "measurements"
+                ],
+                "summary": "Get latest measurements by station",
+                "operationId": "getMeasurementsByStation",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Station ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/internal.Measurement"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/stations/{id}/parameters": {
+            "get": {
+                "description": "Returns parameters for a specific station",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "parameters"
+                ],
+                "summary": "Get parameters by station",
+                "operationId": "getParametersByStation",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Station ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/internal.Parameter"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "internal.Coordinates": {
+            "type": "object",
+            "properties": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal.Country": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal.Measurement": {
+            "type": "object",
+            "properties": {
+                "coordinates": {
+                    "$ref": "#/definitions/internal.Coordinates"
+                },
+                "datetime": {
+                    "$ref": "#/definitions/internal.MeasurementDateTime"
+                },
+                "sensorId": {
+                    "type": "integer"
+                },
+                "stationId": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "internal.MeasurementDateTime": {
+            "type": "object",
+            "properties": {
+                "local": {
+                    "type": "string"
+                },
+                "utc": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal.Parameter": {
+            "type": "object",
+            "properties": {
+                "displayName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "units": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal.Station": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "$ref": "#/definitions/internal.Country"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "locality": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal.Parameter"
+                    }
+                },
+                "timezone": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

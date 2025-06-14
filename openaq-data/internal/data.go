@@ -133,7 +133,7 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 	}
 
 	for _, apiLoc := range data.Results {
-		location := Location{
+		station := Station{
 			ID:       apiLoc.Id,
 			Name:     apiLoc.Name,
 			Locality: apiLoc.Locality,
@@ -143,23 +143,66 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 				Code: apiLoc.Country.Code,
 				Name: apiLoc.Country.Name,
 			},
-			Sensors: []Sensor{},
+			Parameters: []Parameter{},
 		}
 		for _, apiSensor := range apiLoc.Sensors {
-			sensor := Sensor{
-				ID:   apiSensor.Id,
-				Name: apiSensor.Name,
-				Parameter: Parameter{
-					ID:          apiSensor.Parameter.Id,
-					Name:        apiSensor.Parameter.Name,
-					Units:       apiSensor.Parameter.Units,
-					DisplayName: apiSensor.Parameter.DisplayName,
-				},
+			parameter := Parameter{
+				ID:          apiSensor.Parameter.Id,
+				Name:        apiSensor.Parameter.Name,
+				Units:       apiSensor.Parameter.Units,
+				DisplayName: apiSensor.Parameter.DisplayName,
 			}
-			location.Sensors = append(location.Sensors, sensor)
+			station.Parameters = append(station.Parameters, parameter)
 		}
-		if err := s.store.StoreLocation(ctx, location); err != nil {
-			s.logger.Error("Failed to store location", slog.String("location", location.Name), slog.Any("error", err))
+		if err := s.store.StoreStation(ctx, station); err != nil {
+			s.logger.Error("Failed to store location", slog.String("location", station.Name), slog.Any("error", err))
+		}
+	}
+	return nil
+}
+
+func (s *DataService) FetchStations(ctx context.Context) error {
+	s.logger.Info("Fetching stations from OpenAQ API...")
+	var data openAQLocationResponse
+	resp, err := s.client.R().
+		SetQueryParams(map[string]string{
+			"iso":   "PL",
+			"limit": "1000",
+		}).
+		SetResult(&data).
+		Get("locations")
+
+	if err != nil {
+		return fmt.Errorf("failed to fetch stations: %w", err)
+	}
+	if resp.IsError() {
+		return fmt.Errorf("API error: %s", resp.Status())
+	}
+
+	for _, apiStation := range data.Results {
+		station := Station{
+			ID:       apiStation.Id,
+			Name:     apiStation.Name,
+			Locality: apiStation.Locality,
+			Timezone: apiStation.Timezone,
+			Country: Country{
+				ID:   apiStation.Country.Id,
+				Code: apiStation.Country.Code,
+				Name: apiStation.Country.Name,
+			},
+			Parameters: []Parameter{},
+		}
+		for _, apiSensor := range apiStation.Sensors {
+			parameter := Parameter{
+				ID:          apiSensor.Parameter.Id,
+				Name:        apiSensor.Parameter.Name,
+				Units:       apiSensor.Parameter.Units,
+				DisplayName: apiSensor.Parameter.DisplayName,
+			}
+			station.Parameters = append(station.Parameters, parameter)
+		}
+		if err := s.store.StoreStation(ctx, station); err != nil {
+			s.logger.Error("Failed to store station", slog.String("station", station.Name), slog.Any("error", err))
 		}
 	}
 	return nil
@@ -167,27 +210,27 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 
 func (s *DataService) FetchMeasurements(ctx context.Context) error {
 	s.logger.Info("Fetching measurements from OpenAQ API...")
-	locations, err := s.store.GetLocations(ctx)
+	stations, err := s.store.GetStations(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch locations from store: %w", err)
+		return fmt.Errorf("failed to fetch stations from store: %w", err)
 	}
 
-	for _, loc := range locations {
-		for _, sensor := range loc.Sensors {
+	for _, st := range stations {
+		for _, parameter := range st.Parameters {
 			var apiData openAQMeasurementResponse
 			resp, err := s.client.R().
 				SetQueryParams(map[string]string{
-					"parameter_id": fmt.Sprintf("%d", sensor.Parameter.ID),
+					"parameter_id": fmt.Sprintf("%d", parameter.ID),
 				}).
 				SetResult(&apiData).
-				Get(fmt.Sprintf("locations/%d/latest", loc.ID))
+				Get(fmt.Sprintf("locations/%d/latest", st.ID))
 
 			if err != nil {
-				log.Printf("Failed to fetch measurements for location %s, sensor %s: %v", loc.Name, sensor.Name, err)
+				log.Printf("Failed to fetch measurements for station %s, parameter %s: %v", st.Name, parameter.Name, err)
 				continue
 			}
 			if resp.IsError() {
-				log.Printf("API error for location %s, sensor %s: %s", loc.Name, sensor.Name, resp.Status())
+				log.Printf("API error for station %s, parameter %s: %s", st.Name, parameter.Name, resp.Status())
 				continue
 			}
 
@@ -211,13 +254,13 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 						Latitude:  m.Coordinates.Latitude,
 						Longitude: m.Coordinates.Longitude,
 					},
-					SensorID:   sensor.ID,
-					LocationID: loc.ID,
+					SensorID:  parameter.ID,
+					StationID: st.ID,
 				}
 				if err := s.store.StoreMeasurement(ctx, measurement); err != nil {
 					s.logger.Error("Failed to store measurement",
-						slog.String("location", loc.Name),
-						slog.String("sensor", sensor.Name),
+						slog.String("station", st.Name),
+						slog.String("parameter", parameter.Name),
 						slog.Any("measurement", measurement),
 						slog.Any("error", err))
 				}
@@ -228,9 +271,100 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 	return nil
 }
 
+func (s *DataService) SaveStation(ctx context.Context, station Station) error {
+	s.logger.Info("Saving station", slog.String("station", station.Name))
+	err := s.store.StoreStation(ctx, station)
+	if err != nil {
+		s.logger.Error("Failed to save station", slog.String("station", station.Name), slog.Any("error", err))
+	}
+	return err
+}
+
+func (s *DataService) SaveMeasurements(ctx context.Context, measurements []Measurement) error {
+	for _, m := range measurements {
+		s.logger.Info("Saving measurement", slog.Any("measurement", m))
+		if err := s.store.StoreMeasurement(ctx, m); err != nil {
+			s.logger.Error("Failed to save measurement", slog.Any("measurement", m), slog.Any("error", err))
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *DataService) Close() error {
 	if s.store != nil {
 		return s.store.Close()
 	}
 	return nil
+}
+
+func (s *DataService) GetStations(ctx context.Context) ([]Station, error) {
+	s.logger.Info("Getting all stations")
+	stations, err := s.store.GetStations(ctx)
+	if err != nil {
+		s.logger.Error("Failed to get stations", slog.Any("error", err))
+		return nil, err
+	}
+	s.logger.Info("Stations fetched", slog.Int("count", len(stations)))
+	return stations, nil
+}
+
+func (s *DataService) GetStationByID(ctx context.Context, id int32) (*Station, error) {
+	s.logger.Info("Getting station by ID", slog.Int("stationId", int(id)))
+	station, err := s.store.GetStationByID(ctx, id)
+	if err != nil {
+		s.logger.Error("Failed to get station by ID", slog.Int("stationId", int(id)), slog.Any("error", err))
+		return nil, err
+	}
+	if station == nil {
+		s.logger.Info("Station not found", slog.Int("stationId", int(id)))
+	} else {
+		s.logger.Info("Station fetched", slog.Int("stationId", int(id)))
+	}
+	return station, nil
+}
+
+func (s *DataService) GetMeasurementsByStation(ctx context.Context, stationID int32, limit int64) ([]Measurement, error) {
+	s.logger.Info("Getting measurements for station", slog.Int("stationId", int(stationID)), slog.Int64("limit", limit))
+	measurements, err := s.store.GetMeasurementsByStation(ctx, stationID, limit)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get measurements for station",
+			slog.Int("stationId", int(stationID)),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+	s.logger.Info("Measurements fetched", slog.Int("stationId", int(stationID)), slog.Int("count", len(measurements)))
+	return measurements, nil
+}
+
+func (s *DataService) GetParametersByStationID(ctx context.Context, id int32) ([]Parameter, error) {
+	s.logger.Info("Getting parameters for station", slog.Int("stationId", int(id)))
+	parameters, err := s.store.GetParametersByStationID(ctx, id)
+	if err != nil {
+		s.logger.Error("Failed to get parameters for station", slog.Int("stationId", int(id)), slog.Any("error", err))
+		return nil, err
+	}
+	if parameters == nil {
+		s.logger.Info("No parameters found for station", slog.Int("stationId", int(id)))
+	} else {
+		s.logger.Info("Parameters fetched for station", slog.Int("stationId", int(id)), slog.Int("count", len(parameters)))
+	}
+	return parameters, nil
+}
+
+func (s *DataService) GetLatestMeasurementsByStation(ctx context.Context, stationID int32) ([]Measurement, error) {
+	s.logger.Info("Getting latest measurements for station", slog.Int("stationId", int(stationID)))
+	measurements, err := s.store.GetLatestMeasurementsByStation(ctx, stationID)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get latest measurements for station",
+			slog.Int("stationId", int(stationID)),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+	s.logger.Info("Latest measurements fetched", slog.Int("stationId", int(stationID)), slog.Int("count", len(measurements)))
+	return measurements, nil
 }

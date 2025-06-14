@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"log/slog"
 	"strconv"
 
 	"github.com/gofiber/fiber/v3"
@@ -9,78 +8,108 @@ import (
 
 type DataHandler struct {
 	service *DataService
-	logger  *slog.Logger
 }
 
-func NewDataHandler(service *DataService, l *slog.Logger) *DataHandler {
+func NewDataHandler(service *DataService) *DataHandler {
 	return &DataHandler{
 		service: service,
-		logger:  l,
 	}
 }
 
-func (h *DataHandler) HandleGetLocations(c fiber.Ctx) error {
-	h.logger.Info("Fetching locations")
-	locations, err := h.service.store.GetLocations(c.Context())
+// HandleGetStations returns a list of all stations
+// @ID getStations
+// @Summary Get all stations
+// @Description Returns a list of all stations
+// @Tags stations
+// @Produce json
+// @Success 200 {object} map[string][]Station
+// @Router /stations [get]
+func (h *DataHandler) HandleGetStations(c fiber.Ctx) error {
+	stations, err := h.service.GetStations(c.Context())
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch locations")
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch stations")
 	}
 
-	h.logger.Info("Locations fetched successfully", slog.Int("count", len(locations)))
 	return c.JSON(fiber.Map{
-		"data": locations,
+		"data": stations,
 	})
 }
 
-func (h *DataHandler) HandleGetMeasurementsByLocation(c fiber.Ctx) error {
-	h.logger.Info("Fetching measurements for location", slog.String("locationId", c.Params("id")))
-
-	locationIdStr := c.Params("id")
-	locationId, err := strconv.Atoi(locationIdStr)
+// HandleGetStationByID returns a station by its ID
+// @ID getStationById
+// @Summary Get station by ID
+// @Description Returns a station by its ID
+// @Tags stations
+// @Produce json
+// @Param id path int true "Station ID"
+// @Success 200 {object} map[string]Station
+// @Failure 404 {object} map[string]string
+// @Router /stations/{id} [get]
+func (h *DataHandler) HandleGetStationByID(c fiber.Ctx) error {
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid location ID")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
 	}
-
-	limitStr := c.Query("limit", "100")
-	limit, err := strconv.Atoi(limitStr)
+	station, err := h.service.GetStationByID(c.Context(), int32(id))
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid limit parameter")
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch station")
 	}
-	if limit < 1 {
-		limit = 100
+	if station == nil {
+		return fiber.NewError(fiber.StatusNotFound, "Station not found")
 	}
 
-	measurements, err := h.service.store.GetMeasurementsByLocation(c.Context(), int32(locationId), int64(limit))
+	return c.JSON(fiber.Map{"data": station})
+}
+
+// HandleGetMeasurementsByStation returns latest measurements for a station
+// @ID getMeasurementsByStation
+// @Summary Get latest measurements by station
+// @Description Returns the latest measurement for each parameter at a specific station
+// @Tags measurements
+// @Produce json
+// @Param id path int true "Station ID"
+// @Success 200 {object} map[string][]Measurement
+// @Router /stations/{id}/measurements [get]
+func (h *DataHandler) HandleGetLatestMeasurementsByStation(c fiber.Ctx) error {
+	stationIdStr := c.Params("id")
+	stationId, err := strconv.Atoi(stationIdStr)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
+	}
+
+	measurements, err := h.service.GetLatestMeasurementsByStation(c.Context(), int32(stationId))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch measurements")
 	}
 
-	h.logger.Info(
-		"Measurements fetched successfully",
-		slog.Int("locationId", locationId),
-		slog.Int("count", len(measurements)),
-	)
 	return c.JSON(fiber.Map{
 		"data": measurements,
 	})
 }
 
-func (h *DataHandler) HandleGetLocationByID(c fiber.Ctx) error {
-	h.logger.Info("Fetching location by ID", slog.String("locationId", c.Params("id")))
-
+// HandleGetParametersByStation returns parameters for a station
+// @ID getParametersByStation
+// @Summary Get parameters by station
+// @Description Returns parameters for a specific station
+// @Tags parameters
+// @Produce json
+// @Param id path int true "Station ID"
+// @Success 200 {object} map[string][]Parameter
+// @Router /stations/{id}/parameters [get]
+func (h *DataHandler) HandleGetParametersByStation(c fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid location ID")
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
 	}
-	location, err := h.service.store.GetLocationByID(c.Context(), int32(id))
+	parameters, err := h.service.GetParametersByStationID(c.Context(), int32(id))
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch location")
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch parameters")
 	}
-	if location == nil {
-		return fiber.NewError(fiber.StatusNotFound, "Location not found")
+	if parameters == nil {
+		return fiber.NewError(fiber.StatusNotFound, "Station not found")
 	}
 
-	h.logger.Info("Location fetched successfully", slog.Int("locationId", int(location.ID)))
-	return c.JSON(fiber.Map{"data": location})
+	return c.JSON(fiber.Map{"data": parameters})
 }

@@ -46,11 +46,12 @@ func main() {
 		}
 	}()
 
-	h := internal.NewDataHandler(s, l)
+	h := internal.NewDataHandler(s)
 	app := fiber.New()
-	app.Get("/locations", h.HandleGetLocations)
-	app.Get("/locations/:id", h.HandleGetLocationByID)
-	app.Get("/locations/:id/measurements", h.HandleGetMeasurementsByLocation)
+	app.Get("/stations", h.HandleGetStations)
+	app.Get("/stations/:id", h.HandleGetStationByID)
+	app.Get("/stations/:id/measurements/latest", h.HandleGetLatestMeasurementsByStation)
+	app.Get("/stations/:id/parameters", h.HandleGetParametersByStation)
 
 	go func() {
 		if err := app.Listen(":3000"); err != nil {

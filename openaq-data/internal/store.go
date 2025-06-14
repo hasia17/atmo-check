@@ -11,9 +11,9 @@ import (
 )
 
 type Store struct {
-	mongoClient   *mongo.Client
-	locationsColl *mongo.Collection
-	measuresColl  *mongo.Collection
+	mongoClient  *mongo.Client
+	stationsColl *mongo.Collection
+	measuresColl *mongo.Collection
 }
 
 func NewStore(mongoURI string) (*Store, error) {
@@ -29,40 +29,64 @@ func NewStore(mongoURI string) (*Store, error) {
 	}
 
 	db := mongoClient.Database("atmo-check")
-	locationsColl := db.Collection("locations")
+	stationsColl := db.Collection("stations")
 	measuresColl := db.Collection("measurements")
 
 	return &Store{
-		mongoClient:   mongoClient,
-		locationsColl: locationsColl,
-		measuresColl:  measuresColl,
+		mongoClient:  mongoClient,
+		stationsColl: stationsColl,
+		measuresColl: measuresColl,
 	}, nil
 }
 
-func (s *Store) StoreLocation(ctx context.Context, location Location) error {
-	_, err := s.locationsColl.UpdateOne(ctx,
-		bson.M{"_id": location.ID},
-		bson.M{"$set": location},
+func (s *Store) StoreStation(ctx context.Context, station Station) error {
+	_, err := s.stationsColl.UpdateOne(ctx,
+		bson.M{"_id": station.ID},
+		bson.M{"$set": station},
 		options.UpdateOne().SetUpsert(true),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to store location: %w", err)
+		return fmt.Errorf("failed to store station: %w", err)
 	}
 	return nil
 }
 
-func (s *Store) GetLocations(ctx context.Context) ([]Location, error) {
-	cursor, err := s.locationsColl.Find(ctx, bson.M{})
+func (s *Store) GetStations(ctx context.Context) ([]Station, error) {
+	cursor, err := s.stationsColl.Find(ctx, bson.M{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch locations: %w", err)
+		return nil, fmt.Errorf("failed to fetch stations: %w", err)
 	}
 	defer cursor.Close(ctx)
 
-	var locations []Location
-	if err := cursor.All(ctx, &locations); err != nil {
-		return nil, fmt.Errorf("failed to decode locations: %w", err)
+	var stations []Station
+	if err := cursor.All(ctx, &stations); err != nil {
+		return nil, fmt.Errorf("failed to decode stations: %w", err)
 	}
-	return locations, nil
+	return stations, nil
+}
+
+func (s *Store) GetStationByID(ctx context.Context, id int32) (*Station, error) {
+	var station Station
+	err := s.stationsColl.FindOne(ctx, bson.M{"_id": id}).Decode(&station)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch station by id: %w", err)
+	}
+	return &station, nil
+}
+
+func (s *Store) GetParametersByStationID(ctx context.Context, id int32) ([]Parameter, error) {
+	var station Station
+	err := s.stationsColl.FindOne(ctx, bson.M{"_id": id}).Decode(&station)
+	if err == mongo.ErrNoDocuments {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch station for parameters: %w", err)
+	}
+	return station.Parameters, nil
 }
 
 func (s *Store) StoreMeasurement(ctx context.Context, m Measurement) error {
@@ -70,8 +94,8 @@ func (s *Store) StoreMeasurement(ctx context.Context, m Measurement) error {
 	return err
 }
 
-func (s *Store) GetMeasurementsByLocation(ctx context.Context, locationID int32, limit int64) ([]Measurement, error) {
-	filter := bson.M{"locationId": locationID}
+func (s *Store) GetMeasurementsByStation(ctx context.Context, stationID int32, limit int64) ([]Measurement, error) {
+	filter := bson.M{"stationId": stationID}
 	opts := options.Find().SetSort(
 		bson.D{{
 			Key:   "timestamp",
@@ -94,16 +118,33 @@ func (s *Store) GetMeasurementsByLocation(ctx context.Context, locationID int32,
 	return measurements, nil
 }
 
-func (s *Store) GetLocationByID(ctx context.Context, id int32) (*Location, error) {
-	var location Location
-	err := s.locationsColl.FindOne(ctx, bson.M{"_id": id}).Decode(&location)
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
+func (s *Store) GetLatestMeasurementsByStation(ctx context.Context, stationID int32) ([]Measurement, error) {
+	filter := bson.M{"stationId": stationID}
+	opts := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
+	cursor, err := s.measuresColl.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch location by id: %w", err)
+		return nil, err
 	}
-	return &location, nil
+	defer cursor.Close(ctx)
+
+	latest := make(map[int32]Measurement) // parameterID -> Measurement
+	for cursor.Next(ctx) {
+		var m Measurement
+		if err := cursor.Decode(&m); err != nil {
+			return nil, err
+		}
+		if _, exists := latest[m.SensorID]; !exists {
+			latest[m.SensorID] = m
+		}
+	}
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+	result := make([]Measurement, 0, len(latest))
+	for _, m := range latest {
+		result = append(result, m)
+	}
+	return result, nil
 }
 
 func (s *Store) Close() error {
