@@ -86,14 +86,21 @@ func NewDataService(apiKey, mongoURI string, l *slog.Logger) (*DataService, erro
 
 func (s *DataService) Run(ctx context.Context) error {
 	s.logger.Info("Starting DataService...")
-	if err := s.FetchLocations(ctx); err != nil {
-		return fmt.Errorf("initial locations fetch failed: %w", err)
-	}
 
-	if err := s.FetchMeasurements(ctx); err != nil {
-		log.Printf("Failed to fetch measurements: %v", err)
+	hasData, err := s.store.HasStations(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to check for existing data: %w", err)
+	}
+	if !hasData {
+		s.logger.Info("No data found in DB. Running initial fetch...")
+		if err := s.FetchLocations(ctx); err != nil {
+			s.logger.Error("Initial locations fetch failed", slog.Any("error", err))
+		}
+		if err := s.FetchMeasurements(ctx); err != nil {
+			s.logger.Error("Initial measurements fetch failed", slog.Any("error", err))
+		}
 	} else {
-		log.Printf("Measurements updated at %s", time.Now().Format(time.RFC3339))
+		s.logger.Info("Data found in DB. Skipping initial fetch.")
 	}
 
 	ticker := time.NewTicker(1 * time.Hour)
@@ -158,53 +165,7 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 			s.logger.Error("Failed to store location", slog.String("location", station.Name), slog.Any("error", err))
 		}
 	}
-	return nil
-}
-
-func (s *DataService) FetchStations(ctx context.Context) error {
-	s.logger.Info("Fetching stations from OpenAQ API...")
-	var data openAQLocationResponse
-	resp, err := s.client.R().
-		SetQueryParams(map[string]string{
-			"iso":   "PL",
-			"limit": "1000",
-		}).
-		SetResult(&data).
-		Get("locations")
-
-	if err != nil {
-		return fmt.Errorf("failed to fetch stations: %w", err)
-	}
-	if resp.IsError() {
-		return fmt.Errorf("API error: %s", resp.Status())
-	}
-
-	for _, apiStation := range data.Results {
-		station := Station{
-			ID:       apiStation.Id,
-			Name:     apiStation.Name,
-			Locality: apiStation.Locality,
-			Timezone: apiStation.Timezone,
-			Country: Country{
-				ID:   apiStation.Country.Id,
-				Code: apiStation.Country.Code,
-				Name: apiStation.Country.Name,
-			},
-			Parameters: []Parameter{},
-		}
-		for _, apiSensor := range apiStation.Sensors {
-			parameter := Parameter{
-				ID:          apiSensor.Parameter.Id,
-				Name:        apiSensor.Parameter.Name,
-				Units:       apiSensor.Parameter.Units,
-				DisplayName: apiSensor.Parameter.DisplayName,
-			}
-			station.Parameters = append(station.Parameters, parameter)
-		}
-		if err := s.store.StoreStation(ctx, station); err != nil {
-			s.logger.Error("Failed to store station", slog.String("station", station.Name), slog.Any("error", err))
-		}
-	}
+	s.logger.Info("Locations fetched and stored successfully", slog.Int("count", len(data.Results)))
 	return nil
 }
 
@@ -213,6 +174,10 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 	stations, err := s.store.GetStations(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch stations from store: %w", err)
+	}
+	if len(stations) == 0 {
+		s.logger.Info("No stations found in store, skipping measurements fetch")
+		return nil
 	}
 
 	for _, st := range stations {
