@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface MeasurementMapper {
@@ -22,7 +23,7 @@ public interface MeasurementMapper {
     @Mapping(target = "value", source = "wartość")
     Measurement map(GiosDataDTOLd dto, @Context MeasurementContext context);
 
-    MeasurementDTO map(Measurement dto);
+    List<MeasurementDTO> map(List<Measurement> dto);
 
     @Named("mapToLocalDateTime")
     default LocalDateTime mapToLocalDateTime(String data) {

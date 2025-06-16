@@ -6,7 +6,7 @@ import gios.data.model.StationDTO;
 import gios_data.domain.model.Measurement;
 import gios_data.domain.model.Station;
 import gios_data.domain.repository.MeasurementRepository;
-import gios_data.domain.repository.StationRepository;
+import gios_data.domain.repository.station.StationRepository;
 import gios_data.rs.mapper.MeasurementMapper;
 import gios_data.rs.mapper.ParameterMapper;
 import gios_data.rs.mapper.StationMapper;
@@ -17,12 +17,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -47,27 +48,28 @@ public class StationRestController {
 
     @GetMapping("/stations")
     @Operation(
-            summary = "Get list with all stations",
-            operationId = "getAllStations"
+            summary = "Get list with stations",
+            operationId = "getStations"
     )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "All station list or filtered stations"
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Bad request - invalid parameters"
-            )
+            @ApiResponse(responseCode = "200", description = "All station list or filtered stations"),
+            @ApiResponse(responseCode = "400", description = "Bad request - invalid parameters"),
+            @ApiResponse(responseCode = "500", description = "Server error")
     })
-    public ResponseEntity<List<StationDTO>> getAllStations(
+    public ResponseEntity<List<StationDTO>> getStations(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String province,
             @RequestParam(required = false) Double lat,
             @RequestParam(required = false) Double lon,
             @RequestParam(required = false, defaultValue = "10") Double radius) {
 
-        return ResponseEntity.ok(stationMapper.map(stationRepository.findAll()));
+        try {
+            return ResponseEntity.ok(stationMapper.map(stationRepository.searchByCriteria(city, province, lat, lon, radius)));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 
     @GetMapping("/stations/{stationId}")
@@ -76,19 +78,17 @@ public class StationRestController {
             operationId = "getStationById"
     )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Station details"
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Station not found"
-            )
+            @ApiResponse(responseCode = "200", description = "Station details"),
+            @ApiResponse(responseCode = "404", description = "Station not found"),
+            @ApiResponse(responseCode = "500", description = "Server error")
     })
     public ResponseEntity<StationDTO> getStationById(@PathVariable String stationId) {
-
-        Optional<Station> station = stationRepository.findById(stationId);
-        return station.map(value -> ResponseEntity.ok(stationMapper.map(value))).orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            Optional<Station> station = stationRepository.findById(stationId);
+            return station.map(value -> ResponseEntity.ok(stationMapper.map(value))).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error", e);
+        }
     }
 
     @GetMapping("/stations/{stationId}/parameters")
@@ -98,18 +98,19 @@ public class StationRestController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of parameters for the station"),
-            @ApiResponse(responseCode = "404", description = "Station not found")
+            @ApiResponse(responseCode = "404", description = "Station not found"),
+            @ApiResponse(responseCode = "500", description = "Server error")
     })
     public ResponseEntity<List<ParameterDTO>> getParametersForStation(@PathVariable String stationId) {
-        return stationRepository.findById(stationId)
-                .map(station -> {
-                    List<ParameterDTO> parameterDTOs = station.getParameters().stream()
-                            .map(parameterMapper::map) // To mapuje Model -> DTO
-                            .collect(Collectors.toList());
-                    return ResponseEntity.ok(parameterDTOs);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        try {
+            return stationRepository.findById(stationId)
+                    .map(station -> ResponseEntity.ok(parameterMapper.mapDtos(station.getParameters())))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error", e);
+        }
     }
+
 
     @GetMapping("/stations/{stationId}/measurements")
     @Operation(
@@ -118,30 +119,31 @@ public class StationRestController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Measurement data for station"),
-            @ApiResponse(responseCode = "404", description = "Station or measurements not found")
+            @ApiResponse(responseCode = "404", description = "Station or measurements not found"),
+            @ApiResponse(responseCode = "500", description = "Server error")
     })
     public ResponseEntity<List<MeasurementDTO>> getStationMeasurements(
             @PathVariable String stationId,
             @RequestParam(required = false) String parameterId,
             @RequestParam(required = false, defaultValue = "100") Integer limit
     ) {
-        if (!stationRepository.existsById(stationId)) {
-            return ResponseEntity.notFound().build();
+        try {
+            if (!stationRepository.existsById(stationId)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            List<Measurement> measurements;
+            Pageable pageable = PageRequest.of(0, limit);
+
+            if (parameterId != null && !parameterId.isEmpty()) {
+                measurements = measurementRepository.findByStationIdAndParameterIdOrderByTimestampDesc(stationId, parameterId, pageable);
+            } else {
+                measurements = measurementRepository.findByStationIdOrderByTimestampDesc(stationId, pageable);
+            }
+
+            return ResponseEntity.ok(measurementMapper.map(measurements));
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Server error", e);
         }
-
-        List<Measurement> measurements;
-        Pageable pageable = PageRequest.of(0, limit);
-
-        if (parameterId != null && !parameterId.isEmpty()) {
-            measurements = measurementRepository.findByStationIdAndParameterIdOrderByTimestampDesc(stationId, parameterId, pageable);
-        } else {
-            measurements = measurementRepository.findByStationIdOrderByTimestampDesc(stationId, pageable);
-        }
-
-        List<MeasurementDTO> dtos = measurements.stream()
-                .map(measurementMapper::map)
-                .toList();
-
-        return ResponseEntity.ok(dtos);
     }
 }

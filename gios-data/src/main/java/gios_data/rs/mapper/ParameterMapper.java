@@ -19,7 +19,7 @@ public interface ParameterMapper {
 
     List<Parameter> map(List<GiosSensorLdDTO> dtos);
 
-    ParameterDTO map(Parameter dto);
+    List<ParameterDTO> mapDtos(List<Parameter> dtos);
 
     @AfterMapping
     default void setUnit(GiosSensorLdDTO dto, @MappingTarget Parameter parameter) {
