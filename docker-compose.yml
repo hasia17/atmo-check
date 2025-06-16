@@ -60,9 +60,30 @@ services:
       - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
       - "traefik.docker.network=traefik-network"
 
+  openaq-data:
+    build:
+      context: ./openaq-data
+      dockerfile: Dockerfile
+    container_name: openaq-data-app
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - OPENAQ_API_KEY=${OPENAQ_API_KEY}
+    depends_on:
+      - mongodb
+    networks:
+      - traefik-network
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.openaq-data.rule=Host(`openaq-data.localhost`)"
+      - "traefik.http.routers.openaq-data.entrypoints=web"
+      - "traefik.http.services.openaq-data.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik-network"
+
 networks:
   traefik-network:
-    external: true
+    driver: bridge
   app-network:
     driver: bridge
 

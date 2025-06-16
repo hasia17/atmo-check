@@ -38,7 +38,7 @@ func Clean() error {
 func DropDB() error {
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
-		uri = "mongodb://localhost:27017"
+		uri = "mongodb://localhost:27018"
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

@@ -28,7 +28,7 @@ func NewStore(mongoURI string) (*Store, error) {
 		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
-	db := mongoClient.Database("atmo-check")
+	db := mongoClient.Database("openaq")
 	stationsColl := db.Collection("stations")
 	measuresColl := db.Collection("measurements")
 
@@ -145,6 +145,14 @@ func (s *Store) GetLatestMeasurementsByStation(ctx context.Context, stationID in
 		result = append(result, m)
 	}
 	return result, nil
+}
+
+func (s *Store) HasStations(ctx context.Context) (bool, error) {
+	count, err := s.stationsColl.CountDocuments(ctx, bson.M{})
+	if err != nil {
+		return false, fmt.Errorf("failed to count stations: %w", err)
+	}
+	return count > 0, nil
 }
 
 func (s *Store) Close() error {
