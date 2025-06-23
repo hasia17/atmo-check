@@ -1,0 +1,199 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Gios-data API
+  description: API to manage air data from gios
+servers:
+  - url: http://localhost:8081/gios-data/
+paths:
+  /stations:
+    get:
+      summary: Get list with all stations
+      operationId: getAllStations
+      tags:
+        - stations
+      responses:
+        '200':
+          description: All station list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StationDTO"
+
+  /stations/{stationId}:
+    get:
+      summary: Get station by ID
+      operationId: getStationById
+      tags:
+        - stations
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Station details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StationDTO"
+        '404':
+          description: Station not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stations/{stationId}/parameters:
+    get:
+      summary: Get parameters for a station
+      operationId: getStationParameters
+      tags:
+        - parameters
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of parameters for the station
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ParameterDTO"
+        '404':
+          description: Station not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /stations/{stationId}/measurements:
+    get:
+      summary: Get latest measurement data for a station (optionally filtered by parameter)
+      operationId: getStationMeasurements
+      tags:
+        - measurements
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: parameterId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: Latest measurement data for station
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MeasurementDTO"
+        '404':
+          description: Station or measurements not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    StationDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "12345"
+        name:
+          type: string
+          example: "Warszawa - Marszałkowska"
+        location:
+          type: string
+          example: "Marszałkowska 100, Warszawa"
+        gegrLat:
+          type: number
+          format: double
+          example: 52.2297
+        gegrLon:
+          type: number
+          format: double
+          example: 21.0122
+        lastUpdated:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParameterDTO"
+
+    ParameterDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "PM10"
+        name:
+          type: string
+          example: "pył zawieszony PM10"
+        unit:
+          type: string
+          example: "µg/m³"
+        description:
+          type: string
+          example: "Stężenie pyłu zawieszonego PM10"
+
+    MeasurementDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "m123"
+        stationId:
+          type: string
+          example: "12345"
+        parameterId:
+          type: string
+          example: "PM10"
+        value:
+          type: number
+          format: double
+          example: 35.7
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:00:00"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Resource not found"
+        message:
+          type: string
+          example: "Station with ID 999 not found"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
