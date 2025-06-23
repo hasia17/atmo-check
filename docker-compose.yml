@@ -5,6 +5,7 @@ services:
     command:
       - --api.dashboard=true
       - --api.debug=true
+      - --api.insecure=true
       - --log.level=INFO
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
@@ -13,15 +14,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8080:8080"  # Dashboard Traefik
+      - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
-      - traefik-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
+      - app-network
 
   mongodb:
     image: mongo:7.0
@@ -51,14 +48,12 @@ services:
     depends_on:
       - mongodb
     networks:
-      - traefik-network
       - app-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.gios-data.rule=Host(`gios-data.localhost`)"
       - "traefik.http.routers.gios-data.entrypoints=web"
       - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
-      - "traefik.docker.network=traefik-network"
 
   openaq-data:
     build:
@@ -66,24 +61,22 @@ services:
       dockerfile: Dockerfile
     container_name: openaq-data-app
     restart: unless-stopped
+    ports:
+      - "3000:3000"
     environment:
       - MONGO_URI=mongodb://mongodb:27017
       - OPENAQ_API_KEY=${OPENAQ_API_KEY}
     depends_on:
       - mongodb
     networks:
-      - traefik-network
       - app-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.openaq-data.rule=Host(`openaq-data.localhost`)"
       - "traefik.http.routers.openaq-data.entrypoints=web"
       - "traefik.http.services.openaq-data.loadbalancer.server.port=3000"
-      - "traefik.docker.network=traefik-network"
 
 networks:
-  traefik-network:
-    driver: bridge
   app-network:
     driver: bridge
 
