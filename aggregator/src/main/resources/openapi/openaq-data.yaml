@@ -1,0 +1,164 @@
+definitions:
+  internal.Coordinates:
+    properties:
+      latitude:
+        type: number
+      longitude:
+        type: number
+    type: object
+  internal.Country:
+    properties:
+      code:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  internal.Measurement:
+    properties:
+      coordinates:
+        $ref: '#/definitions/internal.Coordinates'
+      datetime:
+        $ref: '#/definitions/internal.MeasurementDateTime'
+      sensorId:
+        type: integer
+      stationId:
+        type: integer
+      value:
+        type: number
+    type: object
+  internal.MeasurementDateTime:
+    properties:
+      local:
+        type: string
+      utc:
+        type: string
+    type: object
+  internal.Parameter:
+    properties:
+      displayName:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      units:
+        type: string
+    type: object
+  internal.Station:
+    properties:
+      country:
+        $ref: '#/definitions/internal.Country'
+      id:
+        type: integer
+      locality:
+        type: string
+      name:
+        type: string
+      parameters:
+        items:
+          $ref: '#/definitions/internal.Parameter'
+        type: array
+      timezone:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /stations:
+    get:
+      description: Returns a list of all stations
+      operationId: getStations
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/internal.Station'
+              type: array
+            type: object
+      summary: Get all stations
+      tags:
+      - stations
+  /stations/{id}:
+    get:
+      description: Returns a station by its ID
+      operationId: getStationById
+      parameters:
+      - description: Station ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/internal.Station'
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get station by ID
+      tags:
+      - stations
+  /stations/{id}/measurements:
+    get:
+      description: Returns the latest measurement for each parameter at a specific
+        station
+      operationId: getMeasurementsByStation
+      parameters:
+      - description: Station ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/internal.Measurement'
+              type: array
+            type: object
+      summary: Get latest measurements by station
+      tags:
+      - measurements
+  /stations/{id}/parameters:
+    get:
+      description: Returns parameters for a specific station
+      operationId: getParametersByStation
+      parameters:
+      - description: Station ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/internal.Parameter'
+              type: array
+            type: object
+      summary: Get parameters by station
+      tags:
+      - parameters
+swagger: "2.0"
