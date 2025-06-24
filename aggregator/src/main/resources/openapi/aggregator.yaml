@@ -1,0 +1,33 @@
+openapi: 3.0.1
+info:
+  title: Aggregator API
+  description: API for aggregating air quality stations from GIOS and OpenAQ.
+  version: "1.0.0"
+servers:
+  - url: /api
+paths:
+  /stations:
+    get:
+      summary: Get all stations
+      description: Returns a list of all air quality stations from all sources.
+      operationId: getAllStations
+      responses:
+        '200':
+          description: List of stations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Station'
+components:
+  schemas:
+    Station:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        source:
+          type: string
