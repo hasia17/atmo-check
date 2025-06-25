@@ -55,6 +55,25 @@ services:
       - "traefik.http.routers.gios-data.entrypoints=web"
       - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
 
+  aggregator:
+    ports:
+      - "8082:8082"
+    build:
+      context: ./aggregator
+      dockerfile: Dockerfile
+    container_name: aggregator-app
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=8082
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aggregator.rule=Host(`aggregator.localhost`)"
+      - "traefik.http.routers.aggregator.entrypoints=web"
+      - "traefik.http.services.aggregator.loadbalancer.server.port=8082"
+
   openaq-data:
     build:
       context: ./openaq-data
