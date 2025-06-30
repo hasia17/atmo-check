@@ -3,6 +3,7 @@ package aggregator.rs;
 import aggregator.api.StationsApi;
 import aggregator.model.Station;
 import aggregator.rs.client.GiosApiClient;
+import aggregator.service.AggregatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -14,15 +15,15 @@ import java.util.List;
 @Controller
 public class StationRestController implements StationsApi {
 
-    private final GiosApiClient giosApiClient;
+    private final AggregatorService aggregatorService;
 
-    public StationRestController(GiosApiClient giosApiClient) {
-        this.giosApiClient = giosApiClient;
+    public StationRestController(AggregatorService aggregatorService) {
+        this.aggregatorService = aggregatorService;
     }
 
     @Override
     public ResponseEntity<List<Station>> getAllStations() {
-        log.info("getAllStations: {} results", giosApiClient.getAllStations().size());
+        aggregatorService.aggregateData();
         return ResponseEntity.ok(Collections.emptyList());
     }
 }
