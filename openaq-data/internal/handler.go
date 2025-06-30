@@ -17,13 +17,6 @@ func NewDataHandler(service *DataService) *DataHandler {
 }
 
 // HandleGetStations returns a list of all stations
-// @ID getStations
-// @Summary Get all stations
-// @Description Returns a list of all stations
-// @Tags stations
-// @Produce json
-// @Success 200 {object} map[string][]Station
-// @Router /stations [get]
 func (h *DataHandler) HandleGetStations(c fiber.Ctx) error {
 	stations, err := h.service.GetStations(c.Context())
 	if err != nil {
@@ -36,15 +29,6 @@ func (h *DataHandler) HandleGetStations(c fiber.Ctx) error {
 }
 
 // HandleGetStationByID returns a station by its ID
-// @ID getStationById
-// @Summary Get station by ID
-// @Description Returns a station by its ID
-// @Tags stations
-// @Produce json
-// @Param id path int true "Station ID"
-// @Success 200 {object} map[string]Station
-// @Failure 404 {object} map[string]string
-// @Router /stations/{id} [get]
 func (h *DataHandler) HandleGetStationByID(c fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := strconv.Atoi(idStr)
@@ -62,15 +46,7 @@ func (h *DataHandler) HandleGetStationByID(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"data": station})
 }
 
-// HandleGetMeasurementsByStation returns latest measurements for a station
-// @ID getMeasurementsByStation
-// @Summary Get latest measurements by station
-// @Description Returns the latest measurement for each parameter at a specific station
-// @Tags measurements
-// @Produce json
-// @Param id path int true "Station ID"
-// @Success 200 {object} map[string][]Measurement
-// @Router /stations/{id}/measurements [get]
+// HandleGetLatestMeasurementsByStation returns latest measurements for a station
 func (h *DataHandler) HandleGetLatestMeasurementsByStation(c fiber.Ctx) error {
 	stationIdStr := c.Params("id")
 	stationId, err := strconv.Atoi(stationIdStr)
@@ -89,14 +65,6 @@ func (h *DataHandler) HandleGetLatestMeasurementsByStation(c fiber.Ctx) error {
 }
 
 // HandleGetParametersByStation returns parameters for a station
-// @ID getParametersByStation
-// @Summary Get parameters by station
-// @Description Returns parameters for a specific station
-// @Tags parameters
-// @Produce json
-// @Param id path int true "Station ID"
-// @Success 200 {object} map[string][]Parameter
-// @Router /stations/{id}/parameters [get]
 func (h *DataHandler) HandleGetParametersByStation(c fiber.Ctx) error {
 	idStr := c.Params("id")
 	id, err := strconv.Atoi(idStr)
