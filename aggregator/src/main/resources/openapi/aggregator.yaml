@@ -4,7 +4,7 @@ info:
   description: API for aggregating air quality stations from GIOS and OpenAQ.
   version: "1.0.0"
 servers:
-  - url: /api
+  - url: /aggregator
 paths:
   /stations:
     get:
