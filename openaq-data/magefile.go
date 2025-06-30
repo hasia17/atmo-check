@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -33,6 +34,27 @@ func Test() error {
 func Clean() error {
 	fmt.Println("Cleaning up...")
 	return os.Remove("openaq-data")
+}
+
+func OapiGenerate() error {
+	fmt.Println("Generating Go code from OpenAPI spec...")
+
+	spec := "api.yaml"
+	output := filepath.Join("gen", "api.gen.go")
+	pkg := "gen"
+	generate := "types,client,server"
+	module := "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"
+
+	cmd := exec.Command("go", "run", module,
+		"-generate", generate,
+		"-o", output,
+		"-package", pkg,
+		spec,
+	)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func DropDB() error {

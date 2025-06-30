@@ -1,0 +1,190 @@
+openapi: 3.1.0
+info:
+  title: AtmoCheck OpenAQ Data API
+  description: API for air quality station data
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+paths:
+  /stations:
+    get:
+      operationId: getStations
+      summary: Get all stations
+      description: Returns a list of all air quality stations
+      tags:
+        - stations
+      responses:
+        "200":
+          description: List of stations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Station"
+
+  /stations/{id}:
+    get:
+      operationId: getStationById
+      summary: Get station by ID
+      description: Returns a specific station by its ID
+      tags:
+        - stations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Station details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Station"
+        "404":
+          description: Station not found
+
+  /stations/{id}/measurements:
+    get:
+      operationId: getMeasurementsByStation
+      summary: Get latest measurements by station
+      description: Returns the latest measurement for each parameter at a specific station
+      tags:
+        - measurements
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Latest measurements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Measurement"
+
+  /stations/{id}/parameters:
+    get:
+      operationId: getParametersByStation
+      summary: Get parameters by station
+      description: Returns all parameters measured at a specific station
+      tags:
+        - parameters
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Station parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Parameter"
+
+components:
+  schemas:
+    Station:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        locality:
+          type: string
+        timezone:
+          type: string
+        country:
+          $ref: "#/components/schemas/Country"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Parameter"
+
+    Country:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        code:
+          type: string
+        name:
+          type: string
+
+    Parameter:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        units:
+          type: string
+        displayName:
+          type: string
+
+    Measurement:
+      type: object
+      properties:
+        datetime:
+          $ref: "#/components/schemas/MeasurementDateTime"
+        value:
+          type: number
+          format: double
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        sensorId:
+          type: integer
+          format: int32
+        stationId:
+          type: integer
+          format: int32
+
+    MeasurementDateTime:
+      type: object
+      properties:
+        utc:
+          type: string
+        local:
+          type: string
+
+    Coordinates:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
