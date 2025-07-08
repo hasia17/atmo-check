@@ -1,8 +1,7 @@
 package aggregator.rs;
 
 import aggregator.api.StationsApi;
-import aggregator.model.Station;
-import aggregator.rs.client.GiosApiClient;
+import aggregator.model.StationWrapperDTO;
 import aggregator.service.AggregatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +21,7 @@ public class StationRestController implements StationsApi {
     }
 
     @Override
-    public ResponseEntity<List<Station>> getAllStations() {
+    public ResponseEntity<List<StationWrapperDTO>> getAllStations() {
         aggregatorService.aggregateData();
         return ResponseEntity.ok(Collections.emptyList());
     }

@@ -60,6 +60,11 @@
 			<artifactId>jsr305</artifactId>
 			<version>3.0.2</version>
 		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>1.5.5.Final</version>
+		</dependency>
 		<!-- Swagger Annotations for OpenAPI 3 -->
 		<dependency>
 			<groupId>io.swagger.core.v3</groupId>

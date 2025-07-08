@@ -5,6 +5,7 @@ import gios_data.domain.model.Parameter;
 import gios_data.domain.model.Station;
 import gios_data.domain.repository.station.StationRepository;
 import gios_data.rs.client.GiosApiClient;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,6 +29,12 @@ public class StationService {
             StationRepository stationRepository, GiosApiClient giosApiClient) {
         this.stationRepository = stationRepository;
         this.giosApiClient = giosApiClient;
+    }
+
+    @PostConstruct
+    public void init() {
+        log.info("StationService initialized");
+        updateStationsFromGios();
     }
 
     @Scheduled(cron = "0 0 2 * * ?") // Daily at 2:00 AM
