@@ -28,6 +28,4 @@ public class AggregatorService {
         System.out.println("GIOS Stations: " + giosStations);
         System.out.println("OpenAQ Stations: " + openAqStations);
     }
-
-
 }
