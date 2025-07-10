@@ -2,13 +2,18 @@ package internal
 
 import "time"
 
+type Coordinates struct {
+	Latitude  float64 `json:"latitude"  bson:"latitude"`
+	Longitude float64 `json:"longitude" bson:"longitude"`
+}
 type Station struct {
-	ID         int32       `json:"id"                   bson:"_id"`
-	Name       string      `json:"name"                 bson:"name"`
-	Locality   string      `json:"locality,omitempty"   bson:"locality,omitempty"`
-	Timezone   string      `json:"timezone,omitempty"   bson:"timezone,omitempty"`
-	Country    Country     `json:"country"              bson:"country,omitempty"`
-	Parameters []Parameter `json:"parameters,omitempty" bson:"parameters,omitempty"`
+	ID          int32       `json:"id"                   bson:"_id"`
+	Name        string      `json:"name"                 bson:"name"`
+	Locality    string      `json:"locality,omitempty"   bson:"locality,omitempty"`
+	Timezone    string      `json:"timezone,omitempty"   bson:"timezone,omitempty"`
+	Country     Country     `json:"country"              bson:"country,omitempty"`
+	Coordinates Coordinates `json:"coordinates"          bson:"coordinates,omitempty"`
+	Parameters  []Parameter `json:"parameters,omitempty" bson:"parameters,omitempty"`
 }
 
 type Country struct {
@@ -36,9 +41,4 @@ type Measurement struct {
 type MeasurementDateTime struct {
 	UTC   string `json:"utc"   bson:"utc"`
 	Local string `json:"local" bson:"local"`
-}
-
-type Coordinates struct {
-	Latitude  float64 `json:"latitude"  bson:"latitude"`
-	Longitude float64 `json:"longitude" bson:"longitude"`
 }
