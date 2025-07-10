@@ -125,6 +125,8 @@ components:
           type: string
         country:
           $ref: "#/components/schemas/Country"
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
         parameters:
           type: array
           items:
