@@ -30,6 +30,10 @@ type openAQLocation struct {
 			DisplayName string `json:"displayName"`
 		} `json:"parameter"`
 	} `json:"sensors"`
+	Coordinates struct {
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	} `json:"coordinates"`
 }
 
 type openAQLocationResponse struct {
@@ -150,6 +154,10 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 				Code: apiLoc.Country.Code,
 				Name: apiLoc.Country.Name,
 			},
+			Coordinates: Coordinates{
+				Latitude:  apiLoc.Coordinates.Latitude,
+				Longitude: apiLoc.Coordinates.Longitude,
+			},
 			Parameters: []Parameter{},
 		}
 		for _, apiSensor := range apiLoc.Sensors {
@@ -165,7 +173,7 @@ func (s *DataService) FetchLocations(ctx context.Context) error {
 			s.logger.Error("Failed to store location", slog.String("location", station.Name), slog.Any("error", err))
 		}
 	}
-	s.logger.Info("Locations fetched and stored successfully", slog.Int("count", len(data.Results)))
+	s.logger.Info("Stations fetched and stored successfully", slog.Int("count", len(data.Results)))
 	return nil
 }
 
