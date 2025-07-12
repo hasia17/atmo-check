@@ -130,11 +130,11 @@ components:
         location:
           type: string
           example: "Marszałkowska 100, Warszawa"
-        gegrLat:
+        geoLat:
           type: number
           format: double
           example: 52.2297
-        gegrLon:
+        geoLon:
           type: number
           format: double
           example: 21.0122

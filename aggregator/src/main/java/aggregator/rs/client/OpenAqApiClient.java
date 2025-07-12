@@ -4,9 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import openaq.data.api.StationsApi;
 import openaq.data.api.MeasurementsApi;
 import openaq.data.api.ParametersApi;
-import openaq.data.model.InternalStation;
-import openaq.data.model.InternalMeasurement;
-import openaq.data.model.InternalParameter;
+import openaq.data.model.Station;
+import openaq.data.model.Measurement;
+import openaq.data.model.Parameter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
@@ -31,7 +31,7 @@ public class OpenAqApiClient {
     /**
      * Returns a map with a list of all OpenAQ stations, or an empty map in case of error.
      */
-    public Map<String, List<InternalStation>> getStations() {
+    public Map<String, List<Station>> getStations() {
         try {
             return stationsApi.getStations();
         } catch (RestClientException ex) {
@@ -43,7 +43,7 @@ public class OpenAqApiClient {
     /**
      * Returns a map with the details of a station with the given ID, or an empty map in case of error.
      */
-    public Map<String, InternalStation> getStationById(Integer id) {
+    public Map<String, Station> getStationById(Integer id) {
         try {
             return stationsApi.getStationById(id);
         } catch (RestClientException ex) {
@@ -55,7 +55,7 @@ public class OpenAqApiClient {
     /**
      * Returns a map with a list of measurements for a given station ID, or an empty map in case of error.
      */
-    public Map<String, List<InternalMeasurement>> getMeasurementsByStation(Integer id) {
+    public Map<String, List<Measurement>> getMeasurementsByStation(Integer id) {
         try {
             return measurementsApi.getMeasurementsByStation(id);
         } catch (RestClientException ex) {
@@ -67,7 +67,7 @@ public class OpenAqApiClient {
     /**
      * Returns a map with a list of parameters for a given station ID, or an empty map in case of error.
      */
-    public Map<String, List<InternalParameter>> getParametersByStation(Integer id) {
+    public Map<String, List<Parameter>> getParametersByStation(Integer id) {
         try {
             return parametersApi.getParametersByStation(id);
         } catch (RestClientException ex) {
