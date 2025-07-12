@@ -1,21 +1,22 @@
 openapi: 3.0.1
 info:
-  title: OpenAQ API
-  contact: {}
+  title: AtmoCheck OpenAQ Data API
+  description: API for air quality station data
   version: 1.0.0
 servers:
   - url: http://openaq-data:3000/
+    description: Local development server
 paths:
   /stations:
     get:
+      operationId: getStations
+      summary: Get all stations
+      description: Returns a list of all air quality stations
       tags:
         - stations
-      summary: Get all stations
-      description: Returns a list of all stations
-      operationId: getStations
       responses:
         "200":
-          description: OK
+          description: List of stations
           content:
             application/json:
               schema:
@@ -23,56 +24,49 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                    $ref: '#/components/schemas/internal.Station'
+                    $ref: '#/components/schemas/Station'
   /stations/{id}:
     get:
+      operationId: getStationById
+      summary: Get station by ID
+      description: Returns a specific station by its ID
       tags:
         - stations
-      summary: Get station by ID
-      description: Returns a station by its ID
-      operationId: getStationById
       parameters:
         - name: id
           in: path
-          description: Station ID
           required: true
           schema:
             type: integer
+            format: int32
       responses:
         "200":
-          description: OK
+          description: Station details
           content:
             application/json:
               schema:
                 type: object
                 additionalProperties:
-                  $ref: '#/components/schemas/internal.Station'
+                  $ref: '#/components/schemas/Station'
         "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: string
+          description: Station not found
   /stations/{id}/measurements:
     get:
+      operationId: getMeasurementsByStation
+      summary: Get latest measurements by station
+      description: Returns the latest measurement for each parameter at a specific station
       tags:
         - measurements
-      summary: Get latest measurements by station
-      description: Returns the latest measurement for each parameter at a specific
-        station
-      operationId: getMeasurementsByStation
       parameters:
         - name: id
           in: path
-          description: Station ID
           required: true
           schema:
             type: integer
+            format: int32
       responses:
         "200":
-          description: OK
+          description: Latest measurements
           content:
             application/json:
               schema:
@@ -80,24 +74,25 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                    $ref: '#/components/schemas/internal.Measurement'
+                      $ref: '#/components/schemas/Measurement'
+
   /stations/{id}/parameters:
     get:
+      operationId: getParametersByStation
+      summary: Get parameters by station
+      description: Returns all parameters measured at a specific station
       tags:
         - parameters
-      summary: Get parameters by station
-      description: Returns parameters for a specific station
-      operationId: getParametersByStation
       parameters:
         - name: id
           in: path
-          description: Station ID
           required: true
           schema:
             type: integer
+            format: int32
       responses:
         "200":
-          description: OK
+          description: Station parameters
           content:
             application/json:
               schema:
@@ -105,71 +100,86 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                    $ref: '#/components/schemas/internal.Parameter'
+                    $ref: '#/components/schemas/Parameter'
+
 components:
   schemas:
-    internal.Coordinates:
+    Station:
       type: object
       properties:
-        latitude:
-          type: number
-        longitude:
-          type: number
-    internal.Country:
-      type: object
-      properties:
-        code:
-          type: string
         id:
           type: integer
+          format: int32
         name:
           type: string
-    internal.Measurement:
-      type: object
-      properties:
+        locality:
+          type: string
+        timezone:
+          type: string
+        country:
+          $ref: '#/components/schemas/Country'
         coordinates:
-          $ref: '#/components/schemas/internal.Coordinates'
-        datetime:
-          $ref: '#/components/schemas/internal.MeasurementDateTime'
-        sensorId:
-          type: integer
-        stationId:
-          type: integer
-        value:
-          type: number
-    internal.MeasurementDateTime:
+          $ref: '#/components/schemas/Coordinates'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parameter'
+
+    Country:
       type: object
       properties:
-        local:
-          type: string
-        utc:
-          type: string
-    internal.Parameter:
-      type: object
-      properties:
-        displayName:
-          type: string
         id:
           type: integer
+          format: int32
+        code:
+          type: string
+        name:
+          type: string
+
+    Parameter:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
         name:
           type: string
         units:
           type: string
-    internal.Station:
+        displayName:
+          type: string
+
+    Measurement:
       type: object
       properties:
-        country:
-          $ref: '#/components/schemas/internal.Country'
-        id:
+        datetime:
+          $ref: '#/components/schemas/MeasurementDateTime'
+        value:
+          type: number
+          format: double
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        sensorId:
           type: integer
-        locality:
+          format: int32
+        stationId:
+          type: integer
+          format: int32
+
+    MeasurementDateTime:
+      type: object
+      properties:
+        utc:
           type: string
-        name:
+        local:
           type: string
-        parameters:
-          type: array
-          items:
-            $ref: '#/components/schemas/internal.Parameter'
-        timezone:
-          type: string
-x-original-swagger-version: "2.0"
+
+    Coordinates:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double

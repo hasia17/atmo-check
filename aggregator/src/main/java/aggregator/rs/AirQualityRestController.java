@@ -27,6 +27,7 @@ public class AirQualityRestController implements AirQualityApi {
     public ResponseEntity<AggregatedVoivodeshipData> airQualityVoivodeshipGet(
             Voivodeship voivodeship) {
         try {
+            aggregatorService.aggregateData();
             return ResponseEntity.ok(new AggregatedVoivodeshipData());
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
