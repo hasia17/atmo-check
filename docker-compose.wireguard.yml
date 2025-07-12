@@ -1,0 +1,48 @@
+services:
+  # MongoDB with WireGuard
+  mongodb-wg:
+    image: mongo:7.0
+    container_name: mongodb-wg
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - mongodb_data:/data/db
+      - ./infra/wg-mongodb.conf:/etc/wireguard/wg0.conf:ro
+    networks:
+      - wg-network
+    ports:
+      - "27018:27017"
+      - "51840:51840/udp"
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y wireguard-tools iproute2 &&
+        mongod --fork --logpath /var/log/mongodb.log --dbpath /data/db --bind_ip_all &&
+        wg-quick up /etc/wireguard/wg0.conf &&
+        tail -f /var/log/mongodb.log
+      "
+
+  # OpenAQ with WireGuard  
+  openaq-data-wg:
+    build:
+      context: ./openaq-data
+    container_name: openaq-data-wg
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./infra/wg-openaq.conf:/etc/wireguard/wg0.conf:ro
+    networks:
+      - wg-network
+    ports:
+      - "3000:3000"
+      - "51830:51830/udp"
+    environment:
+      - MONGO_URI=mongodb://10.0.1.40:27017 
+    depends_on:
+      - mongodb-wg
+
+networks:
+  wg-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
