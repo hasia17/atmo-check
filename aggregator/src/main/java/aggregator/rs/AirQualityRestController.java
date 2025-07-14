@@ -3,7 +3,7 @@ package aggregator.rs;
 import aggregator.api.AirQualityApi;
 import aggregator.model.AggregatedVoivodeshipData;
 import aggregator.model.Voivodeship;
-import aggregator.service.AggregatorService;
+import aggregator.service.AirQualityAggregator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +17,9 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/aggregator")
 public class AirQualityRestController implements AirQualityApi {
 
-    private final AggregatorService aggregatorService;
+    private final AirQualityAggregator aggregatorService;
 
-    public AirQualityRestController(AggregatorService aggregatorService) {
+    public AirQualityRestController(AirQualityAggregator aggregatorService) {
         this.aggregatorService = aggregatorService;
     }
 
@@ -27,8 +27,8 @@ public class AirQualityRestController implements AirQualityApi {
     public ResponseEntity<AggregatedVoivodeshipData> airQualityVoivodeshipGet(
             Voivodeship voivodeship) {
         try {
-            aggregatorService.aggregateData();
-            return ResponseEntity.ok(new AggregatedVoivodeshipData());
+            aggregatorService.aggregateVoivodeshipData(voivodeship);
+            return ResponseEntity.ok(aggregatorService.aggregateVoivodeshipData(voivodeship));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
