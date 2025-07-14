@@ -31,12 +31,12 @@ public class OpenAqApiClient {
     /**
      * Returns a map with a list of all OpenAQ stations, or an empty map in case of error.
      */
-    public Map<String, List<Station>> getStations() {
+    public List<Station> getStations() {
         try {
-            return stationsApi.getStations();
+            return stationsApi.getStations().get(0);
         } catch (RestClientException ex) {
             log.error("Error fetching OpenAQ stations", ex);
-            return Collections.emptyMap();
+            return Collections.emptyList();
         }
     }
 
