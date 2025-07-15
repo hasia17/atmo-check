@@ -8,6 +8,7 @@ import aggregator.rs.client.OpenAqApiClient;
 import gios.data.model.ParameterDTO;
 import gios.data.model.StationDTO;
 
+import lombok.extern.slf4j.Slf4j;
 import openaq.data.model.Station;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AirQualityAggregator {
 
     private final GiosApiClient giosApiClient;
@@ -31,12 +33,15 @@ public class AirQualityAggregator {
         List<Station> openaqStations = openAqApiClient.getStations();
 
         // Filter stations within the voivodeship
+        log.info("Fetching data from gios data");
         List<StationDTO> giosStationsInVoivodeship = filterGiosStationsByVoivodeship(giosStations, voivodeship);
+        log.info("Fetching data from openaq data");
         List<Station> openaqStationsInVoivodeship = filterOpenaqStationsByVoivodeship(openaqStations, voivodeship);
 
         // Collect all parameters from both sources
         Map<String, List<Parameter>> parameterMap = new HashMap<>();
 
+        log.info("Processing data from gios data");
         // Process GIOS parameters
         for (StationDTO station : giosStationsInVoivodeship) {
             if (station.getParameters() != null) {
@@ -48,6 +53,7 @@ public class AirQualityAggregator {
             }
         }
 
+        log.info("Processing data from openaq data");
         // Process OpenAQ parameters
         for (Station station : openaqStationsInVoivodeship) {
             if (station.getParameters() != null) {
@@ -60,11 +66,13 @@ public class AirQualityAggregator {
             }
         }
 
+        log.info("Aggregating parameters");
         // Aggregate parameters by creating unified Parameter objects
         List<Parameter> aggregatedParameters = parameterMap.entrySet().stream()
                 .map(entry -> aggregateParameter(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
+        log.info("Returning response");
         return new AggregatedVoivodeshipData()
                 .voivodeship(voivodeship)
                 .parameters(aggregatedParameters);
