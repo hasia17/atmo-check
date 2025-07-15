@@ -33,7 +33,7 @@ public class OpenAqApiClient {
      */
     public List<Station> getStations() {
         try {
-            return stationsApi.getStations().get(0);
+            return stationsApi.getStations().get("data");
         } catch (RestClientException ex) {
             log.error("Error fetching OpenAQ stations", ex);
             return Collections.emptyList();
