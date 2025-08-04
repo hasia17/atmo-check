@@ -53,7 +53,15 @@ components:
         description:
           type: string
           example: "Stezenie pylu zawieszonego PM10"
-
+        source:
+          $ref: '#/components/schemas/SourceType'
+    SourceType:
+      type: string
+      description: Data source type
+      enum:
+        - GIOS
+        - OPEN_AQ
+        - ALL
     Voivodeship:
       type: string
       description: Name of the voivodeship (province)

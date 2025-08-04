@@ -2,6 +2,7 @@ package aggregator.service;
 
 import aggregator.model.AggregatedVoivodeshipData;
 import aggregator.model.Parameter;
+import aggregator.model.SourceType;
 import aggregator.model.Voivodeship;
 import aggregator.rs.client.GiosApiClient;
 import aggregator.rs.client.OpenAqApiClient;
@@ -61,7 +62,7 @@ public class AirQualityAggregator {
                     String paramKey = normalizeParameterKey(param.getName());
                     Parameter parameter = createParameterFromOpenAqData(param, paramKey);
                     parameterMap.computeIfAbsent(paramKey, k -> new ArrayList<>())
-                            .add(new Parameter());
+                            .add(parameter);
                 }
             }
         }
@@ -80,10 +81,11 @@ public class AirQualityAggregator {
 
     private Parameter createParameterFromGiosData(ParameterDTO param, String paramKey) {
         Parameter parameter = new Parameter();
-        parameter.setName(paramKey);
+        parameter.setName(param.getName());
         parameter.setId(param.getId());
         parameter.setUnit(param.getUnit());
         parameter.setDescription(param.getDescription());
+        parameter.setSource(SourceType.GIOS);
         return parameter;
     }
 
@@ -93,6 +95,7 @@ public class AirQualityAggregator {
         parameter.setId(param.getDisplayName());
         parameter.setUnit(param.getUnits());
         parameter.setDescription(param.getDisplayName());
+        parameter.setSource(SourceType.OPEN_AQ);
         return parameter;
     }
 
@@ -152,9 +155,6 @@ public class AirQualityAggregator {
             return new Parameter().id(key).name(key).unit("").description("");
         }
 
-        // Use the first non-null values for aggregation
-        Parameter primary = parameterDataList.get(0);
-
         String name = parameterDataList.stream()
                 .map(Parameter::getName)
                 .filter(Objects::nonNull)
@@ -175,11 +175,24 @@ public class AirQualityAggregator {
                 .findFirst()
                 .orElse("");
 
+        Set<SourceType> sources = parameterDataList.stream()
+                .map(Parameter::getSource)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        SourceType source;
+        if (sources.size() > 1) {
+            source = SourceType.ALL;
+        } else {
+            source = sources.stream().findFirst().orElse(null);
+        }
+
         return new Parameter()
                 .id(key)
                 .name(name)
                 .unit(unit)
-                .description(description);
+                .description(description)
+                .source(source);
     }
 
 }
