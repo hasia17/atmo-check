@@ -47,7 +47,7 @@ public class AirQualityAggregator {
         for (StationDTO station : giosStationsInVoivodeship) {
             if (station.getParameters() != null) {
                 for (ParameterDTO param : station.getParameters()) {
-                    String paramKey = normalizeParameterKey(param.getId());
+                    String paramKey = normalizeParameterKey(param.getDescription());
                     Parameter parameter = createParameterFromGiosData(param, paramKey);
                     parameterMap.computeIfAbsent(paramKey, k -> new ArrayList<>()).add(parameter);
                 }
@@ -82,7 +82,7 @@ public class AirQualityAggregator {
     private Parameter createParameterFromGiosData(ParameterDTO param, String paramKey) {
         Parameter parameter = new Parameter();
         parameter.setName(param.getName());
-        parameter.setId(param.getId());
+        parameter.setId(paramKey);
         parameter.setUnit(param.getUnit());
         parameter.setDescription(param.getDescription());
         parameter.setSource(SourceType.GIOS);
