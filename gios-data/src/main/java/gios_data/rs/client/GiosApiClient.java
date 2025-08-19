@@ -8,6 +8,7 @@ import gios_data.rs.mapper.StationMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClientException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
@@ -18,12 +19,16 @@ import java.util.*;
 @Service
 public class GiosApiClient {
 
-    private static final int DATA_RETENTION_DAYS = 30; // Keep measurements for 30 days
+    private static final int DATA_RETENTION_DAYS = 30;
     private static final String BASE_URL = "https://api.gios.gov.pl/pjp-api/v1/rest";
     private static final String STATIONS_ENDPOINT = "/station/findAll";
     private static final String SENSORS_ENDPOINT = "/station/sensors/";
     private static final String DATA_ENDPOINT = "/data/getData/";
-    private static final int MAX_MEASUREMENTS_PER_SENSOR = 1; // Limit measurements per sensor
+    private static final String ARCHIVE_DATA_ENDPOINT = "/data/getArchiveData/";
+    private static final int MAX_MEASUREMENTS_PER_SENSOR = 1;
+
+    private static final String MANUAL_STATION_ERROR_CODE = "API-ERR-100003";
+
     private final RestTemplate restTemplate;
     private final StationMapper stationMapper;
     private final ParameterMapper parameterMapper;
@@ -67,22 +72,68 @@ public class GiosApiClient {
         }
     }
 
-
     public List<Measurement> fetchMeasurementsForParameter(String stationId, String parameterId) {
         log.debug("Fetching measurements for station {} parameter {}", stationId, parameterId);
 
-        String url = BASE_URL + DATA_ENDPOINT + parameterId;
-        GiosCurrentDataDTO dtos = restTemplate.getForObject(url, GiosCurrentDataDTO.class);
+        List<Measurement> measurements = tryFetchCurrentData(stationId, parameterId);
 
-        if (dtos == null) {
-            log.warn("No measurements fetched for parameter {}", parameterId);
-            return Collections.emptyList();
+        if (!measurements.isEmpty()) {
+            return measurements;
         }
 
+        return fetchArchiveData(stationId, parameterId);
+    }
+
+    private List<Measurement> tryFetchCurrentData(String stationId, String parameterId) {
+        try {
+            String url = BASE_URL + DATA_ENDPOINT + parameterId;
+            GiosCurrentDataDTO dtos = restTemplate.getForObject(url, GiosCurrentDataDTO.class);
+
+            if (dtos == null) {
+                log.debug("No current data available for parameter {}", parameterId);
+                return Collections.emptyList();
+            }
+
+            if (isManualStationError(dtos)) {
+                log.debug("Parameter {} is from manual station, will try archive data", parameterId);
+                return Collections.emptyList();
+            }
+
+            return processMeasurements(dtos, stationId, parameterId);
+
+        } catch (RestClientException e) {
+            log.debug("Error fetching current data for parameter {}: {}", parameterId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Measurement> fetchArchiveData(String stationId, String parameterId) {
+        try {
+            log.debug("Attempting to fetch archive data for parameter {}", parameterId);
+            String url = BASE_URL + ARCHIVE_DATA_ENDPOINT + parameterId;
+
+            GiosCurrentDataDTO dtos = restTemplate.getForObject(url, GiosCurrentDataDTO.class);
+
+            if (dtos == null) {
+                log.warn("No archive data available for parameter {}", parameterId);
+                return Collections.emptyList();
+            }
+
+            List<Measurement> measurements = processMeasurements(dtos, stationId, parameterId);
+            log.debug("Fetched {} archive measurements for parameter {}", measurements.size(), parameterId);
+            return measurements;
+
+        } catch (RestClientException e) {
+            log.warn("Error fetching archive data for parameter {}: {}", parameterId, e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    private List<Measurement> processMeasurements(GiosCurrentDataDTO dtos, String stationId, String parameterId) {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(DATA_RETENTION_DAYS);
         MeasurementContext context = new MeasurementContext(stationId, parameterId);
 
-        List<Measurement> measurements = dtos.getListaDanychPomiarowych().stream()
+        return dtos.getListaDanychPomiarowych().stream()
                 .filter(dto -> (dto.getData() != null)
                         && (dto.getWartość() != null)
                         && !dto.getWartość().isNaN()
@@ -92,10 +143,10 @@ public class GiosApiClient {
                 .limit(MAX_MEASUREMENTS_PER_SENSOR)
                 .map(dto -> measurementMapper.map(dto, context))
                 .toList();
+    }
 
-        log.debug("Fetched {} valid measurements for parameter {}", measurements.size(), parameterId);
-
-        return measurements;
+    private boolean isManualStationError(GiosCurrentDataDTO dtos) {
+        return dtos.getListaDanychPomiarowych() == null || dtos.getListaDanychPomiarowych().isEmpty();
     }
 
     private boolean isAfterCutoff(String dateStr, LocalDateTime cutoff) {
@@ -103,9 +154,8 @@ public class GiosApiClient {
             LocalDateTime ts = LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             return ts.isAfter(cutoff);
         } catch (Exception e) {
+            log.debug("Could not parse date: {}", dateStr);
             return false;
         }
     }
-
-
 }
