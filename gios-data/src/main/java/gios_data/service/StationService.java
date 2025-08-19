@@ -23,18 +23,21 @@ public class StationService {
 
     private final StationRepository stationRepository;
     private final GiosApiClient giosApiClient;
+    private final MeasurementService measurementService;
 
     @Autowired
     public StationService(
-            StationRepository stationRepository, GiosApiClient giosApiClient) {
+            StationRepository stationRepository, GiosApiClient giosApiClient, MeasurementService measurementService) {
         this.stationRepository = stationRepository;
         this.giosApiClient = giosApiClient;
+        this.measurementService = measurementService;
     }
 
     @PostConstruct
     public void init() {
         log.info("StationService initialized");
         updateStationsFromGios();
+        measurementService.updateMeasurementsFromGios();
     }
 
     @Scheduled(cron = "0 0 2 * * ?") // Daily at 2:00 AM

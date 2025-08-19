@@ -6,7 +6,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>3.4.5</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<relativePath/>
 	</parent>
 	<groupId>com.example</groupId>
 	<artifactId>gios-data</artifactId>
@@ -136,18 +136,11 @@
 						</goals>
 						<id>gios-data</id>
 						<configuration>
-							<!-- Ścieżka do specyfikacji Swagger/OpenAPI -->
 							<inputSpec>${project.basedir}/src/main/resources/openapi/gios-data.yaml</inputSpec>
-
-							<!-- Generator Spring -->
 							<generatorName>spring</generatorName>
-
-							<!-- Pakiet dla wygenerowanych klas -->
 							<apiPackage>gios.data.api</apiPackage>
 							<modelPackage>gios.data.model</modelPackage>
 							<invokerPackage>gios.data.invoker</invokerPackage>
-
-							<!-- Konfiguracja Spring -->
 							<configOptions>
 								<interfaceOnly>true</interfaceOnly>
 								<delegatePattern>true</delegatePattern>
@@ -165,18 +158,11 @@
 						</goals>
 						<id>gios-api</id>
 						<configuration>
-							<!-- Ścieżka do specyfikacji Swagger/OpenAPI -->
 							<inputSpec>${project.basedir}/src/main/resources/openapi/gios-api.yaml</inputSpec>
-
-							<!-- Generator Spring -->
 							<generatorName>spring</generatorName>
-
-							<!-- Pakiet dla wygenerowanych klas -->
 							<apiPackage>ext.gios.api.api</apiPackage>
 							<modelPackage>ext.gios.api.model</modelPackage>
 							<invokerPackage>ext.gios.api.invoker</invokerPackage>
-
-							<!-- Konfiguracja Spring -->
 							<configOptions>
 								<interfaceOnly>true</interfaceOnly>
 								<delegatePattern>true</delegatePattern>
