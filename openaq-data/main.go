@@ -1,8 +1,3 @@
-// @title AtmoCheck OpenAQ Data API
-// @version 1.0
-// @description API for air quality station data
-// @host localhost:3000
-// @BasePath /
 package main
 
 import (
