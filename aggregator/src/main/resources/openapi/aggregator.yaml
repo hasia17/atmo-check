@@ -40,21 +40,56 @@ components:
 
     Parameter:
       type: object
+      description: Air quality parameter with aggregated measurement statistics from multiple data sources
       properties:
         id:
           type: string
+          description: Normalized parameter identifier
           example: "PM10"
         name:
           type: string
+          description: Human-readable parameter name
           example: "pyl zawieszony PM10"
         unit:
           type: string
+          description: Unit of measurement
           example: "µg/m³"
         description:
           type: string
+          description: Detailed parameter description
           example: "Stezenie pylu zawieszonego PM10"
         source:
           $ref: '#/components/schemas/SourceType'
+        averageValue:
+          type: number
+          format: double
+          description: Average value from all measurements across sources
+          example: 23.5
+        minValue:
+          type: number
+          format: double
+          description: Minimum value from all measurements across sources
+          example: 8.2
+        maxValue:
+          type: number
+          format: double
+          description: Maximum value from all measurements across sources
+          example: 87.3
+        measurementCount:
+          type: integer
+          description: Total number of measurements aggregated from all sources
+          example: 450
+          minimum: 0
+        latestValue:
+          type: number
+          format: double
+          description: Most recent measurement value across all sources
+          example: 19.8
+        latestTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the most recent measurement (ISO 8601 format)
+          example: "2025-09-01T10:00:00Z"
     SourceType:
       type: string
       description: Data source type
