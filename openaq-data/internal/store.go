@@ -120,7 +120,7 @@ func (s *Store) GetMeasurementsByStation(ctx context.Context, stationID int32, l
 }
 
 func (s *Store) GetLatestMeasurementsByStation(ctx context.Context, stationID int32) ([]api.Measurement, error) {
-	filter := bson.M{"stationId": stationID}
+	filter := bson.M{"stationid": stationID}
 	opts := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
 	cursor, err := s.measuresColl.Find(ctx, filter, opts)
 	if err != nil {

@@ -204,7 +204,7 @@ func (s *DataService) FetchMeasurements(ctx context.Context) error {
 				continue
 			}
 			if resp.IsError() {
-				log.Printf("API error for station %s, parameter %s: %s", st.Name, parameter.Name, resp.Status())
+				log.Printf("API error for station %s, parameter %s: %s", *st.Name, *parameter.Name, resp.Status())
 				continue
 			}
 
