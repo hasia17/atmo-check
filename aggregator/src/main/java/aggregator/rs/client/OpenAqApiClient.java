@@ -55,12 +55,12 @@ public class OpenAqApiClient {
     /**
      * Returns a map with a list of measurements for a given station ID, or an empty map in case of error.
      */
-    public Map<String, List<Measurement>> getMeasurementsByStation(Integer id) {
+    public List<Measurement> getMeasurementsByStation(Integer id) {
         try {
-            return measurementsApi.getMeasurementsByStation(id);
+            return measurementsApi.getMeasurementsByStation(id).get("data");
         } catch (RestClientException ex) {
             log.error("Error fetching OpenAQ measurements for station ID {}", id, ex);
-            return Collections.emptyMap();
+            return Collections.emptyList();
         }
     }
 
