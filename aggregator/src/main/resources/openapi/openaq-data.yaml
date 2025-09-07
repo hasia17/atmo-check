@@ -25,6 +25,9 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Station'
+        "500":
+          description: Failed to fetch stations
+
   /stations/{id}:
     get:
       operationId: getStationById
@@ -50,7 +53,10 @@ paths:
                   $ref: '#/components/schemas/Station'
         "404":
           description: Station not found
-  /stations/{id}/measurements:
+        "500":
+          description: Failed to fetch station
+
+  /stations/{id}/measurements/latest:
     get:
       operationId: getMeasurementsByStation
       summary: Get latest measurements by station
@@ -74,7 +80,11 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                      $ref: '#/components/schemas/Measurement'
+                    $ref: '#/components/schemas/Measurement'
+        "400":
+          description: Invalid station ID
+        "500":
+          description: Failed to fetch measurements
 
   /stations/{id}/parameters:
     get:
@@ -101,6 +111,12 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/Parameter'
+        "400":
+          description: Invalid station ID
+        "404":
+          description: Station not found
+        "500":
+          description: Failed to fetch parameters
 
 components:
   schemas:
@@ -159,6 +175,9 @@ components:
           format: double
         coordinates:
           $ref: '#/components/schemas/Coordinates'
+        timestamp:
+          type: string
+          format: date-time
         sensorId:
           type: integer
           format: int32

@@ -6,13 +6,19 @@ import aggregator.model.SourceType;
 import aggregator.model.Voivodeship;
 import aggregator.rs.client.GiosApiClient;
 import aggregator.rs.client.OpenAqApiClient;
+import aggregator.service.wrappers.AggregatedMeasurements;
+import aggregator.service.wrappers.ParameterWithMeasurements;
 import gios.data.model.ParameterDTO;
 import gios.data.model.StationDTO;
+import gios.data.model.MeasurementDTO;
 
 import lombok.extern.slf4j.Slf4j;
 import openaq.data.model.Station;
+import openaq.data.model.Measurement;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,7 +28,6 @@ public class AirQualityAggregator {
 
     private final GiosApiClient giosApiClient;
     private final OpenAqApiClient openAqApiClient;
-
 
     public AirQualityAggregator(GiosApiClient giosApiClient, OpenAqApiClient openAqApiClient) {
         this.giosApiClient = giosApiClient;
@@ -39,38 +44,65 @@ public class AirQualityAggregator {
         log.info("Fetching data from openaq data");
         List<Station> openaqStationsInVoivodeship = filterOpenaqStationsByVoivodeship(openaqStations, voivodeship);
 
-        // Collect all parameters from both sources
-        Map<String, List<Parameter>> parameterMap = new HashMap<>();
+        // Collect all parameters from both sources with measurements
+        Map<String, List<ParameterWithMeasurements>> parameterMap = new HashMap<>();
 
         log.info("Processing data from gios data");
-        // Process GIOS parameters
+        // Process GIOS parameters with measurements
         for (StationDTO station : giosStationsInVoivodeship) {
             if (station.getParameters() != null) {
                 for (ParameterDTO param : station.getParameters()) {
                     String paramKey = normalizeParameterKey(param.getDescription());
-                    Parameter parameter = createParameterFromGiosData(param, paramKey);
-                    parameterMap.computeIfAbsent(paramKey, k -> new ArrayList<>()).add(parameter);
+
+                    List<MeasurementDTO> measurements = giosApiClient.getStationMeasurements(
+                            station.getId(), param.getId(), 100); // Limit to last 100 measurements
+
+                    if (CollectionUtils.isEmpty(measurements)) {
+                        continue;
+                    }
+
+                    ParameterWithMeasurements paramWithMeasurements = createParameterFromGiosData(
+                            param, paramKey, measurements);
+                    parameterMap.computeIfAbsent(paramKey, k -> new ArrayList<>())
+                            .add(paramWithMeasurements);
                 }
             }
         }
 
         log.info("Processing data from openaq data");
-        // Process OpenAQ parameters
+        // Process OpenAQ parameters with measurements
         for (Station station : openaqStationsInVoivodeship) {
             if (station.getParameters() != null) {
+
+                List<Measurement> measurements = openAqApiClient.getMeasurementsByStation(
+                        station.getId());
+                if (CollectionUtils.isEmpty(measurements)) {
+                    continue;
+                }
+
                 for (openaq.data.model.Parameter param : station.getParameters()) {
                     String paramKey = normalizeParameterKey(param.getName());
-                    Parameter parameter = createParameterFromOpenAqData(param, paramKey);
+
+                    List<Measurement> paramMeasurements = measurements.stream()
+                            .filter(m -> normalizeParameterKey(getParameterNameFromMeasurement(m)).equals(paramKey))
+                            .collect(Collectors.toList());
+
+                    if (CollectionUtils.isEmpty(paramMeasurements)) {
+                        continue;
+                    }
+
+                    ParameterWithMeasurements paramWithMeasurements = createParameterFromOpenAqData(
+                            param, paramKey, paramMeasurements);
                     parameterMap.computeIfAbsent(paramKey, k -> new ArrayList<>())
-                            .add(parameter);
+                            .add(paramWithMeasurements);
                 }
             }
         }
 
-        log.info("Aggregating parameters");
-        // Aggregate parameters by creating unified Parameter objects
+        log.info("Aggregating parameters with measurements");
+        // Aggregate parameters by creating unified Parameter objects with aggregated measurements
         List<Parameter> aggregatedParameters = parameterMap.entrySet().stream()
-                .map(entry -> aggregateParameter(entry.getKey(), entry.getValue()))
+                .map(entry -> aggregateParameterWithMeasurements(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
 
         log.info("Returning response");
@@ -79,24 +111,29 @@ public class AirQualityAggregator {
                 .parameters(aggregatedParameters);
     }
 
-    private Parameter createParameterFromGiosData(ParameterDTO param, String paramKey) {
+    private ParameterWithMeasurements createParameterFromGiosData(ParameterDTO param, String paramKey,
+                                                                  List<MeasurementDTO> measurements) {
         Parameter parameter = new Parameter();
         parameter.setName(param.getName());
         parameter.setId(paramKey);
         parameter.setUnit(param.getUnit());
         parameter.setDescription(param.getDescription());
         parameter.setSource(SourceType.GIOS);
-        return parameter;
+
+        return new ParameterWithMeasurements(parameter, measurements, null);
     }
 
-    private Parameter createParameterFromOpenAqData(openaq.data.model.Parameter param, String paramKey) {
+    private ParameterWithMeasurements createParameterFromOpenAqData(openaq.data.model.Parameter param,
+                                                                    String paramKey,
+                                                                    List<Measurement> measurements) {
         Parameter parameter = new Parameter();
         parameter.setName(paramKey);
         parameter.setId(param.getDisplayName());
         parameter.setUnit(param.getUnits());
         parameter.setDescription(param.getDisplayName());
         parameter.setSource(SourceType.OPEN_AQ);
-        return parameter;
+
+        return new ParameterWithMeasurements(parameter, null, measurements);
     }
 
     /**
@@ -110,7 +147,6 @@ public class AirQualityAggregator {
     }
 
     private List<Station> filterOpenaqStationsByVoivodeship(List<Station> stations, Voivodeship voivodeship) {
-
         return stations.stream()
                 .filter(station -> station.getCoordinates() != null)
                 .filter(station -> station.getCoordinates().getLatitude() != null && station.getCoordinates().getLongitude() != null)
@@ -148,35 +184,36 @@ public class AirQualityAggregator {
     }
 
     /**
-     * Aggregates multiple parameter data entries into a single Parameter object
+     * Aggregates multiple parameter data entries with their measurements into a single Parameter object
      */
-    private Parameter aggregateParameter(String key, List<Parameter> parameterDataList) {
+    private Parameter aggregateParameterWithMeasurements(String key, List<ParameterWithMeasurements> parameterDataList) {
         if (parameterDataList.isEmpty()) {
             return new Parameter().id(key).name(key).unit("").description("");
         }
 
+        // Aggregate basic parameter info
         String name = parameterDataList.stream()
-                .map(Parameter::getName)
+                .map(p -> p.parameter().getName())
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElse(key);
 
         String unit = parameterDataList.stream()
-                .map(Parameter::getUnit)
+                .map(p -> p.parameter().getUnit())
                 .filter(Objects::nonNull)
                 .filter(u -> !u.isEmpty())
                 .findFirst()
                 .orElse("");
 
         String description = parameterDataList.stream()
-                .map(Parameter::getDescription)
+                .map(p -> p.parameter().getDescription())
                 .filter(Objects::nonNull)
                 .filter(d -> !d.isEmpty())
                 .findFirst()
                 .orElse("");
 
         Set<SourceType> sources = parameterDataList.stream()
-                .map(Parameter::getSource)
+                .map(p -> p.parameter().getSource())
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -187,12 +224,109 @@ public class AirQualityAggregator {
             source = sources.stream().findFirst().orElse(null);
         }
 
-        return new Parameter()
+        AggregatedMeasurements aggregatedMeasurements = aggregateMeasurements(parameterDataList);
+
+        Parameter aggregatedParameter = new Parameter()
                 .id(key)
                 .name(name)
                 .unit(unit)
                 .description(description)
                 .source(source);
+
+        aggregatedParameter.setAverageValue(aggregatedMeasurements.averageValue());
+        aggregatedParameter.setMinValue(aggregatedMeasurements.minValue());
+        aggregatedParameter.setMaxValue(aggregatedMeasurements.maxValue());
+        aggregatedParameter.setMeasurementCount(aggregatedMeasurements.measurementCount());
+        aggregatedParameter.setLatestValue(aggregatedMeasurements.latestValue());
+        aggregatedParameter.setLatestTimestamp(aggregatedMeasurements.latestTimestamp());
+
+        return aggregatedParameter;
+    }
+
+    /**
+     * Aggregates measurements from both GIOS and OpenAQ sources
+     */
+    private AggregatedMeasurements aggregateMeasurements(List<ParameterWithMeasurements> parameterDataList) {
+        List<Double> allValues = new ArrayList<>();
+        OffsetDateTime latestTimestamp = null;
+        Double latestValue = null;
+
+        for (ParameterWithMeasurements paramData : parameterDataList) {
+            // Process GIOS measurements
+            if (paramData.giosMeasurements() != null) {
+                for (MeasurementDTO measurement : paramData.giosMeasurements()) {
+                    if (measurement.getValue() != null) {
+                        allValues.add(measurement.getValue());
+
+                        // Track latest measurement
+                        if (measurement.getTimestamp() != null &&
+                                (latestTimestamp == null || measurement.getTimestamp().isAfter(latestTimestamp))) {
+                            latestTimestamp = measurement.getTimestamp();
+                            latestValue = measurement.getValue();
+                        }
+                    }
+                }
+            }
+
+            // Process OpenAQ measurements
+            if (paramData.openaqMeasurements() != null) {
+                for (Measurement measurement : paramData.openaqMeasurements()) {
+                    if (measurement.getValue() != null) {
+                        allValues.add(measurement.getValue());
+
+                        // Track latest measurement
+                        OffsetDateTime measurementTime = convertToOffsetDateTime(measurement.getDatetime());
+                        if (measurementTime != null &&
+                                (latestTimestamp == null || measurementTime.isAfter(latestTimestamp))) {
+                            latestTimestamp = measurementTime;
+                            latestValue = measurement.getValue();
+                        }
+                    }
+                }
+            }
+        }
+
+        if (allValues.isEmpty()) {
+            return new AggregatedMeasurements(null, null, null, 0, null, null);
+        }
+
+        DoubleSummaryStatistics stats = allValues.stream().mapToDouble(Double::doubleValue).summaryStatistics();
+
+        return new AggregatedMeasurements(
+                stats.getAverage(),
+                stats.getMin(),
+                stats.getMax(),
+                (int) stats.getCount(),
+                latestValue,
+                latestTimestamp
+        );
+    }
+
+    /**
+     * Converts OpenAQ MeasurementDateTime to OffsetDateTime
+     * You'll need to implement this based on your MeasurementDateTime structure
+     */
+    private OffsetDateTime convertToOffsetDateTime(openaq.data.model.MeasurementDateTime dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(dateTime.toString());
+        } catch (Exception e) {
+            log.warn("Could not parse OpenAQ measurement datetime: {}", dateTime, e);
+            return null;
+        }
+    }
+
+    /**
+     * Extracts parameter name from OpenAQ measurement using sensorId
+     */
+    private String getParameterNameFromMeasurement(Measurement measurement) {
+        if (measurement == null || measurement.getSensorId() == null) {
+            return "UNKNOWN";
+        }
+
+        return measurement.getSensorId().toString();
     }
 
 }
