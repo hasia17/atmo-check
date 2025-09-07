@@ -6,11 +6,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
@@ -39,22 +41,42 @@ func Clean() error {
 func OapiGenerate() error {
 	fmt.Println("Generating Go code from OpenAPI spec...")
 
-	spec := "api.yaml"
-	output := filepath.Join("gen", "api.gen.go")
-	pkg := "gen"
-	generate := "types,client,server"
-	module := "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest"
+	// Load OpenAPI spec
+	loader := openapi3.NewLoader()
+	doc, err := loader.LoadFromFile("./api/openapi.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to load OpenAPI spec: %w", err)
+	}
 
-	cmd := exec.Command("go", "run", module,
-		"-generate", generate,
-		"-o", output,
-		"-package", pkg,
-		spec,
-	)
+	// Validate the spec
+	if err := doc.Validate(context.Background()); err != nil {
+		return fmt.Errorf("invalid OpenAPI spec: %w", err)
+	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	// Configure code generation for types only
+	config := codegen.Configuration{
+		PackageName: "api",
+		Generate: codegen.GenerateOptions{
+			Models: true,
+			// TODO: check fiber servers
+		},
+	}
+
+	// Generate the code
+	code, err := codegen.Generate(doc, config)
+	if err != nil {
+		return fmt.Errorf("failed to generate code: %w", err)
+	}
+
+	// Write to file
+	outFile, err := os.Create("api/types.go")
+	if err != nil {
+		return fmt.Errorf("failed to create output file: %w", err)
+	}
+	defer outFile.Close()
+
+	_, err = io.WriteString(outFile, code)
+	return err
 }
 
 func DropDB() error {
