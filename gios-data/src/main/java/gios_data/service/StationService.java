@@ -37,7 +37,7 @@ public class StationService {
     public void init() {
         log.info("StationService initialized");
         updateStationsFromGios();
-        measurementService.updateMeasurementsFromGios();
+//        measurementService.updateMeasurementsFromGios();
     }
 
     @Scheduled(cron = "0 0 2 * * ?") // Daily at 2:00 AM
