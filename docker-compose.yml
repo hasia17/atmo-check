@@ -58,6 +58,7 @@ services:
   aggregator:
     ports:
       - "8082:8082"
+      - "5005:5005"
     build:
       context: ./aggregator
       dockerfile: Dockerfile
@@ -66,6 +67,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=8082
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     networks:
       - app-network
     labels:
@@ -81,7 +83,7 @@ services:
     container_name: openaq-data-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - MONGO_URI=mongodb://mongodb:27017
       - OPENAQ_API_KEY=2052f45d3059fbd16ea10c8dfb5415881fff2aeab157d90e87c5a1897fed9d1c

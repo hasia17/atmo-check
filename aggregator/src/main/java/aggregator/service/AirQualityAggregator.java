@@ -84,7 +84,7 @@ public class AirQualityAggregator {
                     String paramKey = normalizeParameterKey(param.getName());
 
                     List<Measurement> paramMeasurements = measurements.stream()
-                            .filter(m -> normalizeParameterKey(getParameterNameFromMeasurement(m)).equals(paramKey))
+                            .filter(m -> param.getId().equals(m.getSensorId()))
                             .collect(Collectors.toList());
 
                     if (CollectionUtils.isEmpty(paramMeasurements)) {
