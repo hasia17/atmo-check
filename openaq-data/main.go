@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"openaq-data/internal"
+	"openaq-data/internal/data"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
@@ -28,7 +29,7 @@ func main() {
 	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug, // move this to the future config file
 	}))
-	s, err := internal.NewDataService(apiKey, mongoURI, l)
+	s, err := data.NewService(apiKey, mongoURI, l)
 	if err != nil {
 		l.Error("Failed to create data service", "error", err)
 		os.Exit(1)
@@ -50,8 +51,7 @@ func main() {
 	app := fiber.New()
 	app.Get("/stations", h.HandleGetStations)
 	app.Get("/stations/:id", h.HandleGetStationByID)
-	app.Get("/stations/:id/measurements/latest", h.HandleGetLatestMeasurementsByStation)
-	app.Get("/stations/:id/parameters", h.HandleGetParametersByStation)
+	app.Get("/stations/:id/measurements", h.HandleGetMeasurementsForStation)
 
 	go func() {
 		if err := app.Listen(":3000"); err != nil {

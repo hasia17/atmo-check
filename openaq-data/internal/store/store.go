@@ -1,4 +1,4 @@
-package internal
+package store
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type Store struct {
 	measuresColl *mongo.Collection
 }
 
-func NewStore(mongoURI string) (*Store, error) {
+func New(mongoURI string) (*Store, error) {
 	mongoClient, err := mongo.Connect(options.Client().ApplyURI(mongoURI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
@@ -90,9 +90,14 @@ func (s *Store) GetParametersByStationID(ctx context.Context, id int32) ([]api.P
 	return *station.Parameters, nil
 }
 
-func (s *Store) StoreMeasurement(ctx context.Context, m api.Measurement) error {
-	_, err := s.measuresColl.InsertOne(ctx, m)
-	return err
+func (s *Store) StoreMeasurements(ctx context.Context, m []api.Measurement) error {
+	for _, measure := range m {
+		_, err := s.measuresColl.InsertOne(ctx, measure)
+		if err != nil {
+			return fmt.Errorf("failed to store measurement: %w", err)
+		}
+	}
+	return nil
 }
 
 func (s *Store) GetMeasurementsByStation(ctx context.Context, stationID int32, limit int64) ([]api.Measurement, error) {
@@ -146,6 +151,14 @@ func (s *Store) GetLatestMeasurementsByStation(ctx context.Context, stationID in
 		result = append(result, m)
 	}
 	return result, nil
+}
+
+func (s *Store) DeleteMeasurementsForStation(ctx context.Context, stationID int32) error {
+	_, err := s.measuresColl.DeleteMany(ctx, bson.M{"stationId": stationID})
+	if err != nil {
+		return fmt.Errorf("failed to delete measurements for station: %w", err)
+	}
+	return nil
 }
 
 func (s *Store) HasStations(ctx context.Context) (bool, error) {
