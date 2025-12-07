@@ -1,16 +1,17 @@
 package internal
 
 import (
+	"openaq-data/internal/data"
 	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 type DataHandler struct {
-	service *DataService
+	service *data.Service
 }
 
-func NewDataHandler(service *DataService) *DataHandler {
+func NewDataHandler(service *data.Service) *DataHandler {
 	return &DataHandler{
 		service: service,
 	}
@@ -39,22 +40,18 @@ func (h *DataHandler) HandleGetStationByID(c fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch station")
 	}
-	if station == nil {
-		return fiber.NewError(fiber.StatusNotFound, "Station not found")
-	}
-
 	return c.JSON(fiber.Map{"data": station})
 }
 
 // HandleGetLatestMeasurementsByStation returns latest measurements for a station
-func (h *DataHandler) HandleGetLatestMeasurementsByStation(c fiber.Ctx) error {
+func (h *DataHandler) HandleGetMeasurementsForStation(c fiber.Ctx) error {
 	stationIdStr := c.Params("id")
 	stationId, err := strconv.Atoi(stationIdStr)
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
 	}
 
-	measurements, err := h.service.GetLatestMeasurementsByStation(c.Context(), int32(stationId))
+	measurements, err := h.service.GetMeasurementsForStation(c.Context(), int32(stationId), 100)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch measurements")
 	}
@@ -62,22 +59,4 @@ func (h *DataHandler) HandleGetLatestMeasurementsByStation(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"data": measurements,
 	})
-}
-
-// HandleGetParametersByStation returns parameters for a station
-func (h *DataHandler) HandleGetParametersByStation(c fiber.Ctx) error {
-	idStr := c.Params("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
-	}
-	parameters, err := h.service.GetParametersByStationID(c.Context(), int32(id))
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch parameters")
-	}
-	if parameters == nil {
-		return fiber.NewError(fiber.StatusNotFound, "Station not found")
-	}
-
-	return c.JSON(fiber.Map{"data": parameters})
 }
