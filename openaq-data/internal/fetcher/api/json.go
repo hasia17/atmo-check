@@ -1,6 +1,6 @@
-package data
+package api
 
-type openAQLocation struct {
+type OpenAQLocation struct {
 	Id       int32  `json:"id"`
 	Name     string `json:"name"`
 	Locality string `json:"locality"`
@@ -27,10 +27,10 @@ type openAQLocation struct {
 }
 
 type openAQLocationResponse struct {
-	Results []openAQLocation `json:"results"`
+	Results []OpenAQLocation `json:"results"`
 }
 
-type openAQMeasurement struct {
+type OpenAQMeasurement struct {
 	Date struct {
 		Utc   string `json:"utc"`
 		Local string `json:"local"`
@@ -47,5 +47,5 @@ type openAQMeasurement struct {
 }
 
 type openAQMeasurementResponse struct {
-	Results []openAQMeasurement `json:"results"`
+	Results []OpenAQMeasurement `json:"results"`
 }
