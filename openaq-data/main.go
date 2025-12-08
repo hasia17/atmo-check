@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"openaq-data/internal"
-	"openaq-data/internal/data"
+	"openaq-data/internal/fetcher"
+	"openaq-data/internal/server"
+	"openaq-data/internal/store"
 
-	"github.com/gofiber/fiber/v3"
 	"github.com/joho/godotenv"
 )
 
@@ -26,35 +26,36 @@ func main() {
 		log.Fatal("MONGO_URI is required")
 	}
 
+	db, err := store.New(mongoURI)
+	if err != nil {
+		log.Fatal("failed to open DB")
+	}
+	defer db.Close()
+
 	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug, // move this to the future config file
 	}))
-	s, err := data.NewService(apiKey, mongoURI, l)
+
+	f, err := fetcher.NewService(apiKey, db, l)
 	if err != nil {
-		l.Error("Failed to create data service", "error", err)
+		l.Error("failed to create fetcher service", "error", err)
 		os.Exit(1)
 	}
-	defer s.Close()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	go func() {
-		if err := s.Run(ctx); err != nil {
-			l.Error("Data service stopped with error", "error", err)
+		if err := f.Run(ctx); err != nil {
+			l.Error("fetcher service stopped with error", "error", err)
 			cancel()
 			return
 		}
 	}()
 
-	h := internal.NewDataHandler(s)
-	app := fiber.New()
-	app.Get("/stations", h.HandleGetStations)
-	app.Get("/stations/:id", h.HandleGetStationByID)
-	app.Get("/stations/:id/measurements", h.HandleGetMeasurementsForStation)
-
+	srv := server.New(db, l)
 	go func() {
-		if err := app.Listen(":3000"); err != nil {
+		if err := srv.Run(); err != nil {
 			l.Error("Failed to start server", "error", err)
 			cancel()
 			return
@@ -64,11 +65,11 @@ func main() {
 	<-ctx.Done()
 	log.Println("Shutting down...")
 
-	if err := app.Shutdown(); err != nil {
+	if err := srv.Stop(); err != nil {
 		l.Error("Failed to shutdown server", "error", err)
 	}
 
-	if err := s.Close(); err != nil {
+	if err := db.Close(); err != nil {
 		l.Error("Failed to close data service", "error", err)
 	}
 }
