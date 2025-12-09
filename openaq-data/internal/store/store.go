@@ -170,22 +170,6 @@ func (s *Store) DeleteMeasurementsForStation(ctx context.Context, stationID int3
 	return nil
 }
 
-func (s *Store) HasData(ctx context.Context) (bool, error) {
-	stationCount, err := s.stationsColl.CountDocuments(ctx, bson.M{})
-	if err != nil {
-		return false, fmt.Errorf("failed to count stations: %w", err)
-	}
-	if stationCount == 0 {
-		return false, nil
-	}
-
-	measureCount, err := s.measuresColl.CountDocuments(ctx, bson.M{})
-	if err != nil {
-		return false, fmt.Errorf("failed to count measurements: %w", err)
-	}
-	return measureCount > 0, nil
-}
-
 func (s *Store) Close() error {
 	if s.mongoClient != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
