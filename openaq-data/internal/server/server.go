@@ -43,7 +43,7 @@ func (s *Server) Stop() error {
 }
 
 func (s *Server) handleGetStations(c fiber.Ctx) error {
-	stations, err := s.dataService.GetStations(c.Context())
+	stations, err := s.dataService.Stations(c.Context())
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch stations")
 	}
@@ -59,7 +59,7 @@ func (s *Server) handleGetStationByID(c fiber.Ctx) error {
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
 	}
-	station, err := s.dataService.GetStationByID(c.Context(), int32(id))
+	station, err := s.dataService.StationByID(c.Context(), int32(id))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch station")
 	}
@@ -73,7 +73,7 @@ func (s *Server) handleGetMeasurementsForStation(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "Invalid station ID")
 	}
 
-	measurements, err := s.dataService.GetMeasurementsForStation(c.Context(), int32(stationId), 100)
+	measurements, err := s.dataService.MeasurementsForStation(c.Context(), int32(stationId), 100)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to fetch measurements")
 	}

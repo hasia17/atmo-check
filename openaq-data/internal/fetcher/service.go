@@ -9,37 +9,42 @@ import (
 	"openaq-data/internal/fetcher/api"
 	"openaq-data/internal/store"
 	"openaq-data/types"
+	"sync"
 	"time"
 )
 
+const (
+	stationsUpdateInterval     = 24 * time.Hour
+	measurementsUpdateInterval = 1 * time.Hour
+)
+
+var (
+	ErrStationsNotLoaded = errors.New("stations not loaded yet")
+)
+
+// Fetcher service is responsible for fetching data from the OpenAQ API
+// and storing it in the local store.
+// It runs in the background, periodically updating stations and measurements.
 type Service struct {
 	api    *api.Service
 	store  *store.Store
 	logger *slog.Logger
+
+	stationsLoadedOnce sync.Once
+	stationsLoaded     chan struct{}
 }
 
 func NewService(apiKey string, s *store.Store, l *slog.Logger) (*Service, error) {
 	return &Service{
-		api:    api.New(apiKey, l),
-		store:  s,
-		logger: l,
+		api:            api.New(apiKey, l),
+		store:          s,
+		logger:         l,
+		stationsLoaded: make(chan struct{}, 1),
 	}, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	hasData, err := s.store.HasData(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to check for existing data: %w", err)
-	}
-	if !hasData {
-		s.logger.Info("running initial fetch...")
-		if err := s.getStations(ctx); err != nil {
-			return fmt.Errorf("failed to fetch initial locations: %w", err)
-		}
-	} else {
-		s.logger.Info("skipping initial fetch")
-	}
-
+	go s.updateStationsLoop(ctx)
 	go s.updateMeasurementsLoop(ctx)
 
 	<-ctx.Done()
@@ -47,7 +52,24 @@ func (s *Service) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) getStations(ctx context.Context) error {
+func (s *Service) updateStationsLoop(ctx context.Context) {
+	ticker := time.NewTicker(stationsUpdateInterval)
+	defer ticker.Stop()
+
+	for {
+		if err := s.loadStations(ctx); err != nil {
+			s.logger.Error("Failed to update stations", slog.Any("error", err))
+		}
+
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (s *Service) loadStations(ctx context.Context) error {
 	locations, err := s.api.FetchLocations(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch locations from API: %w", err)
@@ -57,6 +79,10 @@ func (s *Service) getStations(ctx context.Context) error {
 	if err := s.store.StoreStations(ctx, stations); err != nil {
 		return fmt.Errorf("failed to store stations: %w", err)
 	}
+
+	s.stationsLoadedOnce.Do(func() {
+		close(s.stationsLoaded)
+	})
 
 	return nil
 }
@@ -95,12 +121,16 @@ func (s *Service) buildStationsFromApiData(locations []api.OpenAQLocation) []typ
 }
 
 func (s *Service) updateMeasurementsLoop(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Hour)
+	ticker := time.NewTicker(measurementsUpdateInterval)
 	defer ticker.Stop()
 
 	for {
 		if err := s.updateMeasurements(ctx); err != nil {
 			s.logger.Error("Failed to update measurements", slog.Any("error", err))
+			if errors.Is(err, ErrStationsNotLoaded) {
+				<-time.After(5 * time.Second)
+				continue
+			}
 		}
 
 		select {
@@ -110,7 +140,16 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 		}
 	}
 }
+
 func (s *Service) updateMeasurements(ctx context.Context) error {
+	select {
+	case <-s.stationsLoaded:
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return ErrStationsNotLoaded
+	}
+
 	stations, err := s.store.GetStations(ctx)
 	if err != nil {
 		return err
@@ -130,7 +169,7 @@ func (s *Service) updateMeasurements(ctx context.Context) error {
 }
 
 func (s *Service) updateMeasurementsForStation(ctx context.Context, station types.Station) error {
-	measurements, err := s.getMeasurementsForStation(station)
+	measurements, err := s.loadMeasurementsForStation(station)
 	if err != nil {
 		return err
 	}
@@ -150,7 +189,7 @@ func (s *Service) updateMeasurementsForStation(ctx context.Context, station type
 	return nil
 }
 
-func (s *Service) getMeasurementsForStation(station types.Station) ([]types.Measurement, error) {
+func (s *Service) loadMeasurementsForStation(station types.Station) ([]types.Measurement, error) {
 	var measurements []types.Measurement
 	for _, parameter := range *station.Parameters {
 		apiData, err := s.tryGetMeasurementsForStation(*station.Id, *parameter.Id)
@@ -198,7 +237,7 @@ func (s *Service) buildMeasurementsFromApiData(
 				continue
 			}
 		}
-		measurement := types.Measurement{
+		measurements = append(measurements, types.Measurement{
 			Datetime: &types.MeasurementDateTime{
 				Utc:   &m.Date.Utc,
 				Local: &m.Date.Local,
@@ -211,8 +250,7 @@ func (s *Service) buildMeasurementsFromApiData(
 			},
 			SensorId:  param.Id,
 			StationId: &stationId,
-		}
-		measurements = append(measurements, measurement)
+		})
 	}
 	return measurements
 }
