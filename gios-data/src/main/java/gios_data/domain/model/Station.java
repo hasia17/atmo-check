@@ -16,9 +16,6 @@ public class Station {
     @Id
     private String id;
     private String name;
-    private String location;
-    private List<Parameter> parameters = new ArrayList<>();
-    private LocalDateTime lastUpdated;
     private double geoLat;
     private double geoLon;
 }
