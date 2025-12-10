@@ -3,7 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
-	"openaq-data/types"
+	"openaq-data/internal/types"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"

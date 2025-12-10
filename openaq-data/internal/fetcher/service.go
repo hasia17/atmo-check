@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"openaq-data/internal/fetcher/api"
+	"openaq-data/internal/fetcher/apiclient"
 	"openaq-data/internal/store"
-	"openaq-data/types"
+	"openaq-data/internal/types"
 	"sync"
 	"time"
 )
@@ -26,7 +26,7 @@ var (
 // and storing it in the local store.
 // It runs in the background, periodically updating stations and measurements.
 type Service struct {
-	api    *api.Service
+	client *apiclient.Service
 	store  *store.Store
 	logger *slog.Logger
 
@@ -36,7 +36,7 @@ type Service struct {
 
 func NewService(apiKey string, s *store.Store, l *slog.Logger) (*Service, error) {
 	return &Service{
-		api:            api.New(apiKey, l),
+		client:         apiclient.New(apiKey, l),
 		store:          s,
 		logger:         l,
 		stationsLoaded: make(chan struct{}, 1),
@@ -70,7 +70,7 @@ func (s *Service) updateStationsLoop(ctx context.Context) {
 }
 
 func (s *Service) loadStations(ctx context.Context) error {
-	locations, err := s.api.FetchLocations(ctx)
+	locations, err := s.client.FetchLocations(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch locations from API: %w", err)
 	}
@@ -87,7 +87,7 @@ func (s *Service) loadStations(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) buildStationsFromApiData(locations []api.OpenAQLocation) []types.Station {
+func (s *Service) buildStationsFromApiData(locations []apiclient.OpenAQLocation) []types.Station {
 	var stations []types.Station
 	for _, apiLoc := range locations {
 		station := types.Station{
@@ -206,11 +206,11 @@ func (s *Service) loadMeasurementsForStation(station types.Station) ([]types.Mea
 	return measurements, nil
 }
 
-func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]api.OpenAQMeasurement, error) {
+func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]apiclient.OpenAQMeasurement, error) {
 	for range 3 {
-		apiData, err := s.api.FetchMeasurementsForLocation(stationId, paramId)
+		apiData, err := s.client.FetchMeasurementsForLocation(stationId, paramId)
 		if err != nil {
-			if errors.Is(err, api.ErrRateLimitExceeded) {
+			if errors.Is(err, apiclient.ErrRateLimitExceeded) {
 				s.logger.Warn("Rate limit exceeded, retrying after delay")
 				<-time.After(5 * time.Second)
 				continue
@@ -223,7 +223,7 @@ func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]api.
 }
 
 func (s *Service) buildMeasurementsFromApiData(
-	apiMeasurements []api.OpenAQMeasurement,
+	apiMeasurements []apiclient.OpenAQMeasurement,
 	param *types.Parameter,
 	stationId int32,
 ) []types.Measurement {
