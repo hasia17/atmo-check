@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"openaq-data/internal/store"
-	"openaq-data/types"
+	"openaq-data/internal/types"
 )
 
 type Service struct {

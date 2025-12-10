@@ -30,36 +30,33 @@ paths:
         "500":
           description: Failed to fetch stations
 
-  /stations/{id}:
+  /parameters:
     get:
-      operationId: getStationById
-      summary: Get station by ID
-      description: Returns a specific station by its ID
+      operationId: getParameters
+      summary: Get all parameters
+      description: Returns a list of all measurement parameters
       tags:
-        - stations
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
+        - parameters
       responses:
         "200":
-          description: Station details
+          description: List of parameters
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/Station"
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Parameter"
+        "400":
+          description: Invalid request
         "404":
-          description: Station not found
+          description: Parameters not found
         "500":
-          description: Failed to fetch station
+          description: Failed to fetch parameters
 
-  /stations/{id}/measurements/latest:
+  /stations/{id}/measurements:
     get:
       operationId: getMeasurementsByStation
       summary: Get latest measurements by station
@@ -70,6 +67,13 @@ paths:
         - name: id
           in: path
           required: true
+          schema:
+            type: integer
+            format: int32
+      queryParameters:
+        - name: parameter_id
+          in: query
+          required: false
           schema:
             type: integer
             format: int32
@@ -87,41 +91,10 @@ paths:
                       $ref: "#/components/schemas/Measurement"
         "400":
           description: Invalid station ID
+        "404":
+          description: Not found
         "500":
           description: Failed to fetch measurements
-
-  /stations/{id}/parameters:
-    get:
-      operationId: getParametersByStation
-      summary: Get parameters by station
-      description: Returns all parameters measured at a specific station
-      tags:
-        - parameters
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          description: Station parameters
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Parameter"
-        "400":
-          description: Invalid station ID
-        "404":
-          description: Station not found
-        "500":
-          description: Failed to fetch parameters
 
 components:
   schemas:
@@ -207,3 +180,12 @@ components:
         longitude:
           type: number
           format: double
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: integer
+          format: int32

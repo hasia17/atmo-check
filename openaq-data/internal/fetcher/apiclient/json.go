@@ -1,4 +1,4 @@
-package api
+package apiclient
 
 type OpenAQLocation struct {
 	Id       int32  `json:"id"`
