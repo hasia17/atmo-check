@@ -55,6 +55,30 @@ services:
       - "traefik.http.routers.gios-data.entrypoints=web"
       - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
 
+  open-meteo-data:
+    ports:
+      - "8083:8083" 
+    build:
+      context: ./gios-data
+      dockerfile: Dockerfile
+    container_name: open-meteo-app
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=open-meteo-db
+      - SERVER_PORT=8083
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gios-data.rule=Host(`open-meteo-data.localhost`)"
+      - "traefik.http.routers.gios-data.entrypoints=web"
+      - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
+
   aggregator:
     ports:
       - "8082:8082"

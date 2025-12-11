@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import open.meteo.domain.model.Station;
+import open.meteo.domain.repository.StationRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -17,8 +18,10 @@ import java.util.List;
 public class StationService {
 
     private final ObjectMapper objectMapper;
+    private final StationRepository stationRepository;
 
-    public StationService() {
+    public StationService(StationRepository stationRepository) {
+        this.stationRepository = stationRepository;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -36,7 +39,8 @@ public class StationService {
                 new TypeReference<List<Station>>() {}
         );
 
-        log.info(stations.size() + " stations loaded.");
+        stationRepository.saveAll(stations);
+        log.info("{} stations loaded.", stations.size());
     }
 }
 
