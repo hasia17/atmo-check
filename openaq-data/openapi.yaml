@@ -70,13 +70,6 @@ paths:
           schema:
             type: integer
             format: int32
-      queryParameters:
-        - name: parameter_id
-          in: query
-          required: false
-          schema:
-            type: integer
-            format: int32
       responses:
         "200":
           description: Latest measurements
