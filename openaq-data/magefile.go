@@ -12,9 +12,14 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/magefile/mage/mg"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+)
+
+const (
+	openAPISpecPath = "openapi.yaml"
 )
 
 func Build() error {
@@ -25,51 +30,56 @@ func Build() error {
 	return cmd.Run()
 }
 
-func Test() error {
-	fmt.Println("Running tests...")
-	cmd := exec.Command("go", "test", "./...")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+type genConfig struct {
+	packageName    string
+	outputFilePath string
+	genOpts        codegen.GenerateOptions
 }
 
-func Clean() error {
-	fmt.Println("Cleaning up...")
-	return os.Remove("openaq-data")
+type Gen mg.Namespace
+
+func (Gen) Types() error {
+	return Gen{}.generate(genConfig{
+		packageName:    "types",
+		outputFilePath: "internal/types/types.go",
+		genOpts: codegen.GenerateOptions{
+			Models: true,
+		},
+	})
 }
 
-func OapiGenerate() error {
-	fmt.Println("Generating Go code from OpenAPI spec...")
+func (Gen) Api() error {
+	return Gen{}.generate(genConfig{
+		packageName:    "api",
+		outputFilePath: "internal/api/server.go",
+		genOpts: codegen.GenerateOptions{
+			EchoServer: true,
+		},
+	})
+}
 
-	// Load OpenAPI spec
+func (Gen) generate(opts genConfig) error {
 	loader := openapi3.NewLoader()
-	doc, err := loader.LoadFromFile("./api/openapi.yaml")
+	doc, err := loader.LoadFromFile(openAPISpecPath)
 	if err != nil {
 		return fmt.Errorf("failed to load OpenAPI spec: %w", err)
 	}
 
-	// Validate the spec
 	if err := doc.Validate(context.Background()); err != nil {
 		return fmt.Errorf("invalid OpenAPI spec: %w", err)
 	}
 
-	// Configure code generation for types only
 	config := codegen.Configuration{
-		PackageName: "api",
-		Generate: codegen.GenerateOptions{
-			Models: true,
-			// TODO: check fiber servers
-		},
+		PackageName: opts.packageName,
+		Generate:    opts.genOpts,
 	}
 
-	// Generate the code
 	code, err := codegen.Generate(doc, config)
 	if err != nil {
 		return fmt.Errorf("failed to generate code: %w", err)
 	}
 
-	// Write to file
-	outFile, err := os.Create("api/types.go")
+	outFile, err := os.Create(opts.outputFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}

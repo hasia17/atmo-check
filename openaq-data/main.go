@@ -8,11 +8,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	"openaq-data/internal/api"
 	"openaq-data/internal/fetcher"
 	"openaq-data/internal/server"
 	"openaq-data/internal/store"
 
 	"github.com/joho/godotenv"
+	"github.com/labstack/echo/v4"
+)
+
+const (
+	listenAddr = ":3000"
 )
 
 func main() {
@@ -42,7 +48,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGILL)
 	defer cancel()
 
 	go func() {
@@ -53,9 +59,12 @@ func main() {
 		}
 	}()
 
+	e := echo.New()
 	srv := server.New(db, l)
+	api.RegisterHandlers(e, srv)
+
 	go func() {
-		if err := srv.Run(); err != nil {
+		if err := e.Start(listenAddr); err != nil {
 			l.Error("Failed to start server", "error", err)
 			cancel()
 			return
@@ -65,7 +74,7 @@ func main() {
 	<-ctx.Done()
 	log.Println("Shutting down...")
 
-	if err := srv.Stop(); err != nil {
+	if err := e.Shutdown(context.Background()); err != nil {
 		l.Error("Failed to shutdown server", "error", err)
 	}
 
