@@ -27,6 +27,10 @@ public class StationService {
 
     @PostConstruct
     public void initializeStations() throws IOException {
+        // clean database before loading
+        stationRepository.deleteAll();
+
+        // load stations from JSON file
         InputStream inputStream = getClass()
                 .getResourceAsStream("/import/stations.json");
 
@@ -39,6 +43,7 @@ public class StationService {
                 new TypeReference<List<Station>>() {}
         );
 
+        // save stations to database
         stationRepository.saveAll(stations);
         log.info("{} stations loaded.", stations.size());
     }
