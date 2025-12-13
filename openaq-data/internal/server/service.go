@@ -32,8 +32,13 @@ func (s *Service) GetStations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
+	parameters, err := s.dataService.Parameters(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to fetch parameters", http.StatusInternalServerError)
+		return
+	}
 	writeJSON(w, http.StatusNotImplemented, map[string]any{
-		"error": "Not implemented",
+		"data": parameters,
 	})
 }
 

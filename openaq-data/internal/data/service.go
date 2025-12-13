@@ -36,6 +36,14 @@ func (s *Service) StationByID(ctx context.Context, id int32) (*types.Station, er
 	return station, nil
 }
 
+func (s *Service) Parameters(ctx context.Context) ([]types.Parameter, error) {
+	parameters, err := s.store.GetParameters(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return parameters, nil
+}
+
 func (s *Service) MeasurementsForStation(
 	ctx context.Context,
 	stationID int32,
