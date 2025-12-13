@@ -1,11 +1,15 @@
 package open.meteo.rs.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 
-@Data
+
+@Getter
+@Setter
 public class OpenMeteoAirQualityResponse {
     private Double latitude;
     private Double longitude;
@@ -18,48 +22,78 @@ public class OpenMeteoAirQualityResponse {
     private Integer utcOffsetSeconds;
 
     private String timezone;
-    private HourlyData hourly;
+
+    @JsonProperty("timezone_abbreviation")
+    private String timezoneAbbreviation;
+
+    @JsonProperty("hourly")
+    private Map<String, List<Double>> values;
 
     @JsonProperty("hourly_units")
-    private HourlyUnits hourlyUnits;
-}
+    private Map<String, String> units;
 
-@Data
-class HourlyData {
-    private List<String> time;
-    private List<Double> pm10;
 
-    @JsonProperty("pm2_5")
-    private List<Double> pm25;
 
-    @JsonProperty("carbon_monoxide")
-    private List<Double> carbonMonoxide;
-
-    @JsonProperty("nitrogen_dioxide")
-    private List<Double> nitrogenDioxide;
-
-    @JsonProperty("sulphur_dioxide")
-    private List<Double> sulphurDioxide;
-
-    private List<Double> ozone;
-}
-
-@Data
-class HourlyUnits {
-    private String time;
-    private String pm10;
-
-    @JsonProperty("pm2_5")
-    private String pm25;
-
-    @JsonProperty("carbon_monoxide")
-    private String carbonMonoxide;
-
-    @JsonProperty("nitrogen_dioxide")
-    private String nitrogenDioxide;
-
-    @JsonProperty("sulphur_dioxide")
-    private String sulphurDioxide;
-
-    private String ozone;
+//    /**
+//     * Pobiera listę wszystkich dostępnych parametrów (bez 'time')
+//     */
+//    public List<String> getAvailableParameters() {
+//        return hourly.keySet().stream()
+//                .filter(key -> !key.equals("time"))
+//                .sorted()
+//                .toList();
+//    }
+//
+//    /**
+//     * Pobiera wartość dla danego parametru w określonym indeksie czasu
+//     */
+//    public Double getValue(String paramName, int timeIndex) {
+//        List<Object> values = hourly.get(paramName);
+//        if (values == null || timeIndex >= values.size()) {
+//            return null;
+//        }
+//        Object value = values.get(timeIndex);
+//        if (value == null) {
+//            return null;
+//        }
+//        return value instanceof Number ? ((Number) value).doubleValue() : null;
+//    }
+//
+//    /**
+//     * Pobiera jednostkę dla danego parametru
+//     */
+//    public String getUnit(String paramName) {
+//        return hourlyUnits != null ? hourlyUnits.get(paramName) : null;
+//    }
+//
+//    /**
+//     * Pobiera listę timestampów
+//     */
+//    @SuppressWarnings("unchecked")
+//    public List<String> getTimeStamps() {
+//        List<Object> times = hourly.get("time");
+//        if (times == null) {
+//            return List.of();
+//        }
+//        return (List<String>) (List<?>) times;
+//    }
+//
+//    /**
+//     * Pobiera liczbę punktów czasowych
+//     */
+//    public int getTimePointsCount() {
+//        List<Object> times = hourly.get("time");
+//        return times != null ? times.size() : 0;
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return "OpenMeteoAirQualityResponse{" +
+//                "latitude=" + latitude +
+//                ", longitude=" + longitude +
+//                ", timezone='" + timezone + '\'' +
+//                ", elevation=" + elevation +
+//                ", parametersCount=" + (hourly != null ? hourly.size() - 1 : 0) +
+//                '}';
+//    }
 }
