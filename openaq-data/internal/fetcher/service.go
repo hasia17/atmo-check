@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"openaq-data/internal"
 	"openaq-data/internal/fetcher/apiclient"
 	"openaq-data/internal/store"
 	"openaq-data/internal/types"
@@ -36,7 +37,7 @@ type Service struct {
 	parametersLoaded     chan struct{}
 }
 
-func NewService(apiKey string, s *store.Store, l *slog.Logger) (*Service, error) {
+func NewService(apiKey string, s *store.Store, l *slog.Logger) (internal.FetcherService, error) {
 	return &Service{
 		client:           apiclient.New(apiKey, l),
 		store:            s,

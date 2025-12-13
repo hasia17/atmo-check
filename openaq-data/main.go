@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"openaq-data/internal/api"
+	"openaq-data/internal/data"
 	"openaq-data/internal/fetcher"
 	"openaq-data/internal/server"
 	"openaq-data/internal/store"
@@ -59,7 +60,8 @@ func main() {
 		}
 	}()
 
-	srv := server.New(db, l)
+	dataService := data.NewService(db, l)
+	srv := server.New(dataService, l)
 	httpServer := &http.Server{
 		Addr:    listenAddr,
 		Handler: api.Handler(srv),

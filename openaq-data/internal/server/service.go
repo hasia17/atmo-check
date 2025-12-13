@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"openaq-data/internal"
 	"openaq-data/internal/api"
-	"openaq-data/internal/data"
-	"openaq-data/internal/store"
 )
 
 type Service struct {
-	dataService *data.Service
+	dataService internal.DataService
 	logger      *slog.Logger
 }
 
-func New(db *store.Store, l *slog.Logger) api.ServerInterface {
+func New(d internal.DataService, l *slog.Logger) api.ServerInterface {
 	return &Service{
-		dataService: data.NewService(db, l),
+		dataService: d,
+		logger:      l,
 	}
 }
 
