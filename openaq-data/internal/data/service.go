@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"openaq-data/internal"
 	"openaq-data/internal/store"
 	"openaq-data/internal/types"
 )
@@ -13,7 +14,7 @@ type Service struct {
 	logger *slog.Logger
 }
 
-func NewService(s *store.Store, l *slog.Logger) *Service {
+func NewService(s *store.Store, l *slog.Logger) internal.DataService {
 	return &Service{
 		store:  s,
 		logger: l,
@@ -28,12 +29,12 @@ func (s *Service) Stations(ctx context.Context) ([]types.Station, error) {
 	return stations, nil
 }
 
-func (s *Service) StationByID(ctx context.Context, id int32) (*types.Station, error) {
-	station, err := s.store.GetStationByID(ctx, id)
+func (s *Service) Parameters(ctx context.Context) ([]types.Parameter, error) {
+	parameters, err := s.store.GetParameters(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return station, nil
+	return parameters, nil
 }
 
 func (s *Service) MeasurementsForStation(

@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"openaq-data/internal"
 	"openaq-data/internal/api"
-	"openaq-data/internal/data"
-	"openaq-data/internal/store"
 )
 
 type Service struct {
-	dataService *data.Service
+	dataService internal.DataService
 	logger      *slog.Logger
 }
 
-func New(db *store.Store, l *slog.Logger) api.ServerInterface {
+func New(d internal.DataService, l *slog.Logger) api.ServerInterface {
 	return &Service{
-		dataService: data.NewService(db, l),
+		dataService: d,
+		logger:      l,
 	}
 }
 
@@ -32,8 +32,13 @@ func (s *Service) GetStations(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
+	parameters, err := s.dataService.Parameters(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to fetch parameters", http.StatusInternalServerError)
+		return
+	}
 	writeJSON(w, http.StatusNotImplemented, map[string]any{
-		"error": "Not implemented",
+		"data": parameters,
 	})
 }
 
