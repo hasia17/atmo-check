@@ -12,9 +12,10 @@ import (
 )
 
 type Store struct {
-	mongoClient  *mongo.Client
-	stationsColl *mongo.Collection
-	measuresColl *mongo.Collection
+	mongoClient    *mongo.Client
+	stationsColl   *mongo.Collection
+	measuresColl   *mongo.Collection
+	parametersColl *mongo.Collection
 }
 
 func New(mongoURI string) (*Store, error) {
@@ -32,11 +33,13 @@ func New(mongoURI string) (*Store, error) {
 	db := mongoClient.Database("openaq")
 	stationsColl := db.Collection("stations")
 	measuresColl := db.Collection("measurements")
+	parametersColl := db.Collection("parameters")
 
 	return &Store{
-		mongoClient:  mongoClient,
-		stationsColl: stationsColl,
-		measuresColl: measuresColl,
+		mongoClient:    mongoClient,
+		stationsColl:   stationsColl,
+		measuresColl:   measuresColl,
+		parametersColl: parametersColl,
 	}, nil
 }
 
@@ -166,6 +169,41 @@ func (s *Store) DeleteMeasurementsForStation(ctx context.Context, stationID int3
 	_, err := s.measuresColl.DeleteMany(ctx, bson.M{"stationId": stationID})
 	if err != nil {
 		return fmt.Errorf("failed to delete measurements for station: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) GetParameters(ctx context.Context) ([]types.Parameter, error) {
+	cursor, err := s.parametersColl.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch parameters: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	var parameters []types.Parameter
+	if err := cursor.All(ctx, &parameters); err != nil {
+		return nil, fmt.Errorf("failed to decode parameters: %w", err)
+	}
+	return parameters, nil
+}
+
+func (s *Store) StoreParameters(ctx context.Context, parameters []types.Parameter) error {
+	for _, parameter := range parameters {
+		if err := s.storeParameter(ctx, parameter); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Store) storeParameter(ctx context.Context, parameter types.Parameter) error {
+	_, err := s.parametersColl.UpdateOne(ctx,
+		bson.M{"_id": parameter.Id},
+		bson.M{"$set": parameter},
+		options.UpdateOne().SetUpsert(true),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to store parameter: %w", err)
 	}
 	return nil
 }

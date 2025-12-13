@@ -1,6 +1,6 @@
 package apiclient
 
-type OpenAQLocation struct {
+type OpenAqLocation struct {
 	Id       int32  `json:"id"`
 	Name     string `json:"name"`
 	Locality string `json:"locality"`
@@ -26,11 +26,11 @@ type OpenAQLocation struct {
 	} `json:"coordinates"`
 }
 
-type openAQLocationResponse struct {
-	Results []OpenAQLocation `json:"results"`
+type openAqLocationResponse struct {
+	Results []OpenAqLocation `json:"results"`
 }
 
-type OpenAQMeasurement struct {
+type OpenAqMeasurement struct {
 	Date struct {
 		Utc   string `json:"utc"`
 		Local string `json:"local"`
@@ -46,6 +46,18 @@ type OpenAQMeasurement struct {
 	LocationId int32 `json:"locationId"`
 }
 
-type openAQMeasurementResponse struct {
-	Results []OpenAQMeasurement `json:"results"`
+type openAqMeasurementResponse struct {
+	Results []OpenAqMeasurement `json:"results"`
+}
+
+type OpenAqParameter struct {
+	Id          int32  `json:"id"`
+	Name        string `json:"name"`
+	Units       string `json:"units"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description"`
+}
+
+type openAqParameterResponse struct {
+	Results []OpenAqParameter `json:"results"`
 }
