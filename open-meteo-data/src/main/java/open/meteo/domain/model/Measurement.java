@@ -12,9 +12,9 @@ import java.time.LocalDateTime;
 @Document(collection = "measurements")
 public class Measurement {
     @Id
-    private String id;
-    private String stationId;
-    private String parameterId;
+    private Long id;
+    private Long stationId;
+    private Long parameterId;
     private Double value;
     private LocalDateTime timestamp;
 }

@@ -1,0 +1,80 @@
+[
+  {
+    "id": 1,
+    "name": "PM10",
+    "unit": "µg/m³",
+    "description": "Concentration of particulate matter with a diameter of 10 micrometers or less in the air."
+  },
+  {
+    "id": 2,
+    "name": "PM2_5",
+    "unit": "µg/m³",
+    "description": "Concentration of fine particulate matter with a diameter of 2.5 micrometers or less in the air."
+  },
+  {
+    "id": 3,
+    "name": "CARBON_MONOXIDE",
+    "unit": "µg/m³",
+    "description": "Concentration of carbon monoxide (CO) in the air."
+  },
+  {
+    "id": 4,
+    "name": "CARBON_DIOXIDE",
+    "unit": "ppm",
+    "description": "Concentration of carbon dioxide (CO₂) in the air."
+  },
+  {
+    "id": 5,
+    "name": "NITROGEN_DIOXIDE",
+    "unit": "µg/m³",
+    "description": "Concentration of nitrogen dioxide (NO₂), mainly emitted from traffic and fuel combustion."
+  },
+  {
+    "id": 6,
+    "name": "SULPHUR_DIOXIDE",
+    "unit": "µg/m³",
+    "description": "Concentration of sulphur dioxide (SO₂), primarily emitted by industrial processes and fossil fuel combustion."
+  },
+  {
+    "id": 7,
+    "name": "OZONE",
+    "unit": "µg/m³",
+    "description": "Concentration of tropospheric ozone (O₃), formed by photochemical reactions in the atmosphere."
+  },
+  {
+    "id": 8,
+    "name": "AMMONIA",
+    "unit": "µg/m³",
+    "description": "Concentration of ammonia (NH₃), mainly originating from agricultural activities and livestock farming."
+  },
+  {
+    "id": 9,
+    "name": "METHANE",
+    "unit": "µg/m³",
+    "description": "Concentration of methane (CH₄), a greenhouse gas emitted from agriculture, waste, and industrial sources."
+  },
+  {
+    "id": 10,
+    "name": "AEROSOL_OPTICAL_DEPTH",
+    "unit": "dimensionless",
+    "description": "Aerosol Optical Depth (AOD), a dimensionless measure of the amount of aerosol particles in the atmosphere."
+  },
+  {
+    "id": 11,
+    "name": "DUST",
+    "unit": "µg/m³",
+    "description": "Concentration of mineral dust particles suspended in the atmosphere."
+  },
+  {
+    "id": 12,
+    "name": "UV_INDEX",
+    "unit": "UV Index",
+    "description": "UV Index indicating the level of ultraviolet radiation at the Earth's surface based on the WHO scale."
+  },
+  {
+    "id": 13,
+    "name": "UV_INDEX_CLEAR_SKY",
+    "unit": "UV Index",
+    "description": "UV Index under clear-sky conditions without cloud cover, based on the WHO scale."
+  }
+]
