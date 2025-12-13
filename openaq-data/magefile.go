@@ -53,7 +53,7 @@ func (Gen) Api() error {
 		packageName:    "api",
 		outputFilePath: "internal/api/server.go",
 		genOpts: codegen.GenerateOptions{
-			EchoServer: true,
+			StdHTTPServer: true,
 		},
 	})
 }

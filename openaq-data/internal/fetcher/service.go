@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	ErrStationsNotLoaded = errors.New("stations not loaded yet")
+	ErrInitialDataNotLoaded = errors.New("initial data not loaded yet")
 )
 
 // Fetcher service is responsible for fetching data from the OpenAQ API
@@ -30,21 +30,25 @@ type Service struct {
 	store  *store.Store
 	logger *slog.Logger
 
-	stationsLoadedOnce sync.Once
-	stationsLoaded     chan struct{}
+	stationsLoadedOnce   sync.Once
+	stationsLoaded       chan struct{}
+	parametersLoadedOnce sync.Once
+	parametersLoaded     chan struct{}
 }
 
 func NewService(apiKey string, s *store.Store, l *slog.Logger) (*Service, error) {
 	return &Service{
-		client:         apiclient.New(apiKey, l),
-		store:          s,
-		logger:         l,
-		stationsLoaded: make(chan struct{}, 1),
+		client:           apiclient.New(apiKey, l),
+		store:            s,
+		logger:           l,
+		stationsLoaded:   make(chan struct{}),
+		parametersLoaded: make(chan struct{}),
 	}, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
 	go s.updateStationsLoop(ctx)
+	go s.updateParametersLoop(ctx)
 	go s.updateMeasurementsLoop(ctx)
 
 	<-ctx.Done()
@@ -87,7 +91,7 @@ func (s *Service) loadStations(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) buildStationsFromApiData(locations []apiclient.OpenAQLocation) []types.Station {
+func (s *Service) buildStationsFromApiData(locations []apiclient.OpenAqLocation) []types.Station {
 	var stations []types.Station
 	for _, apiLoc := range locations {
 		station := types.Station{
@@ -120,6 +124,56 @@ func (s *Service) buildStationsFromApiData(locations []apiclient.OpenAQLocation)
 	return stations
 }
 
+func (s *Service) updateParametersLoop(ctx context.Context) {
+	ticker := time.NewTicker(stationsUpdateInterval)
+	defer ticker.Stop()
+
+	for {
+		if err := s.loadParameters(ctx); err != nil {
+			s.logger.Error("Failed to update parameters", slog.Any("error", err))
+		}
+
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (s *Service) loadParameters(ctx context.Context) error {
+	parameters, err := s.client.FetchParameters(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch parameters from API: %w", err)
+	}
+
+	params := s.buildParametersFromApiData(parameters)
+	if err := s.store.StoreParameters(ctx, params); err != nil {
+		return fmt.Errorf("failed to store parameters: %w", err)
+	}
+
+	s.parametersLoadedOnce.Do(func() {
+		close(s.parametersLoaded)
+	})
+
+	return nil
+}
+
+func (s *Service) buildParametersFromApiData(apiParams []apiclient.OpenAqParameter) []types.Parameter {
+	var params []types.Parameter
+	for _, apiParam := range apiParams {
+		param := types.Parameter{
+			Id:          &apiParam.Id,
+			Name:        &apiParam.Name,
+			Units:       &apiParam.Units,
+			DisplayName: &apiParam.DisplayName,
+			Description: &apiParam.Description,
+		}
+		params = append(params, param)
+	}
+	return params
+}
+
 func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 	ticker := time.NewTicker(measurementsUpdateInterval)
 	defer ticker.Stop()
@@ -127,7 +181,7 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 	for {
 		if err := s.updateMeasurements(ctx); err != nil {
 			s.logger.Error("Failed to update measurements", slog.Any("error", err))
-			if errors.Is(err, ErrStationsNotLoaded) {
+			if errors.Is(err, ErrInitialDataNotLoaded) {
 				<-time.After(5 * time.Second)
 				continue
 			}
@@ -143,11 +197,11 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 
 func (s *Service) updateMeasurements(ctx context.Context) error {
 	select {
-	case <-s.stationsLoaded:
+	case <-waitFor(s.stationsLoaded, s.parametersLoaded):
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		return ErrStationsNotLoaded
+		return ErrInitialDataNotLoaded
 	}
 
 	stations, err := s.store.GetStations(ctx)
@@ -206,7 +260,7 @@ func (s *Service) loadMeasurementsForStation(station types.Station) ([]types.Mea
 	return measurements, nil
 }
 
-func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]apiclient.OpenAQMeasurement, error) {
+func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]apiclient.OpenAqMeasurement, error) {
 	for range 3 {
 		apiData, err := s.client.FetchMeasurementsForLocation(stationId, paramId)
 		if err != nil {
@@ -223,7 +277,7 @@ func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]apic
 }
 
 func (s *Service) buildMeasurementsFromApiData(
-	apiMeasurements []apiclient.OpenAQMeasurement,
+	apiMeasurements []apiclient.OpenAqMeasurement,
 	param *types.Parameter,
 	stationId int32,
 ) []types.Measurement {
@@ -253,4 +307,15 @@ func (s *Service) buildMeasurementsFromApiData(
 		})
 	}
 	return measurements
+}
+
+func waitFor(ch ...chan struct{}) <-chan struct{} {
+	done := make(chan struct{})
+	go func() {
+		for _, c := range ch {
+			<-c
+		}
+		close(done)
+	}()
+	return done
 }

@@ -38,6 +38,7 @@ type MeasurementDateTime struct {
 
 // Parameter defines model for Parameter.
 type Parameter struct {
+	Description *string `json:"description,omitempty"`
 	DisplayName *string `json:"displayName,omitempty"`
 	Id          *int32  `json:"id,omitempty"`
 	Name        *string `json:"name,omitempty"`

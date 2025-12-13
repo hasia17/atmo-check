@@ -32,8 +32,8 @@ func New(apiKey string, l *slog.Logger) *Service {
 	}
 }
 
-func (s *Service) FetchLocations(ctx context.Context) ([]OpenAQLocation, error) {
-	var data openAQLocationResponse
+func (s *Service) FetchLocations(ctx context.Context) ([]OpenAqLocation, error) {
+	var data openAqLocationResponse
 	resp, err := s.client.R().
 		SetQueryParams(map[string]string{
 			"iso":   "PL",
@@ -52,8 +52,8 @@ func (s *Service) FetchLocations(ctx context.Context) ([]OpenAQLocation, error) 
 	return data.Results, nil
 }
 
-func (s *Service) FetchMeasurementsForLocation(locationId, paramId int32) ([]OpenAQMeasurement, error) {
-	var apiData openAQMeasurementResponse
+func (s *Service) FetchMeasurementsForLocation(locationId, paramId int32) ([]OpenAqMeasurement, error) {
+	var apiData openAqMeasurementResponse
 	resp, err := s.client.R().
 		SetQueryParams(map[string]string{
 			"parameter_id": fmt.Sprintf("%d", paramId),
@@ -76,4 +76,20 @@ func (s *Service) FetchMeasurementsForLocation(locationId, paramId int32) ([]Ope
 		return nil, fmt.Errorf("API error for location %d, parameter %d: %s", locationId, paramId, resp.Status())
 	}
 	return apiData.Results, nil
+}
+
+func (s *Service) FetchParameters(ctx context.Context) ([]OpenAqParameter, error) {
+	var data openAqParameterResponse
+	resp, err := s.client.R().
+		SetResult(&data).
+		Get("parameters")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch parameters: %w", err)
+	}
+	if resp.IsError() {
+		return nil, fmt.Errorf("API error: %s", resp.Status())
+	}
+
+	return data.Results, nil
 }
