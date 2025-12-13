@@ -178,8 +178,9 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 	ticker := time.NewTicker(measurementsUpdateInterval)
 	defer ticker.Stop()
 
+	initDataReady := waitFor(s.stationsLoaded, s.parametersLoaded)
 	for {
-		if err := s.updateMeasurements(ctx); err != nil {
+		if err := s.updateMeasurements(ctx, initDataReady); err != nil {
 			s.logger.Error("Failed to update measurements", slog.Any("error", err))
 			if errors.Is(err, ErrInitialDataNotLoaded) {
 				<-time.After(5 * time.Second)
@@ -195,9 +196,9 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 	}
 }
 
-func (s *Service) updateMeasurements(ctx context.Context) error {
+func (s *Service) updateMeasurements(ctx context.Context, initDataReady <-chan struct{}) error {
 	select {
-	case <-waitFor(s.stationsLoaded, s.parametersLoaded):
+	case <-initDataReady:
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
