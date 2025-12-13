@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,7 +15,6 @@ import (
 	"openaq-data/internal/store"
 
 	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
 )
 
 const (
@@ -59,23 +59,24 @@ func main() {
 		}
 	}()
 
-	e := echo.New()
 	srv := server.New(db, l)
-	api.RegisterHandlers(e, srv)
-
+	httpServer := &http.Server{
+		Addr:    listenAddr,
+		Handler: api.Handler(srv),
+	}
 	go func() {
-		if err := e.Start(listenAddr); err != nil {
-			l.Error("Failed to start server", "error", err)
+		l.Info("Starting server", "addr", listenAddr)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			l.Error("Server failed", "error", err)
 			cancel()
-			return
 		}
 	}()
 
 	<-ctx.Done()
 	log.Println("Shutting down...")
 
-	if err := e.Shutdown(context.Background()); err != nil {
-		l.Error("Failed to shutdown server", "error", err)
+	if err := httpServer.Shutdown(context.Background()); err != nil {
+		l.Error("Failed to shut down server", "error", err)
 	}
 
 	if err := db.Close(); err != nil {

@@ -39,7 +39,6 @@ func (s *Service) StationByID(ctx context.Context, id int32) (*types.Station, er
 func (s *Service) MeasurementsForStation(
 	ctx context.Context,
 	stationID int32,
-	limit int64,
 ) ([]types.Measurement, error) {
 	station, err := s.store.GetStationByID(ctx, stationID)
 	if err != nil {

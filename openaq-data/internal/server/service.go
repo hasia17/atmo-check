@@ -1,13 +1,12 @@
 package server
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"openaq-data/internal/api"
 	"openaq-data/internal/data"
 	"openaq-data/internal/store"
-
-	"github.com/labstack/echo/v4"
 )
 
 type Service struct {
@@ -21,28 +20,36 @@ func New(db *store.Store, l *slog.Logger) api.ServerInterface {
 	}
 }
 
-func (s *Service) GetStations(ctx echo.Context) error {
-	stations, err := s.dataService.Stations(ctx.Request().Context())
+func (s *Service) GetStations(w http.ResponseWriter, r *http.Request) {
+	stations, err := s.dataService.Stations(r.Context())
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch stations")
+		http.Error(w, "Failed to fetch stations", http.StatusInternalServerError)
+		return
 	}
-
-	return ctx.JSON(200, echo.Map{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"data": stations,
 	})
 }
 
-func (s *Service) GetParameters(ctx echo.Context) error {
-	return ctx.JSON(400, echo.Map{"message": "Not implemented"})
+func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusNotImplemented, map[string]any{
+		"error": "Not implemented",
+	})
 }
 
-func (s *Service) GetMeasurementsByStation(ctx echo.Context, id int32) error {
-	measurements, err := s.dataService.MeasurementsForStation(ctx.Request().Context(), id, 100)
+func (s *Service) GetMeasurementsByStation(w http.ResponseWriter, r *http.Request, id int32) {
+	measurements, err := s.dataService.MeasurementsForStation(r.Context(), id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch measurements")
+		http.Error(w, "Failed to fetch measurements", http.StatusInternalServerError)
+		return
 	}
-
-	return ctx.JSON(200, echo.Map{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"data": measurements,
 	})
+}
+
+func writeJSON(rw http.ResponseWriter, status int, v any) error {
+	rw.WriteHeader(status)
+	rw.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(rw).Encode(v)
 }
