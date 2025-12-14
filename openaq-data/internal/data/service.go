@@ -48,7 +48,7 @@ func (s *Service) MeasurementsForStation(
 	if station == nil {
 		return nil, fmt.Errorf("station with ID %d not found", stationID)
 	}
-	measurements, err := s.store.GetLatestMeasurementsByStation(ctx, *station.Id)
+	measurements, err := s.store.GetLatestMeasurementsByStation(ctx, station.Id)
 	if err != nil {
 		return nil, err
 	}

@@ -40,10 +40,8 @@ type OpenAqMeasurement struct {
 		Latitude  float64 `json:"latitude"`
 		Longitude float64 `json:"longitude"`
 	} `json:"coordinates"`
-	Parameter struct {
-		Id int32 `json:"id"`
-	} `json:"parameter"`
-	LocationId int32 `json:"locationId"`
+	SensorId   int32 `json:"sensorsId"`
+	LocationId int32 `json:"locationsId"`
 }
 
 type openAqMeasurementResponse struct {

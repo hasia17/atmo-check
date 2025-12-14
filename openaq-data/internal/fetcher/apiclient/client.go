@@ -8,40 +8,53 @@ import (
 	"resty.dev/v3"
 )
 
+const (
+	baseURL = "https://api.openaq.org/v3/"
+)
+
 var (
 	ErrRateLimitExceeded = fmt.Errorf("rate limit exceeded")
 )
 
 type Service struct {
-	apiKey string
 	client *resty.Client
 	logger *slog.Logger
 }
 
-func New(apiKey string, l *slog.Logger) *Service {
-	client := resty.New().
-		SetBaseURL("https://api.openaq.org/v3/").
-		SetHeader("Content-Type", "application/json")
-	if apiKey != "" {
-		client.SetHeader("X-API-Key", apiKey)
+func New(apiKey string, l *slog.Logger) (*Service, error) {
+	client, err := buildClient(apiKey)
+	if err != nil {
+		return nil, err
 	}
 	return &Service{
-		apiKey: apiKey,
 		client: client,
 		logger: l,
+	}, nil
+}
+
+func buildClient(apiKey string) (*resty.Client, error) {
+	if apiKey == "" {
+		return nil, fmt.Errorf("API key is required")
 	}
+	return resty.New().
+			SetHeader("Accept", "application/json").
+			SetHeader("X-API-Key", apiKey),
+		nil
 }
 
 func (s *Service) FetchLocations(ctx context.Context) ([]OpenAqLocation, error) {
 	var data openAqLocationResponse
-	resp, err := s.client.R().
-		SetQueryParams(map[string]string{
-			"iso":   "PL",
-			"limit": "1000",
-		}).
-		SetResult(&data).
-		Get("locations")
-
+	queryParams := map[string]string{
+		"iso":   "PL",
+		"limit": "1000",
+	}
+	resp, err := s.request(
+		ctx,
+		&data,
+		locationsEndpoint,
+		resty.MethodGet,
+		queryParams,
+	).Send()
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch locations: %w", err)
 	}
@@ -52,20 +65,19 @@ func (s *Service) FetchLocations(ctx context.Context) ([]OpenAqLocation, error) 
 	return data.Results, nil
 }
 
-func (s *Service) FetchMeasurementsForLocation(locationId, paramId int32) ([]OpenAqMeasurement, error) {
+func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId int32) ([]OpenAqMeasurement, error) {
 	var apiData openAqMeasurementResponse
-	resp, err := s.client.R().
-		SetQueryParams(map[string]string{
-			"parameter_id": fmt.Sprintf("%d", paramId),
-		}).
-		SetResult(&apiData).
-		Get(fmt.Sprintf("locations/%d/latest", locationId))
-
+	resp, err := s.request(
+		ctx,
+		&apiData,
+		fmt.Sprintf(measurementsEndpoint, locationId),
+		resty.MethodGet,
+		nil,
+	).Send()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to fetch measurements for location %d, parameter %d: %w",
+			"failed to fetch measurements for location %d, %w",
 			locationId,
-			paramId,
 			err,
 		)
 	}
@@ -73,23 +85,40 @@ func (s *Service) FetchMeasurementsForLocation(locationId, paramId int32) ([]Ope
 		if resp.StatusCode() == 429 {
 			return nil, ErrRateLimitExceeded
 		}
-		return nil, fmt.Errorf("API error for location %d, parameter %d: %s", locationId, paramId, resp.Status())
+		return nil, fmt.Errorf("API error for location %d: %s", locationId, resp.Status())
 	}
 	return apiData.Results, nil
 }
 
 func (s *Service) FetchParameters(ctx context.Context) ([]OpenAqParameter, error) {
 	var data openAqParameterResponse
-	resp, err := s.client.R().
-		SetResult(&data).
-		Get("parameters")
-
+	res, err := s.request(
+		ctx,
+		&data,
+		parametersEndpoint,
+		resty.MethodGet,
+		nil,
+	).Send()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch parameters: %w", err)
+		return nil, fmt.Errorf("API request failed: %w", err)
 	}
-	if resp.IsError() {
-		return nil, fmt.Errorf("API error: %s", resp.Status())
+	if res.IsError() {
+		return nil, fmt.Errorf("API error: %s", res.Status())
 	}
-
 	return data.Results, nil
+}
+
+func (s *Service) request(
+	ctx context.Context,
+	result any,
+	endpoint string,
+	method string,
+	queryParams map[string]string,
+) *resty.Request {
+	return s.client.R().
+		SetContext(ctx).
+		SetResult(result).
+		SetURL(baseURL + endpoint).
+		SetMethod(method).
+		SetQueryParams(queryParams)
 }

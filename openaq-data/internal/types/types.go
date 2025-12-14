@@ -7,51 +7,30 @@ import (
 	"time"
 )
 
-// Coordinates defines model for Coordinates.
-type Coordinates struct {
-	Latitude  *float64 `json:"latitude,omitempty"`
-	Longitude *float64 `json:"longitude,omitempty"`
-}
-
-// Country defines model for Country.
-type Country struct {
-	Code *string `json:"code,omitempty"`
-	Id   *int32  `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
-}
-
 // Measurement defines model for Measurement.
 type Measurement struct {
-	Coordinates *Coordinates         `json:"coordinates,omitempty"`
-	Datetime    *MeasurementDateTime `json:"datetime,omitempty"`
-	SensorId    *int32               `json:"sensorId,omitempty"`
-	StationId   *int32               `json:"stationId,omitempty"`
-	Timestamp   *time.Time           `json:"timestamp,omitempty"`
-	Value       *float64             `json:"value,omitempty"`
-}
-
-// MeasurementDateTime defines model for MeasurementDateTime.
-type MeasurementDateTime struct {
-	Local *string `json:"local,omitempty"`
-	Utc   *string `json:"utc,omitempty"`
+	ParameterId int32     `json:"parameterId"`
+	StationId   int32     `json:"stationId"`
+	Timestamp   time.Time `json:"timestamp"`
+	Value       float64   `json:"value"`
 }
 
 // Parameter defines model for Parameter.
 type Parameter struct {
 	Description *string `json:"description,omitempty"`
-	DisplayName *string `json:"displayName,omitempty"`
-	Id          *int32  `json:"id,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Units       *string `json:"units,omitempty"`
+	DisplayName string  `json:"displayName"`
+	Id          int32   `json:"id"`
+	Name        string  `json:"name"`
+	Units       string  `json:"units"`
 }
 
 // Station defines model for Station.
 type Station struct {
-	Coordinates *Coordinates `json:"coordinates,omitempty"`
-	Country     *Country     `json:"country,omitempty"`
-	Id          *int32       `json:"id,omitempty"`
-	Locality    *string      `json:"locality,omitempty"`
-	Name        *string      `json:"name,omitempty"`
-	Parameters  *[]Parameter `json:"parameters,omitempty"`
-	Timezone    *string      `json:"timezone,omitempty"`
+	Id           int32   `json:"id"`
+	Latitude     float64 `json:"latitude"`
+	Locality     string  `json:"locality"`
+	Longitude    float64 `json:"longitude"`
+	Name         string  `json:"name"`
+	ParameterIds []int32 `json:"parameterIds"`
+	Timezone     string  `json:"timezone"`
 }

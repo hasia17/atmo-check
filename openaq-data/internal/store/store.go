@@ -90,18 +90,6 @@ func (s *Store) GetStationByID(ctx context.Context, id int32) (*types.Station, e
 	return &station, nil
 }
 
-func (s *Store) GetParametersByStationID(ctx context.Context, id int32) ([]types.Parameter, error) {
-	var station types.Station
-	err := s.stationsColl.FindOne(ctx, bson.M{"_id": id}).Decode(&station)
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch station for parameters: %w", err)
-	}
-	return *station.Parameters, nil
-}
-
 func (s *Store) StoreMeasurements(ctx context.Context, m []types.Measurement) error {
 	for _, measure := range m {
 		_, err := s.measuresColl.InsertOne(ctx, measure)
@@ -151,8 +139,8 @@ func (s *Store) GetLatestMeasurementsByStation(ctx context.Context, stationID in
 		if err := cursor.Decode(&m); err != nil {
 			return nil, err
 		}
-		if _, exists := latest[*m.SensorId]; !exists {
-			latest[*m.SensorId] = m
+		if _, exists := latest[m.ParameterId]; !exists {
+			latest[m.ParameterId] = m
 		}
 	}
 	if err := cursor.Err(); err != nil {
