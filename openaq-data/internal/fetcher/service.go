@@ -15,12 +15,9 @@ import (
 )
 
 const (
-	stationsUpdateInterval     = 24 * time.Hour
-	measurementsUpdateInterval = 1 * time.Hour
-)
-
-var (
-	ErrInitialDataNotLoaded = errors.New("initial data not loaded yet")
+	stationsUpdateInterval       = 24 * time.Hour
+	measurementsUpdateInterval   = 1 * time.Hour
+	maxTryGetMeasurementsRetries = 3
 )
 
 // Fetcher service is responsible for fetching data from the OpenAQ API
@@ -38,8 +35,12 @@ type Service struct {
 }
 
 func NewService(apiKey string, s *store.Store, l *slog.Logger) (internal.FetcherService, error) {
+	apiclient, err := apiclient.New(apiKey, l)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create API client: %w", err)
+	}
 	return &Service{
-		client:           apiclient.New(apiKey, l),
+		client:           apiclient,
 		store:            s,
 		logger:           l,
 		stationsLoaded:   make(chan struct{}),
@@ -176,17 +177,18 @@ func (s *Service) buildParametersFromApiData(apiParams []apiclient.OpenAqParamet
 }
 
 func (s *Service) updateMeasurementsLoop(ctx context.Context) {
+	initDataReady := waitFor(s.stationsLoaded, s.parametersLoaded)
+	select {
+	case <-initDataReady:
+	case <-ctx.Done():
+		return
+	}
+
 	ticker := time.NewTicker(measurementsUpdateInterval)
 	defer ticker.Stop()
-
-	initDataReady := waitFor(s.stationsLoaded, s.parametersLoaded)
 	for {
-		if err := s.updateMeasurements(ctx, initDataReady); err != nil {
+		if err := s.updateMeasurements(ctx); err != nil {
 			s.logger.Error("Failed to update measurements", slog.Any("error", err))
-			if errors.Is(err, ErrInitialDataNotLoaded) {
-				<-time.After(5 * time.Second)
-				continue
-			}
 		}
 
 		select {
@@ -197,15 +199,7 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 	}
 }
 
-func (s *Service) updateMeasurements(ctx context.Context, initDataReady <-chan struct{}) error {
-	select {
-	case <-initDataReady:
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-		return ErrInitialDataNotLoaded
-	}
-
+func (s *Service) updateMeasurements(ctx context.Context) error {
 	stations, err := s.store.GetStations(ctx)
 	if err != nil {
 		return err
@@ -225,7 +219,7 @@ func (s *Service) updateMeasurements(ctx context.Context, initDataReady <-chan s
 }
 
 func (s *Service) updateMeasurementsForStation(ctx context.Context, station types.Station) error {
-	measurements, err := s.loadMeasurementsForStation(station)
+	measurements, err := s.loadMeasurementsForStation(ctx, station)
 	if err != nil {
 		return err
 	}
@@ -245,10 +239,10 @@ func (s *Service) updateMeasurementsForStation(ctx context.Context, station type
 	return nil
 }
 
-func (s *Service) loadMeasurementsForStation(station types.Station) ([]types.Measurement, error) {
+func (s *Service) loadMeasurementsForStation(ctx context.Context, station types.Station) ([]types.Measurement, error) {
 	var measurements []types.Measurement
 	for _, parameter := range *station.Parameters {
-		apiData, err := s.tryGetMeasurementsForStation(*station.Id, *parameter.Id)
+		apiData, err := s.tryGetMeasurementsForStation(ctx, *station.Id, *parameter.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -262,9 +256,12 @@ func (s *Service) loadMeasurementsForStation(station types.Station) ([]types.Mea
 	return measurements, nil
 }
 
-func (s *Service) tryGetMeasurementsForStation(stationId, paramId int32) ([]apiclient.OpenAqMeasurement, error) {
-	for range 3 {
-		apiData, err := s.client.FetchMeasurementsForLocation(stationId, paramId)
+func (s *Service) tryGetMeasurementsForStation(
+	ctx context.Context,
+	stationId, paramId int32,
+) ([]apiclient.OpenAqMeasurement, error) {
+	for range maxTryGetMeasurementsRetries {
+		apiData, err := s.client.FetchMeasurementsForLocation(ctx, stationId, paramId)
 		if err != nil {
 			if errors.Is(err, apiclient.ErrRateLimitExceeded) {
 				s.logger.Warn("Rate limit exceeded, retrying after delay")
