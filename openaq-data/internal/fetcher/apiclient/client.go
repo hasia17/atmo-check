@@ -65,23 +65,19 @@ func (s *Service) FetchLocations(ctx context.Context) ([]OpenAqLocation, error) 
 	return data.Results, nil
 }
 
-func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId, paramId int32) ([]OpenAqMeasurement, error) {
+func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId int32) ([]OpenAqMeasurement, error) {
 	var apiData openAqMeasurementResponse
-	queryParams := map[string]string{
-		"parameter_id": fmt.Sprintf("%d", paramId),
-	}
 	resp, err := s.request(
 		ctx,
 		&apiData,
 		fmt.Sprintf(measurementsEndpoint, locationId),
 		resty.MethodGet,
-		queryParams,
+		nil,
 	).Send()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to fetch measurements for location %d, parameter %d: %w",
+			"failed to fetch measurements for location %d, %w",
 			locationId,
-			paramId,
 			err,
 		)
 	}
@@ -89,7 +85,7 @@ func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId, 
 		if resp.StatusCode() == 429 {
 			return nil, ErrRateLimitExceeded
 		}
-		return nil, fmt.Errorf("API error for location %d, parameter %d: %s", locationId, paramId, resp.Status())
+		return nil, fmt.Errorf("API error for location %d: %s", locationId, resp.Status())
 	}
 	return apiData.Results, nil
 }

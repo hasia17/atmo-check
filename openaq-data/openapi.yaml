@@ -93,6 +93,14 @@ components:
   schemas:
     Station:
       type: object
+      required:
+        - id
+        - name
+        - locality
+        - timezone
+        - latitude
+        - longitude
+        - parameterIds
       properties:
         id:
           type: integer
@@ -103,28 +111,25 @@ components:
           type: string
         timezone:
           type: string
-        country:
-          $ref: "#/components/schemas/Country"
-        coordinates:
-          $ref: "#/components/schemas/Coordinates"
-        parameters:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        parameterIds:
           type: array
           items:
-            $ref: "#/components/schemas/Parameter"
-
-    Country:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int32
-        code:
-          type: string
-        name:
-          type: string
+            type: integer
+            format: int32
 
     Parameter:
       type: object
+      required:
+        - id
+        - name
+        - units
+        - displayName
       properties:
         id:
           type: integer
@@ -140,41 +145,24 @@ components:
 
     Measurement:
       type: object
+      required:
+        - value
+        - timestamp
+        - parameterId
+        - stationId
       properties:
-        datetime:
-          $ref: "#/components/schemas/MeasurementDateTime"
         value:
           type: number
           format: double
-        coordinates:
-          $ref: "#/components/schemas/Coordinates"
         timestamp:
           type: string
           format: date-time
-        sensorId:
+        parameterId:
           type: integer
           format: int32
         stationId:
           type: integer
           format: int32
-
-    MeasurementDateTime:
-      type: object
-      properties:
-        utc:
-          type: string
-        local:
-          type: string
-
-    Coordinates:
-      type: object
-      properties:
-        latitude:
-          type: number
-          format: double
-        longitude:
-          type: number
-          format: double
 
     Error:
       type: object

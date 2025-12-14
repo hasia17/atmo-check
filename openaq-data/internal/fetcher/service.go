@@ -10,14 +10,15 @@ import (
 	"openaq-data/internal/fetcher/apiclient"
 	"openaq-data/internal/store"
 	"openaq-data/internal/types"
+	"openaq-data/internal/util"
 	"sync"
 	"time"
 )
 
 const (
-	stationsUpdateInterval       = 24 * time.Hour
-	measurementsUpdateInterval   = 1 * time.Hour
-	maxTryGetMeasurementsRetries = 3
+	stationsUpdateInterval      = 24 * time.Hour
+	measurementsUpdateInterval  = 1 * time.Hour
+	maxFetchMeasurementsRetries = 3
 )
 
 // Fetcher service is responsible for fetching data from the OpenAQ API
@@ -97,30 +98,17 @@ func (s *Service) buildStationsFromApiData(locations []apiclient.OpenAqLocation)
 	var stations []types.Station
 	for _, apiLoc := range locations {
 		station := types.Station{
-			Id:       &apiLoc.Id,
-			Name:     &apiLoc.Name,
-			Locality: &apiLoc.Locality,
-			Timezone: &apiLoc.Timezone,
-			Country: &types.Country{
-				Id:   &apiLoc.Country.Id,
-				Code: &apiLoc.Country.Code,
-				Name: &apiLoc.Country.Name,
-			},
-			Coordinates: &types.Coordinates{
-				Latitude:  &apiLoc.Coordinates.Latitude,
-				Longitude: &apiLoc.Coordinates.Longitude,
-			},
-			Parameters: &[]types.Parameter{},
+			Id:        apiLoc.Id,
+			Name:      apiLoc.Name,
+			Locality:  apiLoc.Locality,
+			Timezone:  apiLoc.Timezone,
+			Latitude:  apiLoc.Coordinates.Latitude,
+			Longitude: apiLoc.Coordinates.Longitude,
 		}
 		for _, apiSensor := range apiLoc.Sensors {
-			parameter := &types.Parameter{
-				Id:          &apiSensor.Parameter.Id,
-				Name:        &apiSensor.Parameter.Name,
-				Units:       &apiSensor.Parameter.Units,
-				DisplayName: &apiSensor.Parameter.DisplayName,
-			}
-			*station.Parameters = append(*station.Parameters, *parameter)
+			station.ParameterIds = append(station.ParameterIds, apiSensor.Parameter.Id)
 		}
+		station.ParameterIds = util.RemoveDuplicates(station.ParameterIds)
 		stations = append(stations, station)
 	}
 	return stations
@@ -165,10 +153,10 @@ func (s *Service) buildParametersFromApiData(apiParams []apiclient.OpenAqParamet
 	var params []types.Parameter
 	for _, apiParam := range apiParams {
 		param := types.Parameter{
-			Id:          &apiParam.Id,
-			Name:        &apiParam.Name,
-			Units:       &apiParam.Units,
-			DisplayName: &apiParam.DisplayName,
+			Id:          apiParam.Id,
+			Name:        apiParam.Name,
+			Units:       apiParam.Units,
+			DisplayName: apiParam.DisplayName,
 			Description: &apiParam.Description,
 		}
 		params = append(params, param)
@@ -177,7 +165,7 @@ func (s *Service) buildParametersFromApiData(apiParams []apiclient.OpenAqParamet
 }
 
 func (s *Service) updateMeasurementsLoop(ctx context.Context) {
-	initDataReady := waitFor(s.stationsLoaded, s.parametersLoaded)
+	initDataReady := util.WaitFor(s.stationsLoaded, s.parametersLoaded)
 	select {
 	case <-initDataReady:
 	case <-ctx.Done():
@@ -224,44 +212,40 @@ func (s *Service) updateMeasurementsForStation(ctx context.Context, station type
 		return err
 	}
 	if len(measurements) == 0 {
-		return fmt.Errorf("no measurements found for station %s", *station.Name)
+		return fmt.Errorf("no measurements found for station %s", station.Name)
 	}
 
-	err = s.store.DeleteMeasurementsForStation(ctx, *station.Id)
+	err = s.store.DeleteMeasurementsForStation(ctx, station.Id)
 	if err != nil {
-		return fmt.Errorf("failed to delete existing measurements for station %s: %w", *station.Name, err)
+		return fmt.Errorf("failed to delete existing measurements for station %s: %w", station.Name, err)
 	}
 
 	err = s.store.StoreMeasurements(ctx, measurements)
 	if err != nil {
-		return fmt.Errorf("failed to store measurements for station %s: %w", *station.Name, err)
+		return fmt.Errorf("failed to store measurements for station %s: %w", station.Name, err)
 	}
 	return nil
 }
 
 func (s *Service) loadMeasurementsForStation(ctx context.Context, station types.Station) ([]types.Measurement, error) {
 	var measurements []types.Measurement
-	for _, parameter := range *station.Parameters {
-		apiData, err := s.tryGetMeasurementsForStation(ctx, *station.Id, *parameter.Id)
-		if err != nil {
-			return nil, err
-		}
-
-		paramMeasurements := s.buildMeasurementsFromApiData(apiData, &parameter, *station.Id)
-		measurements = append(measurements, paramMeasurements...)
-
-		// To avoid hitting rate limits
-		<-time.After(1 * time.Second)
+	apiData, err := s.tryGetMeasurementsForStation(ctx, station.Id)
+	if err != nil {
+		return nil, err
 	}
+
+	paramMeasurements := s.buildMeasurementsFromApiData(apiData, station)
+	measurements = append(measurements, paramMeasurements...)
+
 	return measurements, nil
 }
 
 func (s *Service) tryGetMeasurementsForStation(
 	ctx context.Context,
-	stationId, paramId int32,
+	stationId int32,
 ) ([]apiclient.OpenAqMeasurement, error) {
-	for range maxTryGetMeasurementsRetries {
-		apiData, err := s.client.FetchMeasurementsForLocation(ctx, stationId, paramId)
+	for range maxFetchMeasurementsRetries {
+		apiData, err := s.client.FetchMeasurementsForLocation(ctx, stationId)
 		if err != nil {
 			if errors.Is(err, apiclient.ErrRateLimitExceeded) {
 				s.logger.Warn("Rate limit exceeded, retrying after delay")
@@ -272,49 +256,28 @@ func (s *Service) tryGetMeasurementsForStation(
 		}
 		return apiData, nil
 	}
-	return nil, fmt.Errorf("failed to fetch measurements for station %d, parameter %d after retries", stationId, paramId)
+	return nil, fmt.Errorf("failed to fetch measurements for station %d after retries", stationId)
 }
 
 func (s *Service) buildMeasurementsFromApiData(
 	apiMeasurements []apiclient.OpenAqMeasurement,
-	param *types.Parameter,
-	stationId int32,
+	station types.Station,
 ) []types.Measurement {
 	var measurements []types.Measurement
 	for _, m := range apiMeasurements {
-		parsedTime, err := time.Parse(time.RFC3339Nano, m.Date.Utc)
+		parsedTime, err := util.StringToTime(m.Date.Utc)
 		if err != nil {
-			parsedTime, err = time.Parse(time.RFC3339, m.Date.Utc)
-			if err != nil {
-				log.Printf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err)
-				continue
-			}
+			log.Printf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err)
+			continue
 		}
 		measurements = append(measurements, types.Measurement{
-			Datetime: &types.MeasurementDateTime{
-				Utc:   &m.Date.Utc,
-				Local: &m.Date.Local,
-			},
-			Timestamp: &parsedTime,
-			Value:     &m.Value,
-			Coordinates: &types.Coordinates{
-				Latitude:  &m.Coordinates.Latitude,
-				Longitude: &m.Coordinates.Longitude,
-			},
-			SensorId:  param.Id,
-			StationId: &stationId,
+			Timestamp: parsedTime,
+			Value:     m.Value,
+			// ParameterId: paramId,
+			// StationId:   stationId,
+			// TODO: probably will need to save json types in DB instead
+			// and then return types defined for application API
 		})
 	}
 	return measurements
-}
-
-func waitFor(ch ...chan struct{}) <-chan struct{} {
-	done := make(chan struct{})
-	go func() {
-		for _, c := range ch {
-			<-c
-		}
-		close(done)
-	}()
-	return done
 }
