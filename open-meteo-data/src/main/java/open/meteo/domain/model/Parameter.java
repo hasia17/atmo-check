@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Setter
 @Document(collection = "parameters")
 public class Parameter {
-    private String id;
+    private Long id;
     private String name;
     private String unit;
     private String description;

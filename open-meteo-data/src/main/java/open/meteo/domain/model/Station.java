@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Station {
 
     @Id
-    private String id;
+    private Long id;
     private String name;
     private double geoLat;
     private double geoLon;

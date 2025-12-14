@@ -1,11 +1,15 @@
 package open.meteo.rs.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
+import java.util.Map;
 
-@Data
+
+@Getter
+@Setter
 public class OpenMeteoAirQualityResponse {
     private Double latitude;
     private Double longitude;
@@ -18,48 +22,14 @@ public class OpenMeteoAirQualityResponse {
     private Integer utcOffsetSeconds;
 
     private String timezone;
-    private HourlyData hourly;
+
+    @JsonProperty("timezone_abbreviation")
+    private String timezoneAbbreviation;
+
+    @JsonProperty("hourly")
+    private Map<String, List<Object>> values;
 
     @JsonProperty("hourly_units")
-    private HourlyUnits hourlyUnits;
-}
-
-@Data
-class HourlyData {
-    private List<String> time;
-    private List<Double> pm10;
-
-    @JsonProperty("pm2_5")
-    private List<Double> pm25;
-
-    @JsonProperty("carbon_monoxide")
-    private List<Double> carbonMonoxide;
-
-    @JsonProperty("nitrogen_dioxide")
-    private List<Double> nitrogenDioxide;
-
-    @JsonProperty("sulphur_dioxide")
-    private List<Double> sulphurDioxide;
-
-    private List<Double> ozone;
-}
-
-@Data
-class HourlyUnits {
-    private String time;
-    private String pm10;
-
-    @JsonProperty("pm2_5")
-    private String pm25;
-
-    @JsonProperty("carbon_monoxide")
-    private String carbonMonoxide;
-
-    @JsonProperty("nitrogen_dioxide")
-    private String nitrogenDioxide;
-
-    @JsonProperty("sulphur_dioxide")
-    private String sulphurDioxide;
-
-    private String ozone;
+    private Map<String, String> units;
+    
 }

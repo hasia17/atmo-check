@@ -3,6 +3,7 @@ package open.meteo.rs.controller;
 import lombok.RequiredArgsConstructor;
 import open.meteo.api.StationsApi;
 import open.meteo.domain.repository.StationRepository;
+import open.meteo.model.MeasurementDTO;
 import open.meteo.model.StationDTO;
 import open.meteo.rs.mapper.StationMapper;
 import org.springframework.http.ResponseEntity;
@@ -21,4 +22,10 @@ public class StationRestController implements StationsApi {
     public ResponseEntity<List<StationDTO>> getAllStations() {
         return ResponseEntity.ok(stationMapper.map(stationRepository.findAll()));
     }
+
+    @Override
+    public ResponseEntity<List<MeasurementDTO>> getStationMeasurements(String stationId) {
+        return ResponseEntity.ok().build();
+    }
+
 }
