@@ -27,7 +27,7 @@ public class OpenMeteoAirQualityResponse {
     private String timezoneAbbreviation;
 
     @JsonProperty("hourly")
-    private Map<String, List<Double>> values;
+    private Map<String, List<Object>> values;
 
     @JsonProperty("hourly_units")
     private Map<String, String> units;

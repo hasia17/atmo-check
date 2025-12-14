@@ -21,6 +21,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StationDTO"
+        '500':
+          description: Service exception
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /stations/{stationId}:
     get:
@@ -47,6 +53,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Service exception
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /stations/{stationId}/measurements:
     get:
@@ -60,18 +72,6 @@ paths:
           required: true
           schema:
             type: string
-        - name: parameterId
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            default: 100
-            maximum: 1000
       responses:
         '200':
           description: Latest measurement data for station
@@ -87,18 +87,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Service exception
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /parameters:
     get:
-      summary: Get parameters
+      summary: Get all parameters
       operationId: getParameters
       tags:
         - parameters
-      parameters:
-        - name: stationId
-          in: path
-          required: true
-          schema:
-            type: string
       responses:
         '200':
           description: List of parameters for the station
@@ -108,8 +108,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ParameterDTO"
-        '404':
-          description: Station not found
+        '500':
+          description: Service exception
           content:
             application/json:
               schema:
