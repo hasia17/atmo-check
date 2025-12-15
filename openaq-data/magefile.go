@@ -40,8 +40,8 @@ type Gen mg.Namespace
 
 func (Gen) Types() error {
 	return Gen{}.generate(genConfig{
-		packageName:    "types",
-		outputFilePath: "internal/types/types.go",
+		packageName:    "api",
+		outputFilePath: "internal/api/types.go",
 		genOpts: codegen.GenerateOptions{
 			Models: true,
 		},

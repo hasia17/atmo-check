@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"openaq-data/internal/types"
+	"openaq-data/internal/api"
 )
 
 type FetcherService interface {
@@ -10,7 +10,7 @@ type FetcherService interface {
 }
 
 type DataService interface {
-	Stations(ctx context.Context) ([]types.Station, error)
-	Parameters(ctx context.Context) ([]types.Parameter, error)
-	MeasurementsForStation(ctx context.Context, stationID int32) ([]types.Measurement, error)
+	Stations(ctx context.Context) ([]api.Station, error)
+	Parameters(ctx context.Context) ([]api.Parameter, error)
+	MeasurementsForStation(ctx context.Context, stationID int32) ([]api.Measurement, error)
 }
