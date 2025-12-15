@@ -71,7 +71,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type : integer
+            format : int64
       responses:
         '200':
           description: Latest measurement data for station
@@ -120,8 +121,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          example: "12345"
+          type : integer
+          format : int64
         name:
           type: string
           example: "Warszawa - Marszałkowska"
@@ -137,8 +138,8 @@ components:
       type: object
       properties:
         id:
-          type: string
-          example: "PM10"
+          type : integer
+          format : int64
         name:
           type: string
           example: "pył zawieszony PM10"
@@ -152,14 +153,14 @@ components:
       type: object
       properties:
         id:
-          type: string
-          example: "m123"
+          type : integer
+          format : int64
         stationId:
-          type: string
-          example: "12345"
+          type : integer
+          format : int64
         parameterId:
-          type: string
-          example: "PM10"
+          type : integer
+          format : int64
         value:
           type: number
           format: double
