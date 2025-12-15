@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"openaq-data/internal/types"
 
 	"resty.dev/v3"
 )
@@ -42,15 +43,18 @@ func buildClient(apiKey string) (*resty.Client, error) {
 		nil
 }
 
-func (s *Service) FetchLocations(ctx context.Context) ([]OpenAqLocation, error) {
-	var data openAqLocationResponse
+func (s *Service) FetchLocations(ctx context.Context) ([]types.Location, error) {
+	var locationResponse struct {
+		Results []types.Location `json:"results"`
+	}
+
 	queryParams := map[string]string{
 		"iso":   "PL",
 		"limit": "1000",
 	}
 	resp, err := s.request(
 		ctx,
-		&data,
+		&locationResponse,
 		locationsEndpoint,
 		resty.MethodGet,
 		queryParams,
@@ -62,14 +66,17 @@ func (s *Service) FetchLocations(ctx context.Context) ([]OpenAqLocation, error) 
 		return nil, fmt.Errorf("API error: %s", resp.Status())
 	}
 
-	return data.Results, nil
+	return locationResponse.Results, nil
 }
 
-func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId int32) ([]OpenAqMeasurement, error) {
-	var apiData openAqMeasurementResponse
+func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId int32) ([]types.Measurement, error) {
+	var measurementResponse struct {
+		Results []types.Measurement `json:"results"`
+	}
+
 	resp, err := s.request(
 		ctx,
-		&apiData,
+		&measurementResponse,
 		fmt.Sprintf(measurementsEndpoint, locationId),
 		resty.MethodGet,
 		nil,
@@ -87,14 +94,16 @@ func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId i
 		}
 		return nil, fmt.Errorf("API error for location %d: %s", locationId, resp.Status())
 	}
-	return apiData.Results, nil
+	return measurementResponse.Results, nil
 }
 
-func (s *Service) FetchParameters(ctx context.Context) ([]OpenAqParameter, error) {
-	var data openAqParameterResponse
+func (s *Service) FetchParameters(ctx context.Context) ([]types.Parameter, error) {
+	var parameterResponse struct {
+		Results []types.Parameter `json:"results"`
+	}
 	res, err := s.request(
 		ctx,
-		&data,
+		&parameterResponse,
 		parametersEndpoint,
 		resty.MethodGet,
 		nil,
@@ -105,7 +114,7 @@ func (s *Service) FetchParameters(ctx context.Context) ([]OpenAqParameter, error
 	if res.IsError() {
 		return nil, fmt.Errorf("API error: %s", res.Status())
 	}
-	return data.Results, nil
+	return parameterResponse.Results, nil
 }
 
 func (s *Service) request(
