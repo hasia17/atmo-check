@@ -1,5 +1,6 @@
 package open.meteo.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import open.meteo.domain.model.Measurement;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -32,8 +34,8 @@ public class MeasurementService {
 
     private static final String TIME_PARAM = "time";
 
-    @Scheduled(cron = "0 0 * * * ?")
-    private void fetchAndStoreMeasurements() {
+
+    public void fetchAndStoreMeasurements() {
         log.info("Starting scheduled measurement fetch");
 
         List<Station> stations = stationRepository.findAll();
@@ -90,7 +92,7 @@ public class MeasurementService {
                 if (!TIME_PARAM.equals(parameter)) {
                     Double latestValue = (Double) values.getLast();
                     log.info("Latest value for parameter {} at station {}: {}", parameter, station.getName(), latestValue);
-                    latestValues.put(ParameterType.valueOf(parameter), latestValue);
+                    latestValues.put(ParameterType.fromName(parameter), latestValue);
                 }
             }
         });

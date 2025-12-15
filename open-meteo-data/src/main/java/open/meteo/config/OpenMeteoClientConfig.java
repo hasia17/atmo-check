@@ -10,7 +10,7 @@ public class OpenMeteoClientConfig {
     @Bean
     public WebClient openMeteoWebClient() {
         return WebClient.builder()
-                .baseUrl("https://air-quality.open-meteo.com")
+                .baseUrl("https://air-quality-api.open-meteo.com/")
                 .build();
     }
 }
