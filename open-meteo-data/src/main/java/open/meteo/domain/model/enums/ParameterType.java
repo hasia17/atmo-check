@@ -2,6 +2,11 @@ package open.meteo.domain.model.enums;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 @Getter
 public enum ParameterType {
 
@@ -26,8 +31,19 @@ public enum ParameterType {
 
     private final String name;
 
+    private static final Map<String, ParameterType> BY_NAME =
+            Arrays.stream(values()).collect(Collectors.toMap(p -> p.name.toLowerCase(), Function.identity()));
+
     ParameterType(String name) {
         this.name = name;
+    }
+
+    public static ParameterType fromName(String name) {
+        ParameterType type = BY_NAME.get(name.toLowerCase());
+        if (type == null) {
+            throw new IllegalArgumentException("Unknown ParameterType: " + name);
+        }
+        return type;
     }
 
 }

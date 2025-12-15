@@ -71,7 +71,7 @@
             "style":"form",
             "schema":{
               "type":"integer",
-              "format":"int32"
+              "format":"int64"
             }
           },
           {

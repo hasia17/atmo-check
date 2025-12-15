@@ -57,7 +57,8 @@ services:
 
   open-meteo-data:
     ports:
-      - "8083:8083" 
+      - "8083:8083"
+      - "5006:5006" 
     build:
       context: ./open-meteo-data
       dockerfile: Dockerfile
@@ -69,6 +70,7 @@ services:
       - SPRING_DATA_MONGODB_PORT=27017
       - SPRING_DATA_MONGODB_DATABASE=open-meteo-db
       - SERVER_PORT=8083
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
     depends_on:
       - mongodb
     networks:
