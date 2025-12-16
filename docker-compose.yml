@@ -1,25 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.0
-    container_name: traefik
-    command:
-      - --api.dashboard=true
-      - --api.debug=true
-      - --api.insecure=true
-      - --log.level=INFO
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - app-network
-
   mongodb:
     image: mongo:7.0
     container_name: mongodb
@@ -29,7 +8,7 @@ services:
     networks:
       - app-network
     ports:
-      - "27018:27017"
+      - "27017:27017"
 
   gios-data:
     ports:
@@ -49,11 +28,6 @@ services:
       - mongodb
     networks:
       - app-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.gios-data.rule=Host(`gios-data.localhost`)"
-      - "traefik.http.routers.gios-data.entrypoints=web"
-      - "traefik.http.services.gios-data.loadbalancer.server.port=8081"
 
   open-meteo-data:
     ports:
@@ -75,11 +49,6 @@ services:
       - mongodb
     networks:
       - app-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.open-meteo-data.rule=Host(`open-meteo-data.localhost`)"
-      - "traefik.http.routers.open-meteo-data.entrypoints=web"
-      - "traefik.http.services.open-meteo-data.loadbalancer.server.port=8083"
 
   aggregator:
     ports:
@@ -96,11 +65,6 @@ services:
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     networks:
       - app-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.aggregator.rule=Host(`aggregator.localhost`)"
-      - "traefik.http.routers.aggregator.entrypoints=web"
-      - "traefik.http.services.aggregator.loadbalancer.server.port=8082"
 
   openaq-data:
     build:
@@ -111,17 +75,12 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - MONGO_URI=mongodb://mongodb:27017
-      - OPENAQ_API_KEY=2052f45d3059fbd16ea10c8dfb5415881fff2aeab157d90e87c5a1897fed9d1c
+      - MONGO_URI={MONGO_URI}
+      - OPENAQ_API_KEY=${OPENAQ_API_KEY}
     depends_on:
       - mongodb
     networks:
       - app-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.openaq-data.rule=Host(`openaq-data.localhost`)"
-      - "traefik.http.routers.openaq-data.entrypoints=web"
-      - "traefik.http.services.openaq-data.loadbalancer.server.port=3000"
 
 networks:
   app-network:
