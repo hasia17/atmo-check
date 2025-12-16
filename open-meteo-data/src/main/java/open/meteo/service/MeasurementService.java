@@ -52,7 +52,7 @@ public class MeasurementService {
     private void fetchAndStoreMeasurementsForStation(Station station) {
 
         List<Measurement> measurementsToCreate = new ArrayList<>();
-        Map<ParameterType, Double> latestValues = fetchMeasurements(station);
+        Map<ParameterType, Object> latestValues = fetchMeasurements(station);
 
         List<Parameter> parameters = parameterRepository.findAll();
         Map<ParameterType, Long> parametersTypeAndIds = parameters.stream()
@@ -61,7 +61,7 @@ public class MeasurementService {
 
         latestValues.forEach((parameterType, value) -> {
             Long parameterId = parametersTypeAndIds.get(parameterType);
-            measurementsToCreate.add(createMeasurement(station.getId(), parameterId, value, LocalDateTime.now()));
+            measurementsToCreate.add(createMeasurement(station.getId(), parameterId, ((Number) value).doubleValue(), LocalDateTime.now()));
         });
 
         measurementRepository.deleteAll();
@@ -78,19 +78,19 @@ public class MeasurementService {
         return measurement;
     }
 
-    private Map<ParameterType, Double> fetchMeasurements(Station station) {
+    private Map<ParameterType, Object> fetchMeasurements(Station station) {
         log.info("Fetching measurements for {} started", station);
         OpenMeteoAirQualityResponse measurements = openMeteoClient.getAirQuality(station.getGeoLat(), station.getGeoLon());
 
         Map<String, List<Object>> valuesMap = measurements.getValues();
 
-        Map<ParameterType, Double> latestValues = new HashMap<>();
+        Map<ParameterType, Object> latestValues = new HashMap<>();
 
         // get only latest value for each parameter
         valuesMap.forEach((parameter, values) -> {
             if (values != null && !values.isEmpty()) {
                 if (!TIME_PARAM.equals(parameter)) {
-                    Double latestValue = (Double) values.getLast();
+                    Object latestValue = values.getLast();
                     log.info("Latest value for parameter {} at station {}: {}", parameter, station.getName(), latestValue);
                     latestValues.put(ParameterType.fromName(parameter), latestValue);
                 }
