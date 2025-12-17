@@ -25,7 +25,7 @@ const (
 // It runs in the background, periodically updating locations and measurements.
 type Service struct {
 	client *apiclient.Service
-	store  *store.Store
+	store  store.Storer
 	logger *slog.Logger
 
 	locationsLoadedOnce  sync.Once
@@ -34,7 +34,7 @@ type Service struct {
 	parametersLoaded     chan struct{}
 }
 
-func NewService(apiKey string, s *store.Store, l *slog.Logger) (internal.FetcherService, error) {
+func NewService(apiKey string, s store.Storer, l *slog.Logger) (internal.FetcherService, error) {
 	apiclient, err := apiclient.New(apiKey, l)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create API client: %w", err)

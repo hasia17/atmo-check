@@ -11,6 +11,21 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// TODO: maybe split this into multiple files
+type Storer interface {
+	StoreLocations(ctx context.Context, locations []types.Location) error
+	GetLocations(ctx context.Context) ([]types.Location, error)
+	GetLocationByID(ctx context.Context, id int32) (*types.Location, error)
+
+	StoreMeasurements(ctx context.Context, m []types.Measurement) error
+	GetMeasurementsByLocation(ctx context.Context, locationId int32) ([]types.Measurement, error)
+	DeleteMeasurementsForLocation(ctx context.Context, locationID int32) error
+
+	StoreParameters(ctx context.Context, parameters []types.Parameter) error
+	GetParameters(ctx context.Context) ([]types.Parameter, error)
+
+	Close() error
+}
 type Store struct {
 	mongoClient    *mongo.Client
 	locationsColl  *mongo.Collection
