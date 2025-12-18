@@ -13,6 +13,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/magefile/mage/mg"
+	"github.com/magefile/mage/sh"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -22,12 +23,14 @@ const (
 	openAPISpecPath = "openapi.yaml"
 )
 
-func Build() error {
-	fmt.Println("Building openaq-data...")
-	cmd := exec.Command("go", "build", "-o", "openaq-data", "main.go")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+type Test mg.Namespace
+
+func (t Test) All() error {
+	return sh.RunV("go", "test", "./...")
+}
+
+func (t Test) Races() error {
+	return sh.RunV("go", "test", "./...", "--race")
 }
 
 type genConfig struct {
@@ -38,8 +41,8 @@ type genConfig struct {
 
 type Gen mg.Namespace
 
-func (Gen) Types() error {
-	return Gen{}.generate(genConfig{
+func (g Gen) Types() error {
+	return g.generate(genConfig{
 		packageName:    "api",
 		outputFilePath: "internal/api/types.go",
 		genOpts: codegen.GenerateOptions{
@@ -48,8 +51,8 @@ func (Gen) Types() error {
 	})
 }
 
-func (Gen) Api() error {
-	return Gen{}.generate(genConfig{
+func (g Gen) Api() error {
+	return g.generate(genConfig{
 		packageName:    "api",
 		outputFilePath: "internal/api/server.go",
 		genOpts: codegen.GenerateOptions{
@@ -58,7 +61,7 @@ func (Gen) Api() error {
 	})
 }
 
-func (Gen) generate(opts genConfig) error {
+func (g Gen) generate(opts genConfig) error {
 	loader := openapi3.NewLoader()
 	doc, err := loader.LoadFromFile(openAPISpecPath)
 	if err != nil {
@@ -111,4 +114,12 @@ func DropDB() error {
 
 	fmt.Println("Database dropped.")
 	return nil
+}
+
+func Build() error {
+	fmt.Println("Building openaq-data...")
+	cmd := exec.Command("go", "build", "-o", "openaq-data", "main.go")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
