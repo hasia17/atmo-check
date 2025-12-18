@@ -13,11 +13,11 @@ import (
 )
 
 type Service struct {
-	store  *store.Store
+	store  store.Storer
 	logger *slog.Logger
 }
 
-func NewService(s *store.Store, l *slog.Logger) internal.DataService {
+func NewService(s store.Storer, l *slog.Logger) internal.DataService {
 	return &Service{
 		store:  s,
 		logger: l,
