@@ -7,30 +7,30 @@ import (
 )
 
 type Store struct {
-	locations    []types.Location
-	measurements []types.Measurement
-	parameters   []types.Parameter
+	Locations    []types.Location
+	Measurements []types.Measurement
+	Parameters   []types.Parameter
 }
 
 func New() store.Storer {
 	return &Store{
-		locations:    []types.Location{},
-		measurements: []types.Measurement{},
-		parameters:   []types.Parameter{},
+		Locations:    []types.Location{},
+		Measurements: []types.Measurement{},
+		Parameters:   []types.Parameter{},
 	}
 }
 
 func (s *Store) StoreLocations(_ context.Context, locations []types.Location) error {
-	s.locations = locations
+	s.Locations = locations
 	return nil
 }
 
 func (s *Store) GetLocations(_ context.Context) ([]types.Location, error) {
-	return s.locations, nil
+	return s.Locations, nil
 }
 
 func (s *Store) GetLocationByID(_ context.Context, id int32) (*types.Location, error) {
-	for _, loc := range s.locations {
+	for _, loc := range s.Locations {
 		if loc.Id == id {
 			return &loc, nil
 		}
@@ -39,24 +39,24 @@ func (s *Store) GetLocationByID(_ context.Context, id int32) (*types.Location, e
 }
 
 func (s *Store) StoreMeasurements(_ context.Context, measurements []types.Measurement) error {
-	s.measurements = measurements
+	s.Measurements = measurements
 	return nil
 }
 
 func (s *Store) DeleteMeasurementsForLocation(_ context.Context, locId int32) error {
-	filtered := s.measurements[:0] // keep the same underlying array
-	for _, m := range s.measurements {
+	filtered := s.Measurements[:0] // keep the same underlying array
+	for _, m := range s.Measurements {
 		if m.LocationId != locId {
 			filtered = append(filtered, m)
 		}
 	}
-	s.measurements = filtered
+	s.Measurements = filtered
 	return nil
 }
 
 func (s *Store) GetMeasurementsByLocation(_ context.Context, locationId int32) ([]types.Measurement, error) {
 	var result []types.Measurement
-	for _, m := range s.measurements {
+	for _, m := range s.Measurements {
 		if m.LocationId == locationId {
 			result = append(result, m)
 		}
@@ -65,12 +65,12 @@ func (s *Store) GetMeasurementsByLocation(_ context.Context, locationId int32) (
 }
 
 func (s *Store) StoreParameters(_ context.Context, parameters []types.Parameter) error {
-	s.parameters = parameters
+	s.Parameters = parameters
 	return nil
 }
 
 func (s *Store) GetParameters(_ context.Context) ([]types.Parameter, error) {
-	return s.parameters, nil
+	return s.Parameters, nil
 }
 
 func (s *Store) Close() error {
