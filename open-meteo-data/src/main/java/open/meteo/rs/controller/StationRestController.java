@@ -31,7 +31,6 @@ public class StationRestController implements StationsApi {
 
     @Override
     public ResponseEntity<List<MeasurementDTO>> getStationMeasurements(Long stationId) {
-        measurementService.fetchAndStoreMeasurements();
         return ResponseEntity.ok(measurementMapper.map(measurementRepository.findAllByStationId(stationId)));
     }
 

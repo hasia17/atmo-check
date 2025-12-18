@@ -10,4 +10,6 @@ import java.util.List;
 public interface MeasurementRepository extends MongoRepository<Measurement, String> {
 
     List<Measurement> findAllByStationId(Long stationId);
+
+    void deleteAllByStationId(Long stationId);
 }

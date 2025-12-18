@@ -1,6 +1,5 @@
 package open.meteo.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import open.meteo.domain.model.Measurement;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -34,7 +32,7 @@ public class MeasurementService {
 
     private static final String TIME_PARAM = "time";
 
-
+    @Scheduled(initialDelay = 60000, fixedRate = 3600000)
     public void fetchAndStoreMeasurements() {
         log.info("Starting scheduled measurement fetch");
 
@@ -52,7 +50,7 @@ public class MeasurementService {
     private void fetchAndStoreMeasurementsForStation(Station station) {
 
         List<Measurement> measurementsToCreate = new ArrayList<>();
-        Map<ParameterType, Double> latestValues = fetchMeasurements(station);
+        Map<ParameterType, Object> latestValues = fetchMeasurements(station);
 
         List<Parameter> parameters = parameterRepository.findAll();
         Map<ParameterType, Long> parametersTypeAndIds = parameters.stream()
@@ -61,10 +59,11 @@ public class MeasurementService {
 
         latestValues.forEach((parameterType, value) -> {
             Long parameterId = parametersTypeAndIds.get(parameterType);
-            measurementsToCreate.add(createMeasurement(station.getId(), parameterId, value, LocalDateTime.now()));
+            double mappedValue = value == null ? 0 : ((Number) value).doubleValue();
+            measurementsToCreate.add(createMeasurement(station.getId(), parameterId, mappedValue, LocalDateTime.now()));
         });
 
-        measurementRepository.deleteAll();
+        measurementRepository.deleteAllByStationId(station.getId());
         measurementRepository.saveAll(measurementsToCreate);
         log.info("Stored {} measurements for station {}", measurementsToCreate.size(), station.getName());
     }
@@ -78,19 +77,19 @@ public class MeasurementService {
         return measurement;
     }
 
-    private Map<ParameterType, Double> fetchMeasurements(Station station) {
-        log.info("Fetching measurements for {} started", station);
+    private Map<ParameterType, Object> fetchMeasurements(Station station) {
+        log.info("Fetching measurements for {} started", station.getName());
         OpenMeteoAirQualityResponse measurements = openMeteoClient.getAirQuality(station.getGeoLat(), station.getGeoLon());
 
         Map<String, List<Object>> valuesMap = measurements.getValues();
 
-        Map<ParameterType, Double> latestValues = new HashMap<>();
+        Map<ParameterType, Object> latestValues = new HashMap<>();
 
         // get only latest value for each parameter
         valuesMap.forEach((parameter, values) -> {
             if (values != null && !values.isEmpty()) {
                 if (!TIME_PARAM.equals(parameter)) {
-                    Double latestValue = (Double) values.getLast();
+                    Object latestValue = values.getLast();
                     log.info("Latest value for parameter {} at station {}: {}", parameter, station.getName(), latestValue);
                     latestValues.put(ParameterType.fromName(parameter), latestValue);
                 }
