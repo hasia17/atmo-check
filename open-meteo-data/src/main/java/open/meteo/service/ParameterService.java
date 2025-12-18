@@ -3,12 +3,9 @@ package open.meteo.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import open.meteo.domain.model.Parameter;
-import open.meteo.domain.model.Station;
 import open.meteo.domain.repository.ParameterRepository;
-import open.meteo.domain.repository.StationRepository;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
