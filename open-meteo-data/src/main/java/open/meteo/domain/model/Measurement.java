@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Document(collection = "measurements")
 public class Measurement {
     @Id
-    private Long id;
+    private String id;
     private Long stationId;
     private Long parameterId;
     private Double value;

@@ -1,6 +1,5 @@
 package open.meteo.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import open.meteo.domain.model.Measurement;
@@ -20,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -34,7 +32,7 @@ public class MeasurementService {
 
     private static final String TIME_PARAM = "time";
 
-
+    @Scheduled(initialDelay = 60000, fixedRate = 3600000)
     public void fetchAndStoreMeasurements() {
         log.info("Starting scheduled measurement fetch");
 
@@ -61,10 +59,11 @@ public class MeasurementService {
 
         latestValues.forEach((parameterType, value) -> {
             Long parameterId = parametersTypeAndIds.get(parameterType);
-            measurementsToCreate.add(createMeasurement(station.getId(), parameterId, ((Number) value).doubleValue(), LocalDateTime.now()));
+            double mappedValue = value == null ? 0 : ((Number) value).doubleValue();
+            measurementsToCreate.add(createMeasurement(station.getId(), parameterId, mappedValue, LocalDateTime.now()));
         });
 
-        measurementRepository.deleteAll();
+        measurementRepository.deleteAllByStationId(station.getId());
         measurementRepository.saveAll(measurementsToCreate);
         log.info("Stored {} measurements for station {}", measurementsToCreate.size(), station.getName());
     }
@@ -79,7 +78,7 @@ public class MeasurementService {
     }
 
     private Map<ParameterType, Object> fetchMeasurements(Station station) {
-        log.info("Fetching measurements for {} started", station);
+        log.info("Fetching measurements for {} started", station.getName());
         OpenMeteoAirQualityResponse measurements = openMeteoClient.getAirQuality(station.getGeoLat(), station.getGeoLon());
 
         Map<String, List<Object>> valuesMap = measurements.getValues();
