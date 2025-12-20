@@ -6,6 +6,7 @@ import (
 	"openaq-data/internal/mock"
 	"openaq-data/internal/models"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -59,6 +60,33 @@ var initApiParameter = api.Parameter{
 		out := ""
 		return &out
 	}(),
+}
+
+var initModelMeasurement = models.Measurement{
+	Date: struct {
+		Utc   string `json:"utc" bson:"utc"`
+		Local string `json:"local" bson:"local"`
+	}{
+		Utc:   "UTC",
+		Local: "UTC",
+	},
+	Value: 1.2,
+	Coordinates: struct {
+		Latitude  float64 "json:\"latitude\" bson:\"latitude\""
+		Longitude float64 "json:\"longitude\" bson:\"longitude\""
+	}{
+		Latitude:  10.0,
+		Longitude: 20.0,
+	},
+	SensorId:   1,
+	LocationId: 1,
+}
+
+var initApiMeasurement = api.Measurement{
+	ParameterId: 1,
+	StationId:   1,
+	Timestamp:   time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
+	Value:       1.2,
 }
 
 func TestStations(t *testing.T) {
@@ -146,6 +174,30 @@ func TestParameters(t *testing.T) {
 			params, err := s.Parameters(t.Context())
 			assert.Equal(t, test.wantErr, err)
 			assert.Equal(t, test.wantParameters, params)
+		})
+	}
+}
+
+func TestMeasuremtns(t *testing.T) {
+	tests := []struct {
+		name             string
+		giveMeasurements []models.Measurement
+		wantMeasurements []api.Measurement
+		wantErr          error
+	}{}
+	for _, tests := range tests {
+		t.Run(tests.name, func(t *testing.T) {
+			db := mock.Store{
+				Measurements: []models.Measurement{
+					initModelMeasurement,
+				},
+			}
+			l := &slog.Logger{}
+			s := NewService(&db, l)
+
+			measurements, err := s.MeasurementsForStation(t.Context(), 1)
+			assert.Equal(t, tests.wantErr, err)
+			assert.Equal(t, tests.wantMeasurements, measurements)
 		})
 	}
 }
