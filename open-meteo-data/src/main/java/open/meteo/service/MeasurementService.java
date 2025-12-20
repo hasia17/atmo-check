@@ -11,14 +11,12 @@ import open.meteo.domain.repository.ParameterRepository;
 import open.meteo.domain.repository.StationRepository;
 import open.meteo.rs.client.OpenMeteoClient;
 import open.meteo.rs.dto.OpenMeteoAirQualityResponse;
+import open.meteo.rs.exception.ResourceNotFoundException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -32,7 +30,7 @@ public class MeasurementService {
 
     private static final String TIME_PARAM = "time";
 
-    @Scheduled(initialDelay = 60000, fixedRate = 3600000)
+    @Scheduled(cron = "0 0 * * * ?") // Every hour
     public void fetchAndStoreMeasurements() {
         log.info("Starting scheduled measurement fetch");
 
@@ -48,7 +46,7 @@ public class MeasurementService {
     }
 
     private void fetchAndStoreMeasurementsForStation(Station station) {
-
+        log.info("Fetching measurements for {} started", station.getName());
         List<Measurement> measurementsToCreate = new ArrayList<>();
         Map<ParameterType, Object> latestValues = fetchMeasurements(station);
 
@@ -78,7 +76,6 @@ public class MeasurementService {
     }
 
     private Map<ParameterType, Object> fetchMeasurements(Station station) {
-        log.info("Fetching measurements for {} started", station.getName());
         OpenMeteoAirQualityResponse measurements = openMeteoClient.getAirQuality(station.getGeoLat(), station.getGeoLon());
 
         Map<String, List<Object>> valuesMap = measurements.getValues();
@@ -87,14 +84,20 @@ public class MeasurementService {
 
         // get only latest value for each parameter
         valuesMap.forEach((parameter, values) -> {
-            if (values != null && !values.isEmpty()) {
-                if (!TIME_PARAM.equals(parameter)) {
-                    Object latestValue = values.getLast();
-                    log.info("Latest value for parameter {} at station {}: {}", parameter, station.getName(), latestValue);
-                    latestValues.put(ParameterType.fromName(parameter), latestValue);
-                }
+            if (values != null && !values.isEmpty() && !TIME_PARAM.equals(parameter)) {
+                Object latestValue = values.getLast();
+                log.info("Latest value for parameter {} at station {}: {}", parameter, station.getName(), latestValue);
+                latestValues.put(ParameterType.fromName(parameter), latestValue);
             }
         });
         return latestValues;
+    }
+
+    public List<Measurement> getMeasurementsForStation(Long stationId) {
+        Station station = stationRepository.findStationById(stationId);
+        if (station == null) {
+            throw new ResourceNotFoundException("Station with ID " + stationId + " not found.");
+        }
+        return measurementRepository.findAllByStationId(stationId);
     }
 }
