@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"openaq-data/internal"
 	"openaq-data/internal/fetcher/apiclient"
+	"openaq-data/internal/models"
 	"openaq-data/internal/store"
-	"openaq-data/internal/types"
 	"openaq-data/internal/util"
 	"sync"
 	"time"
@@ -166,7 +166,7 @@ func (s *Service) updateMeasurements(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) updateMeasurementsForLocation(ctx context.Context, loc types.Location) error {
+func (s *Service) updateMeasurementsForLocation(ctx context.Context, loc models.Location) error {
 	measurements, err := s.loadMeasurementsForLocation(ctx, loc.Id)
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func (s *Service) updateMeasurementsForLocation(ctx context.Context, loc types.L
 	return nil
 }
 
-func (s *Service) loadMeasurementsForLocation(ctx context.Context, locId int32) ([]types.Measurement, error) {
+func (s *Service) loadMeasurementsForLocation(ctx context.Context, locId int32) ([]models.Measurement, error) {
 	for range maxFetchMeasurementsRetries {
 		apiData, err := s.client.FetchMeasurementsForLocation(ctx, locId)
 		if err != nil {

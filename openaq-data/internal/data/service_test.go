@@ -4,13 +4,13 @@ import (
 	"log/slog"
 	"openaq-data/internal/api"
 	"openaq-data/internal/mock"
-	"openaq-data/internal/types"
+	"openaq-data/internal/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var initTypesLocation = types.Location{
+var initModelLocation = models.Location{
 	Id:       1,
 	Name:     "Test Location",
 	Locality: "Test Locality",
@@ -22,12 +22,12 @@ var initTypesLocation = types.Location{
 		Latitude:  10.0,
 		Longitude: 20.0,
 	},
-	Sensors: []types.Sensor{
+	Sensors: []models.Sensor{
 		{
-			Parameter: types.Parameter{Id: 100},
+			Parameter: models.Parameter{Id: 100},
 		},
 		{
-			Parameter: types.Parameter{Id: 200},
+			Parameter: models.Parameter{Id: 200},
 		},
 	},
 }
@@ -42,7 +42,7 @@ var initApiStation = api.Station{
 	ParameterIds: []int32{100, 200},
 }
 
-var initTypesParameter = types.Parameter{
+var initModelParameter = models.Parameter{
 	Id:          10,
 	Name:        "Test Param",
 	Units:       "test_unit",
@@ -61,17 +61,17 @@ var initApiParameter = api.Parameter{
 	}(),
 }
 
-func TestStation(t *testing.T) {
+func TestStations(t *testing.T) {
 	tests := []struct {
 		name          string
-		giveLocations []types.Location
+		giveLocations []models.Location
 		wantStations  []api.Station
 		wantErr       error
 	}{
 		{
 			name: "All good",
-			giveLocations: []types.Location{
-				initTypesLocation,
+			giveLocations: []models.Location{
+				initModelLocation,
 			},
 			wantStations: []api.Station{
 				initApiStation,
@@ -80,18 +80,18 @@ func TestStation(t *testing.T) {
 		},
 		{
 			name: "Duplicate parameter",
-			giveLocations: []types.Location{
-				func() types.Location {
-					loc := initTypesLocation
-					loc.Sensors = []types.Sensor{
+			giveLocations: []models.Location{
+				func() models.Location {
+					loc := initModelLocation
+					loc.Sensors = []models.Sensor{
 						{
-							Parameter: types.Parameter{Id: 100},
+							Parameter: models.Parameter{Id: 100},
 						},
 						{
-							Parameter: types.Parameter{Id: 200},
+							Parameter: models.Parameter{Id: 200},
 						},
 						{
-							Parameter: types.Parameter{Id: 200},
+							Parameter: models.Parameter{Id: 200},
 						},
 					}
 					return loc
@@ -118,17 +118,17 @@ func TestStation(t *testing.T) {
 	}
 }
 
-func TestParameter(t *testing.T) {
+func TestParameters(t *testing.T) {
 	tests := []struct {
 		name           string
-		giveParameters []types.Parameter
+		giveParameters []models.Parameter
 		wantParameters []api.Parameter
 		wantErr        error
 	}{
 		{
 			name: "All good",
-			giveParameters: []types.Parameter{
-				initTypesParameter,
+			giveParameters: []models.Parameter{
+				initModelParameter,
 			},
 			wantParameters: []api.Parameter{
 				initApiParameter,

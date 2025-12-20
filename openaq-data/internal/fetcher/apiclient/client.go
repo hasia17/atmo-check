@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"openaq-data/internal/types"
+	"openaq-data/internal/models"
 
 	"resty.dev/v3"
 )
@@ -43,9 +43,9 @@ func buildClient(apiKey string) (*resty.Client, error) {
 		nil
 }
 
-func (s *Service) FetchLocations(ctx context.Context) ([]types.Location, error) {
+func (s *Service) FetchLocations(ctx context.Context) ([]models.Location, error) {
 	var locationResponse struct {
-		Results []types.Location `json:"results"`
+		Results []models.Location `json:"results"`
 	}
 
 	queryParams := map[string]string{
@@ -69,9 +69,9 @@ func (s *Service) FetchLocations(ctx context.Context) ([]types.Location, error) 
 	return locationResponse.Results, nil
 }
 
-func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId int32) ([]types.Measurement, error) {
+func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId int32) ([]models.Measurement, error) {
 	var measurementResponse struct {
-		Results []types.Measurement `json:"results"`
+		Results []models.Measurement `json:"results"`
 	}
 
 	resp, err := s.request(
@@ -97,9 +97,9 @@ func (s *Service) FetchMeasurementsForLocation(ctx context.Context, locationId i
 	return measurementResponse.Results, nil
 }
 
-func (s *Service) FetchParameters(ctx context.Context) ([]types.Parameter, error) {
+func (s *Service) FetchParameters(ctx context.Context) ([]models.Parameter, error) {
 	var parameterResponse struct {
-		Results []types.Parameter `json:"results"`
+		Results []models.Parameter `json:"results"`
 	}
 	res, err := s.request(
 		ctx,
