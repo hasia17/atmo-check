@@ -28,38 +28,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /stations/{stationId}:
-    get:
-      summary: Get station by ID
-      operationId: getStationById
-      tags:
-        - stations
-      parameters:
-        - name: stationId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Station details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StationDTO"
-        '404':
-          description: Station not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        '500':
-          description: Service exception
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   /stations/{stationId}/measurements:
     get:
       summary: Get latest measurement data for a station (optionally filtered by parameter)
