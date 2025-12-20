@@ -125,9 +125,8 @@ func (s *Service) loadParameters(ctx context.Context) error {
 }
 
 func (s *Service) updateMeasurementsLoop(ctx context.Context) {
-	initDataReady := util.WaitFor(s.locationsLoaded, s.parametersLoaded)
 	select {
-	case <-initDataReady:
+	case <-util.WaitFor(s.locationsLoaded, s.parametersLoaded):
 	case <-ctx.Done():
 		return
 	}
