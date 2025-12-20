@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"openaq-data/internal"
 	"openaq-data/internal/api"
+	"openaq-data/internal/models"
 	"openaq-data/internal/store"
-	"openaq-data/internal/types"
 	"openaq-data/internal/util"
 )
 
@@ -32,7 +32,7 @@ func (s *Service) Stations(ctx context.Context) ([]api.Station, error) {
 	return s.buildStations(locations), nil
 }
 
-func (s *Service) buildStations(locations []types.Location) []api.Station {
+func (s *Service) buildStations(locations []models.Location) []api.Station {
 	var stations []api.Station
 	for _, apiLoc := range locations {
 		station := api.Station{
@@ -60,7 +60,7 @@ func (s *Service) Parameters(ctx context.Context) ([]api.Parameter, error) {
 	return s.buildParameters(parameters), nil
 }
 
-func (s *Service) buildParameters(params []types.Parameter) []api.Parameter {
+func (s *Service) buildParameters(params []models.Parameter) []api.Parameter {
 	var apiParams []api.Parameter
 	for _, param := range params {
 		apiParam := api.Parameter{
@@ -94,8 +94,8 @@ func (s *Service) MeasurementsForStation(
 }
 
 func (s *Service) buildMeasurements(
-	measurements []types.Measurement,
-	loc types.Location,
+	measurements []models.Measurement,
+	loc models.Location,
 ) []api.Measurement {
 	var apiMeasurements []api.Measurement
 	for _, m := range measurements {
@@ -121,7 +121,7 @@ func (s *Service) buildMeasurements(
 	return apiMeasurements
 }
 
-func exctractParameterId(sensorId int32, loc types.Location) (int32, error) {
+func exctractParameterId(sensorId int32, loc models.Location) (int32, error) {
 	for _, sensor := range loc.Sensors {
 		if sensor.Id == sensorId {
 			return sensor.Parameter.Id, nil

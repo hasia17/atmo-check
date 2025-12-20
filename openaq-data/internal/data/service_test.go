@@ -4,13 +4,14 @@ import (
 	"log/slog"
 	"openaq-data/internal/api"
 	"openaq-data/internal/mock"
-	"openaq-data/internal/types"
+	"openaq-data/internal/models"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var initTypesLocation = types.Location{
+var initModelLocation = models.Location{
 	Id:       1,
 	Name:     "Test Location",
 	Locality: "Test Locality",
@@ -22,12 +23,12 @@ var initTypesLocation = types.Location{
 		Latitude:  10.0,
 		Longitude: 20.0,
 	},
-	Sensors: []types.Sensor{
+	Sensors: []models.Sensor{
 		{
-			Parameter: types.Parameter{Id: 100},
+			Parameter: models.Parameter{Id: 100},
 		},
 		{
-			Parameter: types.Parameter{Id: 200},
+			Parameter: models.Parameter{Id: 200},
 		},
 	},
 }
@@ -42,7 +43,7 @@ var initApiStation = api.Station{
 	ParameterIds: []int32{100, 200},
 }
 
-var initTypesParameter = types.Parameter{
+var initModelParameter = models.Parameter{
 	Id:          10,
 	Name:        "Test Param",
 	Units:       "test_unit",
@@ -61,17 +62,44 @@ var initApiParameter = api.Parameter{
 	}(),
 }
 
-func TestStation(t *testing.T) {
+var initModelMeasurement = models.Measurement{
+	Date: struct {
+		Utc   string `json:"utc" bson:"utc"`
+		Local string `json:"local" bson:"local"`
+	}{
+		Utc:   "UTC",
+		Local: "UTC",
+	},
+	Value: 1.2,
+	Coordinates: struct {
+		Latitude  float64 "json:\"latitude\" bson:\"latitude\""
+		Longitude float64 "json:\"longitude\" bson:\"longitude\""
+	}{
+		Latitude:  10.0,
+		Longitude: 20.0,
+	},
+	SensorId:   1,
+	LocationId: 1,
+}
+
+var initApiMeasurement = api.Measurement{
+	ParameterId: 1,
+	StationId:   1,
+	Timestamp:   time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
+	Value:       1.2,
+}
+
+func TestStations(t *testing.T) {
 	tests := []struct {
 		name          string
-		giveLocations []types.Location
+		giveLocations []models.Location
 		wantStations  []api.Station
 		wantErr       error
 	}{
 		{
 			name: "All good",
-			giveLocations: []types.Location{
-				initTypesLocation,
+			giveLocations: []models.Location{
+				initModelLocation,
 			},
 			wantStations: []api.Station{
 				initApiStation,
@@ -80,18 +108,18 @@ func TestStation(t *testing.T) {
 		},
 		{
 			name: "Duplicate parameter",
-			giveLocations: []types.Location{
-				func() types.Location {
-					loc := initTypesLocation
-					loc.Sensors = []types.Sensor{
+			giveLocations: []models.Location{
+				func() models.Location {
+					loc := initModelLocation
+					loc.Sensors = []models.Sensor{
 						{
-							Parameter: types.Parameter{Id: 100},
+							Parameter: models.Parameter{Id: 100},
 						},
 						{
-							Parameter: types.Parameter{Id: 200},
+							Parameter: models.Parameter{Id: 200},
 						},
 						{
-							Parameter: types.Parameter{Id: 200},
+							Parameter: models.Parameter{Id: 200},
 						},
 					}
 					return loc
@@ -118,17 +146,17 @@ func TestStation(t *testing.T) {
 	}
 }
 
-func TestParameter(t *testing.T) {
+func TestParameters(t *testing.T) {
 	tests := []struct {
 		name           string
-		giveParameters []types.Parameter
+		giveParameters []models.Parameter
 		wantParameters []api.Parameter
 		wantErr        error
 	}{
 		{
 			name: "All good",
-			giveParameters: []types.Parameter{
-				initTypesParameter,
+			giveParameters: []models.Parameter{
+				initModelParameter,
 			},
 			wantParameters: []api.Parameter{
 				initApiParameter,
@@ -146,6 +174,30 @@ func TestParameter(t *testing.T) {
 			params, err := s.Parameters(t.Context())
 			assert.Equal(t, test.wantErr, err)
 			assert.Equal(t, test.wantParameters, params)
+		})
+	}
+}
+
+func TestMeasuremtns(t *testing.T) {
+	tests := []struct {
+		name             string
+		giveMeasurements []models.Measurement
+		wantMeasurements []api.Measurement
+		wantErr          error
+	}{}
+	for _, tests := range tests {
+		t.Run(tests.name, func(t *testing.T) {
+			db := mock.Store{
+				Measurements: []models.Measurement{
+					initModelMeasurement,
+				},
+			}
+			l := &slog.Logger{}
+			s := NewService(&db, l)
+
+			measurements, err := s.MeasurementsForStation(t.Context(), 1)
+			assert.Equal(t, tests.wantErr, err)
+			assert.Equal(t, tests.wantMeasurements, measurements)
 		})
 	}
 }

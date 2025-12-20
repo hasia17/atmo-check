@@ -1,6 +1,6 @@
-package types
+package models
 
-// Package types provides data types that represent OpenAQ API responses.
+// Package models provides data types that represent OpenAQ API responses.
 type Location struct {
 	Id       int32  `json:"id"          bson:"id"`
 	Name     string `json:"name"        bson:"name"`
