@@ -25,9 +25,11 @@ var initModelLocation = models.Location{
 	},
 	Sensors: []models.Sensor{
 		{
+			Id:        1,
 			Parameter: models.Parameter{Id: 100},
 		},
 		{
+			Id:        2,
 			Parameter: models.Parameter{Id: 200},
 		},
 	},
@@ -67,8 +69,8 @@ var initModelMeasurement = models.Measurement{
 		Utc   string `json:"utc" bson:"utc"`
 		Local string `json:"local" bson:"local"`
 	}{
-		Utc:   "UTC",
-		Local: "UTC",
+		Utc:   "2009-11-17T20:34:58.651387237Z",
+		Local: "2009-11-17T15:34:58.651387237-05:00",
 	},
 	Value: 1.2,
 	Coordinates: struct {
@@ -83,7 +85,7 @@ var initModelMeasurement = models.Measurement{
 }
 
 var initApiMeasurement = api.Measurement{
-	ParameterId: 1,
+	ParameterId: 100,
 	StationId:   1,
 	Timestamp:   time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
 	Value:       1.2,
@@ -178,19 +180,33 @@ func TestParameters(t *testing.T) {
 	}
 }
 
-func TestMeasuremtns(t *testing.T) {
+func TestMeasurements(t *testing.T) {
 	tests := []struct {
 		name             string
+		giveLocations    []models.Location
 		giveMeasurements []models.Measurement
 		wantMeasurements []api.Measurement
 		wantErr          error
-	}{}
+	}{
+		{
+			name: "All good",
+			giveLocations: []models.Location{
+				initModelLocation,
+			},
+			giveMeasurements: []models.Measurement{
+				initModelMeasurement,
+			},
+			wantMeasurements: []api.Measurement{
+				initApiMeasurement,
+			},
+			wantErr: nil,
+		},
+	}
 	for _, tests := range tests {
 		t.Run(tests.name, func(t *testing.T) {
 			db := mock.Store{
-				Measurements: []models.Measurement{
-					initModelMeasurement,
-				},
+				Locations:    tests.giveLocations,
+				Measurements: tests.giveMeasurements,
 			}
 			l := &slog.Logger{}
 			s := NewService(&db, l)
