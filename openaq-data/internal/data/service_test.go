@@ -201,6 +201,21 @@ func TestMeasurements(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		{
+			name: "Location has no sensors",
+			giveLocations: func() []models.Location {
+				loc := initModelLocation
+				loc.Sensors = []models.Sensor{}
+				return []models.Location{
+					loc,
+				}
+			}(),
+			giveMeasurements: []models.Measurement{
+				initModelMeasurement,
+			},
+			wantMeasurements: nil,
+			wantErr:          nil, //TODO: should return an error
+		},
 	}
 	for _, tests := range tests {
 		t.Run(tests.name, func(t *testing.T) {
