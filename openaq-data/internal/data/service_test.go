@@ -135,7 +135,7 @@ func TestStations(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := &slog.Logger{}
+			l := slog.Default()
 			db := &mock.Store{
 				Locations: test.giveLocations,
 			}
@@ -167,7 +167,7 @@ func TestParameters(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := &slog.Logger{}
+			l := slog.Default()
 			db := &mock.Store{
 				Parameters: test.giveParameters,
 			}
@@ -214,7 +214,14 @@ func TestMeasurements(t *testing.T) {
 				initModelMeasurement,
 			},
 			wantMeasurements: nil,
-			wantErr:          nil, //TODO: should return an error
+			wantErr:          nil,
+		},
+		{
+			name:             "Location not found",
+			giveLocations:    nil,
+			giveMeasurements: nil,
+			wantMeasurements: nil,
+			wantErr:          ErrLocationNotFound,
 		},
 	}
 	for _, tests := range tests {
@@ -223,7 +230,7 @@ func TestMeasurements(t *testing.T) {
 				Locations:    tests.giveLocations,
 				Measurements: tests.giveMeasurements,
 			}
-			l := &slog.Logger{}
+			l := slog.Default()
 			s := NewService(&db, l)
 
 			measurements, err := s.MeasurementsForStation(t.Context(), 1)
