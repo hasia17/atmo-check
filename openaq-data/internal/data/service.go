@@ -2,14 +2,18 @@ package data
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"openaq-data/internal"
 	"openaq-data/internal/api"
 	"openaq-data/internal/models"
 	"openaq-data/internal/store"
 	"openaq-data/internal/util"
+)
+
+var (
+	ErrLocationNotFound = errors.New("Location not found")
 )
 
 type Service struct {
@@ -84,7 +88,8 @@ func (s *Service) MeasurementsForStation(
 		return nil, err
 	}
 	if loc == nil {
-		return nil, fmt.Errorf("location with ID %d not found", locId)
+		s.logger.Debug(fmt.Sprintf("location with ID %d not found", locId))
+		return nil, ErrLocationNotFound
 	}
 	measurements, err := s.store.GetMeasurementsByLocation(ctx, locId)
 	if err != nil {
@@ -101,13 +106,13 @@ func (s *Service) buildMeasurements(
 	for _, m := range measurements {
 		parsedTime, err := util.StringToTime(m.Date.Utc)
 		if err != nil {
-			log.Printf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err)
+			s.logger.Debug(fmt.Sprintf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err))
 			continue
 		}
 
 		paramId, err := exctractParameterId(m.SensorId, loc)
 		if err != nil {
-			log.Printf("Failed to extract parameter ID for sensor ID %d: %v", m.SensorId, err)
+			s.logger.Debug(fmt.Sprintf("Failed to extract parameter ID for sensor ID %d: %v", m.SensorId, err))
 			continue
 		}
 
