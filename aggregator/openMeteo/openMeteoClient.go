@@ -7,13 +7,11 @@ import (
 	"net/http"
 )
 
-const HOST_NAME = "http://localhost:8083"
+const Hostname = "http://localhost:8083"
 
 func GetStations() ([]Station, error) {
 
-	url := "/open-meteo-data-rs/stations"
-
-	response, err := http.Get(HOST_NAME + url)
+	response, err := http.Get(Hostname + "/open-meteo-data-rs/stations")
 	if err != nil {
 		return nil, fmt.Errorf("request to fetch stations failed: %v", err)
 	}
@@ -25,8 +23,7 @@ func GetStations() ([]Station, error) {
 	}
 
 	var stations []Station
-	err = json.Unmarshal(body, &stations)
-	if err != nil {
+	if err = json.Unmarshal(body, &stations); err != nil {
 		return nil, fmt.Errorf("unmarshalling response body failed: %v", err)
 	}
 

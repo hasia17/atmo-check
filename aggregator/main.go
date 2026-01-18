@@ -25,11 +25,11 @@ func getStations(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	err = json.NewEncoder(w).Encode(stations)
-	if err != nil {
+	if err = json.NewEncoder(w).Encode(stations); err != nil {
 		http.Error(w, "Encoding json response failed", http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	log.Print("Request to get stations finished successfully")
 
 }
