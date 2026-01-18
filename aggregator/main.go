@@ -3,7 +3,6 @@ package main
 import (
 	"aggregator/openMeteo"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 )
@@ -15,22 +14,22 @@ func main() {
 }
 
 func getStations(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Request to get stations started")
+	log.Print("Request to get stations started")
 	var stations []openMeteo.Station
 
-	stations = openMeteo.GetStations()
-	if stations == nil {
-		fmt.Println("Fetching stations failed")
+	stations, err := openMeteo.GetStations()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 
-	err := json.NewEncoder(w).Encode(stations)
+	err = json.NewEncoder(w).Encode(stations)
 	if err != nil {
-		fmt.Println("Encoding json response failed", err)
+		http.Error(w, "Encoding json response failed", http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("Request to get stations finished successfully")
+	log.Print("Request to get stations finished successfully")
 
 }

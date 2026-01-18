@@ -7,29 +7,28 @@ import (
 	"net/http"
 )
 
-func GetStations() []Station {
+const HOST_NAME = "http://localhost:8083"
 
-	url := "http://localhost:8083/open-meteo-data-rs/stations"
+func GetStations() ([]Station, error) {
 
-	response, err := http.Get(url)
+	url := "/open-meteo-data-rs/stations"
+
+	response, err := http.Get(HOST_NAME + url)
 	if err != nil {
-		fmt.Println("Request to fetch stations failed", err)
-		return nil
+		return nil, fmt.Errorf("request to fetch stations failed: %v", err)
 	}
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println("Reading response body failed", err)
-		return nil
+		return nil, fmt.Errorf("failed to read stations: %v", err)
 	}
 
 	var stations []Station
 	err = json.Unmarshal(body, &stations)
 	if err != nil {
-		fmt.Println("Unmarshalling response body failed", err)
-		return nil
+		return nil, fmt.Errorf("unmarshalling response body failed: %v", err)
 	}
 
-	return stations
+	return stations, nil
 }
