@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aggregator/openMeteo"
+	"aggregator/internal/data/openMeteo"
 	"encoding/json"
 	"log"
 	"net/http"
