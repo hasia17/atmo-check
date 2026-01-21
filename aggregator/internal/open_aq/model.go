@@ -1,4 +1,4 @@
-package openAq
+package open_aq
 
 import "time"
 
