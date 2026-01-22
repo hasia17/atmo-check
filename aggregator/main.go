@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aggregator/openMeteo"
+	"aggregator/internal/openmeteo"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -15,9 +15,9 @@ func main() {
 
 func getStations(w http.ResponseWriter, r *http.Request) {
 	log.Print("Request to get stations started")
-	var stations []openMeteo.Station
+	var stations []openmeteo.Station
 
-	stations, err := openMeteo.GetStations()
+	stations, err := openmeteo.GetStations()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

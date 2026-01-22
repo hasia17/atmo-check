@@ -1,4 +1,4 @@
-package openMeteo
+package openmeteo
 
 type Station struct {
 	Id      int     `json:"id"`
