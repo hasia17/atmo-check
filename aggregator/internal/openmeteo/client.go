@@ -1,4 +1,4 @@
-package open_meteo
+package openmeteo
 
 import (
 	"encoding/json"
