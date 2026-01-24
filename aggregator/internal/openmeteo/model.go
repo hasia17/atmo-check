@@ -1,10 +1,10 @@
 package openmeteo
 
 type Station struct {
-	Id      int     `json:"id"`
-	Name    string  `json:"name"`
-	GeoLat  float64 `json:"geoLat"`
-	GeoLong float64 `json:"geoLong"`
+	Id     int     `json:"id"`
+	Name   string  `json:"name"`
+	GeoLat float64 `json:"geoLat"`
+	GeoLon float64 `json:"geoLon"`
 }
 
 type Parameter struct {
