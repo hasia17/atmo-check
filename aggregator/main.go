@@ -17,7 +17,9 @@ func getStations(w http.ResponseWriter, r *http.Request) {
 	log.Print("Request to get stations started")
 	var stations []openmeteo.Station
 
-	stations, err := openmeteo.GetStations()
+	openmeteoClient := openmeteo.NewClient()
+
+	stations, err := openmeteoClient.GetStations()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -1,19 +1,26 @@
 package openmeteo
 
 import (
-	"aggregator/internal/util"
+	"aggregator/internal/apiclient"
 )
 
 const Hostname = "http://localhost:8083"
 
-func GetStations() ([]Station, error) {
-	return util.ReadResponse[Station](Hostname + "/open-meteo-data-rs/stations")
+type Client struct {
 }
 
-func GetParameters() ([]Parameter, error) {
-	return util.ReadResponse[Parameter](Hostname + "/open-meteo-data-rs/parameters")
+func NewClient() *Client {
+	return &Client{}
 }
 
-func GetMeasurementForStation(stationId string) ([]Measurement, error) {
-	return util.ReadResponse[Measurement](Hostname + "/open-meteo-data-rs/stations/" + stationId + "/measurements")
+func (c *Client) GetStations() ([]Station, error) {
+	return apiclient.FetchData[Station](Hostname + "/open-meteo-data-rs/stations")
+}
+
+func (c *Client) GetParameters() ([]Parameter, error) {
+	return apiclient.FetchData[Parameter](Hostname + "/open-meteo-data-rs/parameters")
+}
+
+func (c *Client) GetMeasurementForStation(stationId string) ([]Measurement, error) {
+	return apiclient.FetchData[Measurement](Hostname + "/open-meteo-data-rs/stations/" + stationId + "/measurements")
 }

@@ -19,22 +19,22 @@ type Parameter struct {
 
 type Station struct {
 	Id           int32   `json:"id"`
-	Latitude     float64 `json:"latitude"`
+	Lat          float64 `json:"latitude"`
 	Locality     string  `json:"locality"`
-	Longitude    float64 `json:"longitude"`
+	Lon          float64 `json:"longitude"`
 	Name         string  `json:"name"`
 	ParameterIds []int32 `json:"parameterIds"`
 	Timezone     string  `json:"timezone"`
 }
 
-func (s Station) GetLongitude() float64 {
-	return s.Longitude
+func (s Station) Longitude() float64 {
+	return s.Lon
 }
 
-func (s Station) GetLatitude() float64 {
-	return s.Latitude
+func (s Station) Latitude() float64 {
+	return s.Lat
 }
 
-func (s Station) GetName() string {
+func (s Station) StationName() string {
 	return s.Name
 }
