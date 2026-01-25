@@ -27,3 +27,9 @@ type GeographicalBounds struct {
 	MaxLongitude float64
 	MinLongitude float64
 }
+
+type StationWithCoordinates interface {
+	GetLatitude() float64
+	GetLongitude() float64
+	GetName() string
+}

@@ -15,26 +15,7 @@ func GroupOpenMeteoStations() (map[api.Voivodeship][]openmeteo.Station, error) {
 		return nil, err
 	}
 
-	stationsByVoivodeship := make(map[api.Voivodeship][]openmeteo.Station)
-
-	voivodeshipBounds := getVoivodeshipBounds()
-
-	for voivodeship, bounds := range voivodeshipBounds {
-
-		for _, station := range stations {
-
-			if station.GeoLat >= bounds.MinLatitude &&
-				station.GeoLat <= bounds.MaxLatitude &&
-				station.GeoLon >= bounds.MinLongitude &&
-				station.GeoLon <= bounds.MaxLongitude {
-
-				log.Printf("Stations %v assigned to voivodeship: %s", station.Name, voivodeship)
-				stationsByVoivodeship[voivodeship] = append(stationsByVoivodeship[voivodeship], station)
-			}
-		}
-	}
-	log.Print("Assigned voivodeship stations: ", stationsByVoivodeship)
-	return stationsByVoivodeship, nil
+	return GroupStationsByVoivodeship(stations)
 }
 
 func GroupOpenAqStations() (map[api.Voivodeship][]openaq.Station, error) {
@@ -45,26 +26,7 @@ func GroupOpenAqStations() (map[api.Voivodeship][]openaq.Station, error) {
 		return nil, err
 	}
 
-	stationsByVoivodeship := make(map[api.Voivodeship][]openaq.Station)
-
-	voivodeshipBounds := getVoivodeshipBounds()
-
-	for voivodeship, bounds := range voivodeshipBounds {
-
-		for _, station := range stations {
-
-			if station.Latitude >= bounds.MinLatitude &&
-				station.Latitude <= bounds.MaxLatitude &&
-				station.Longitude >= bounds.MinLongitude &&
-				station.Longitude <= bounds.MaxLongitude {
-
-				log.Printf("Stations %v assigned to voivodeship: %s", station.Name, voivodeship)
-				stationsByVoivodeship[voivodeship] = append(stationsByVoivodeship[voivodeship], station)
-			}
-		}
-	}
-	log.Print("Assigned voivodeship stations: ", stationsByVoivodeship)
-	return stationsByVoivodeship, nil
+	return GroupStationsByVoivodeship(stations)
 }
 
 func getVoivodeshipBounds() map[api.Voivodeship]api.GeographicalBounds {
@@ -87,4 +49,28 @@ func getVoivodeshipBounds() map[api.Voivodeship]api.GeographicalBounds {
 		api.Lodzkie:            {MinLatitude: 50.8, MaxLatitude: 52.0, MinLongitude: 18.9, MaxLongitude: 20.5},
 		api.Swietokrzyskie:     {MinLatitude: 50.1, MaxLatitude: 51.3, MinLongitude: 20.5, MaxLongitude: 21.8},
 	}
+}
+
+func GroupStationsByVoivodeship[T api.StationWithCoordinates](stations []T) (map[api.Voivodeship][]T, error) {
+
+	stationsByVoivodeship := make(map[api.Voivodeship][]T)
+
+	voivodeshipBounds := getVoivodeshipBounds()
+
+	for voivodeship, bounds := range voivodeshipBounds {
+
+		for _, station := range stations {
+
+			if station.GetLatitude() >= bounds.MinLatitude &&
+				station.GetLatitude() <= bounds.MaxLatitude &&
+				station.GetLongitude() >= bounds.MinLongitude &&
+				station.GetLongitude() <= bounds.MaxLongitude {
+
+				log.Printf("Stations %v assigned to voivodeship: %s", station.GetName(), voivodeship)
+				stationsByVoivodeship[voivodeship] = append(stationsByVoivodeship[voivodeship], station)
+			}
+		}
+	}
+	log.Print("Assigned voivodeship stations: ", stationsByVoivodeship)
+	return stationsByVoivodeship, nil
 }

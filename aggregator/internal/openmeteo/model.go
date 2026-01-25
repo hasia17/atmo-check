@@ -27,3 +27,15 @@ type ErrorResponse struct {
 	Message   string `json:"message"`
 	Timestamp string `json:"timestamp"`
 }
+
+func (s Station) GetLatitude() float64 {
+	return s.GeoLat
+}
+
+func (s Station) GetLongitude() float64 {
+	return s.GeoLon
+}
+
+func (s Station) GetName() string {
+	return s.Name
+}

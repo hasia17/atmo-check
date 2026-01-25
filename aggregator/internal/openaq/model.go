@@ -26,3 +26,15 @@ type Station struct {
 	ParameterIds []int32 `json:"parameterIds"`
 	Timezone     string  `json:"timezone"`
 }
+
+func (s Station) GetLongitude() float64 {
+	return s.Longitude
+}
+
+func (s Station) GetLatitude() float64 {
+	return s.Latitude
+}
+
+func (s Station) GetName() string {
+	return s.Name
+}
