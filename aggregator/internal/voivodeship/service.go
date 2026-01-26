@@ -3,7 +3,7 @@ package voivodeship
 import (
 	"aggregator/internal/openaq"
 	"aggregator/internal/openmeteo"
-	"log"
+	"log/slog"
 )
 
 type Service struct {
@@ -18,28 +18,28 @@ func NewService(openmeteoClient *openmeteo.Client, openaqClient *openaq.Client) 
 	}
 }
 
-type VoivodeshipMap[T any] map[voivodeship][]T
+type Map[T any] map[voivodeship][]T
 
-func (s *Service) GroupOpenMeteoStations() (VoivodeshipMap[openmeteo.Station], error) {
+func (s *Service) GroupOpenMeteoStations() (Map[openmeteo.Station], error) {
 
 	stations, err := s.openmeteoClient.GetStations()
 	if err != nil {
-		log.Print("Error getting open meteo stations")
+		slog.Info("Error getting open meteo stations")
 		return nil, err
 	}
 
-	return GroupStationsByVoivodeship(stations)
+	return groupStationsByVoivodeship(stations)
 }
 
-func (s *Service) GroupOpenAqStations() (VoivodeshipMap[openaq.Station], error) {
+func (s *Service) GroupOpenAqStations() (Map[openaq.Station], error) {
 
 	stations, err := s.openaqClient.GetStations()
 	if err != nil {
-		log.Print("Error getting openaq stations")
+		slog.Info("Error getting openaq stations")
 		return nil, err
 	}
 
-	return GroupStationsByVoivodeship(stations)
+	return groupStationsByVoivodeship(stations)
 }
 
 type voivodeship string
@@ -70,7 +70,7 @@ type geographicalBounds struct {
 	MinLongitude float64
 }
 
-type StationWithCoordinates interface {
+type locatable interface {
 	Latitude() float64
 	Longitude() float64
 	StationName() string
@@ -98,26 +98,23 @@ func voivodeshipBounds() map[voivodeship]geographicalBounds {
 	}
 }
 
-func GroupStationsByVoivodeship[T StationWithCoordinates](stations []T) (VoivodeshipMap[T], error) {
+func groupStationsByVoivodeship[T locatable](stations []T) (Map[T], error) {
 
-	stationsByVoivodeship := make(map[voivodeship][]T)
+	vm := make(map[voivodeship][]T)
 
 	for v, b := range voivodeshipBounds() {
-
 		for _, s := range stations {
-
 			if stationInVoivodeship(s, b) {
-
-				log.Printf("Stations %s assigned to voivodeship: %s", s.StationName(), v)
-				stationsByVoivodeship[v] = append(stationsByVoivodeship[v], s)
+				slog.Info("Stations %s assigned to voivodeship: %s", s.StationName(), v)
+				vm[v] = append(vm[v], s)
 			}
 		}
 	}
-	log.Print("Assigned voivodeship stations: ", stationsByVoivodeship)
-	return stationsByVoivodeship, nil
+	slog.Info("Assigned voivodeship stations: ", vm)
+	return vm, nil
 }
 
-func stationInVoivodeship[T StationWithCoordinates](s T, b geographicalBounds) bool {
+func stationInVoivodeship[T locatable](s T, b geographicalBounds) bool {
 	return s.Latitude() >= b.MinLatitude &&
 		s.Latitude() <= b.MaxLatitude &&
 		s.Longitude() >= b.MinLongitude &&
