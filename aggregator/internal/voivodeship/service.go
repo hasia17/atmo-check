@@ -105,12 +105,14 @@ func groupStationsByVoivodeship[T locatable](stations []T) (Map[T], error) {
 	for v, b := range voivodeshipBounds() {
 		for _, s := range stations {
 			if stationInVoivodeship(s, b) {
-				slog.Info("Stations %s assigned to voivodeship: %s", s.StationName(), v)
+				slog.Info("Station assigned to voivodeship",
+					"station", s.StationName(),
+					"voivodeship", v)
 				vm[v] = append(vm[v], s)
 			}
 		}
 	}
-	slog.Info("Assigned voivodeship stations: ", vm)
+	slog.Info("Assigned voivodeship stations", "stations", vm)
 	return vm, nil
 }
 
