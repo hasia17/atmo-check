@@ -2,6 +2,7 @@ package openmeteo
 
 import (
 	"aggregator/internal/apiclient"
+	"fmt"
 )
 
 const Hostname = "http://localhost:8083"
@@ -21,6 +22,7 @@ func (c *Client) GetParameters() ([]Parameter, error) {
 	return apiclient.FetchData[Parameter](Hostname + "/open-meteo-data-rs/parameters")
 }
 
-func (c *Client) GetMeasurementForStation(stationId string) ([]Measurement, error) {
-	return apiclient.FetchData[Measurement](Hostname + "/open-meteo-data-rs/stations/" + stationId + "/measurements")
+func (c *Client) GetMeasurementForStation(stationId int) ([]Measurement, error) {
+	url := fmt.Sprintf("%s/open-meteo-data-rs/stations/%d/measurements", Hostname, stationId)
+	return apiclient.FetchData[Measurement](url)
 }
