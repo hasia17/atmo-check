@@ -2,6 +2,7 @@ package openaq
 
 import (
 	"aggregator/internal/apiclient"
+	"fmt"
 )
 
 const Hostname = "http://localhost:3000"
@@ -16,4 +17,9 @@ func NewClient() *Client {
 func (c *Client) GetStations() ([]Station, error) {
 
 	return apiclient.FetchData[Station](Hostname + "/stations")
+}
+
+func (c *Client) GetMeasurementForStation(stationId int) ([]Measurement, error) {
+	url := fmt.Sprintf("%s/stations/%d/measurements", Hostname, stationId)
+	return apiclient.FetchData[Measurement](url)
 }
