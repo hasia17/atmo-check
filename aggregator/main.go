@@ -1,6 +1,9 @@
 package main
 
 import (
+	"aggregator/internal/aggregator"
+	"aggregator/internal/api"
+	"aggregator/internal/openaq"
 	"aggregator/internal/openmeteo"
 	"encoding/json"
 	"log"
@@ -8,6 +11,15 @@ import (
 )
 
 func main() {
+	opmClient := openmeteo.NewClient()
+	oaqClient := openaq.NewClient()
+
+	service, err := aggregator.NewService(opmClient, oaqClient)
+	if err != nil {
+		log.Fatal(err)
+	}
+	results, err := service.AggregateOpenMeteo(api.Dolnoslaskie)
+	log.Println(results)
 
 	http.HandleFunc("/stations", getStations)
 	log.Fatal(http.ListenAndServe(":8080", nil))
