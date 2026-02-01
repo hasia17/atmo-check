@@ -8,52 +8,6 @@ import (
 	"log/slog"
 )
 
-type Service struct {
-	openmeteoClient *openmeteo.Client
-	openaqClient    *openaq.Client
-	openMeteoMap    Map[openmeteo.Station]
-	openaqMap       Map[openaq.Station]
-}
-
-func NewService(openmeteoClient *openmeteo.Client, openaqClient *openaq.Client) (*Service, error) {
-	openMeteoMap, err := groupOpenMeteoStations(openmeteoClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to group open meteo stations: %w", err)
-	}
-
-	openaqMap, err := groupOpenaqStations(openaqClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to group open aq stations: %w", err)
-	}
-
-	return &Service{
-		openmeteoClient: openmeteoClient,
-		openaqClient:    openaqClient,
-		openMeteoMap:    openMeteoMap,
-		openaqMap:       openaqMap,
-	}, nil
-}
-
-type Map[T any] map[Voivodeship][]T
-
-func groupOpenMeteoStations(openmeteoClient *openmeteo.Client) (Map[openmeteo.Station], error) {
-	stations, err := openmeteoClient.GetStations()
-	if err != nil {
-		slog.Info("Error getting open meteo stations")
-		return nil, err
-	}
-	return groupStationsByVoivodeship(stations)
-}
-
-func groupOpenaqStations(openaqClient *openaq.Client) (Map[openaq.Station], error) {
-	stations, err := openaqClient.GetStations()
-	if err != nil {
-		slog.Info("Error getting openaq stations")
-		return nil, err
-	}
-	return groupStationsByVoivodeship(stations)
-}
-
 type Voivodeship string
 
 const (
@@ -75,17 +29,67 @@ const (
 	Zachodniopomorskie Voivodeship = "zachodniopomorskie"
 )
 
+type Service struct {
+	openmeteoClient *openmeteo.Client
+	openaqClient    *openaq.Client
+	openMeteoMap    Map[openmeteo.Station]
+	openaqMap       Map[openaq.Station]
+}
+
+func NewService(openmeteoClient *openmeteo.Client, openaqClient *openaq.Client) (*Service, error) {
+	s := &Service{
+		openmeteoClient: openmeteoClient,
+		openaqClient:    openaqClient,
+	}
+	err := s.initStationsMapping()
+	if err != nil {
+		return nil, fmt.Errorf("failed to init stations maps: %w", err)
+	}
+
+	return s, nil
+}
+
+func (s Service) initStationsMapping() error {
+	openMeteoMap, err := s.groupOpenMeteoStations()
+	if err != nil {
+
+		return fmt.Errorf("failed to group open meteo stations: %w", err)
+	}
+	s.openMeteoMap = openMeteoMap
+
+	openaqMap, err := s.groupOpenaqStations()
+	if err != nil {
+		return fmt.Errorf("failed to group open aq stations: %w", err)
+	}
+	s.openaqMap = openaqMap
+	return nil
+}
+
+type Map[T any] map[Voivodeship][]T
+
+func (s Service) groupOpenMeteoStations() (Map[openmeteo.Station], error) {
+	stations, err := s.openmeteoClient.GetStations()
+	if err != nil {
+		slog.Info("Error getting open meteo stations")
+		return nil, err
+	}
+	return groupStationsByVoivodeship(stations)
+}
+
+func (s Service) groupOpenaqStations() (Map[openaq.Station], error) {
+	stations, err := s.openaqClient.GetStations()
+	if err != nil {
+		slog.Info("Error getting openaq stations")
+		return nil, err
+	}
+	return groupStationsByVoivodeship(stations)
+}
+
 type geographicalBounds struct {
 	MaxLatitude  float64
 	MinLatitude  float64
 	MaxLongitude float64
 	MinLongitude float64
-}
-
-type locatable interface {
-	Latitude() float64
-	Longitude() float64
-	StationName() string
 }
 
 func voivodeshipBounds() map[Voivodeship]geographicalBounds {
@@ -108,6 +112,12 @@ func voivodeshipBounds() map[Voivodeship]geographicalBounds {
 		Lodzkie:            {MinLatitude: 50.8, MaxLatitude: 52.0, MinLongitude: 18.9, MaxLongitude: 20.5},
 		Swietokrzyskie:     {MinLatitude: 50.1, MaxLatitude: 51.3, MinLongitude: 20.5, MaxLongitude: 21.8},
 	}
+}
+
+type locatable interface {
+	Latitude() float64
+	Longitude() float64
+	StationName() string
 }
 
 func groupStationsByVoivodeship[T locatable](stations []T) (Map[T], error) {
@@ -152,7 +162,7 @@ func (s *Service) AggregateOpenMeteo(voivodeship api.Voivodeship) (api.Aggregate
 	}
 	result := api.AggregatedData{
 		Voivodeship: voivodeship,
-		Parameters:  calculateAverage(groupByParamId(toMeasurableSlice(measurements))),
+		Parameters:  calculateAverage(groupByParamId(slice(measurements))),
 	}
 	return result, nil
 }
@@ -172,25 +182,21 @@ func (s *Service) AggregateOpenaq(voivodeship api.Voivodeship) (api.AggregatedDa
 		}
 		measurements = append(measurements, m...)
 	}
-	measurables := make([]Measurable, len(measurements))
-	for i, m := range measurements {
-		measurables[i] = m
-	}
 
 	result := api.AggregatedData{
 		Voivodeship: voivodeship,
-		Parameters:  calculateAverage(groupByParamId(toMeasurableSlice(measurements))),
+		Parameters:  calculateAverage(groupByParamId(slice(measurements))),
 	}
 	return result, nil
 }
 
-type Measurable interface {
+type measurable interface {
 	GetParameterId() int
 	GetValue() float32
 }
 
-func groupByParamId(measurements []Measurable) map[int][]Measurable {
-	grouped := make(map[int][]Measurable)
+func groupByParamId(measurements []measurable) map[int][]measurable {
+	grouped := make(map[int][]measurable)
 
 	for _, m := range measurements {
 		grouped[m.GetParameterId()] = append(grouped[m.GetParameterId()], m)
@@ -198,7 +204,7 @@ func groupByParamId(measurements []Measurable) map[int][]Measurable {
 	return grouped
 }
 
-func calculateAverage(grouped map[int][]Measurable) []api.Parameter {
+func calculateAverage(grouped map[int][]measurable) []api.Parameter {
 	params := make([]api.Parameter, 0)
 	for p, mList := range grouped {
 		var sum float32 = 0.0
@@ -214,8 +220,8 @@ func calculateAverage(grouped map[int][]Measurable) []api.Parameter {
 	return params
 }
 
-func toMeasurableSlice[T Measurable](measurements []T) []Measurable {
-	result := make([]Measurable, len(measurements))
+func slice[T measurable](measurements []T) []measurable {
+	result := make([]measurable, len(measurements))
 	for i, m := range measurements {
 		result[i] = m
 	}
