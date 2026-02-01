@@ -36,6 +36,8 @@ func (s Station) Longitude() float64 {
 	return s.GeoLon
 }
 
-func (s Station) StationName() string {
-	return s.Name
-}
+func (s Station) StationName() string { return s.Name }
+
+func (m Measurement) GetParameterId() int { return m.ParameterId }
+
+func (m Measurement) GetValue() float32 { return m.Value }
