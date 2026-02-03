@@ -3,6 +3,7 @@ package api
 type AggregatedData struct {
 	Voivodeship Voivodeship `json:"voivodeship"`
 	Parameters  []Parameter `json:"parameters"`
+	Timestamp   string      `json:"timestamp"`
 }
 
 type Parameter struct {
@@ -11,7 +12,6 @@ type Parameter struct {
 	Description string  `json:"description"`
 	Unit        string  `json:"unit"`
 	Value       float32 `json:"value"`
-	Timestamp   string  `json:"timestamp"`
 }
 
 type Voivodeship string

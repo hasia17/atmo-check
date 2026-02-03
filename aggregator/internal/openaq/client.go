@@ -15,8 +15,11 @@ func NewClient() *Client {
 }
 
 func (c *Client) GetStations() ([]Station, error) {
-
 	return apiclient.FetchData[Station](Hostname + "/stations")
+}
+
+func (c *Client) GetParameters() ([]Parameter, error) {
+	return apiclient.FetchData[Parameter](Hostname + "/parameters")
 }
 
 func (c *Client) GetMeasurementForStation(stationId int) ([]Measurement, error) {

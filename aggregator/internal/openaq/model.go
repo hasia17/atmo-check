@@ -27,18 +27,20 @@ type Station struct {
 	Timezone     string  `json:"timezone"`
 }
 
-func (s Station) Longitude() float64 {
-	return s.Lon
-}
+func (s Station) Longitude() float64 { return s.Lon }
 
-func (s Station) Latitude() float64 {
-	return s.Lat
-}
+func (s Station) Latitude() float64 { return s.Lat }
 
-func (s Station) StationName() string {
-	return s.Name
-}
+func (s Station) StationName() string { return s.Name }
 
 func (m Measurement) GetParameterId() int { return m.ParameterId }
 
 func (m Measurement) GetValue() float32 { return m.Value }
+
+func (p Parameter) GetDescription() string { return p.Description }
+
+func (p Parameter) GetName() string { return p.DisplayName }
+
+func (p Parameter) GetUnit() string { return p.Units }
+
+func (p Parameter) GetId() int { return p.Id }
