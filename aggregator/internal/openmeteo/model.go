@@ -41,3 +41,11 @@ func (s Station) StationName() string { return s.Name }
 func (m Measurement) GetParameterId() int { return m.ParameterId }
 
 func (m Measurement) GetValue() float32 { return m.Value }
+
+func (p Parameter) GetDescription() string { return p.Description }
+
+func (p Parameter) GetName() string { return p.Name }
+
+func (p Parameter) GetUnit() string { return p.Unit }
+
+func (p Parameter) GetId() int { return p.Id }
