@@ -35,7 +35,7 @@ func main() {
 
 	db, err := store.New(mongoURI)
 	if err != nil {
-		log.Fatal("failed to open DB: ", err)
+		log.Fatal("failed to open DB")
 	}
 	defer db.Close()
 

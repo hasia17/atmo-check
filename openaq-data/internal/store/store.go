@@ -64,7 +64,7 @@ func configureClient(ctx context.Context, mongoURI string) (*mongo.Client, error
 		return nil, fmt.Errorf("failed to ping MongoDB: %w", err)
 	}
 
-	return mongoClient, nil
+	return mongoClient, err
 }
 
 func (s *Store) StoreLocations(ctx context.Context, locations []models.Location) error {
