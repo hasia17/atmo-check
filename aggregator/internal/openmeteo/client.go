@@ -15,14 +15,14 @@ func NewClient() *Client {
 }
 
 func (c *Client) GetStations() ([]Station, error) {
-	return apiclient.FetchData[Station](Hostname + "/open-meteo-data-rs/stations")
+	return apiclient.FetchData[Station](Hostname + "/stations")
 }
 
 func (c *Client) GetParameters() ([]Parameter, error) {
-	return apiclient.FetchData[Parameter](Hostname + "/open-meteo-data-rs/parameters")
+	return apiclient.FetchData[Parameter](Hostname + "/parameters")
 }
 
 func (c *Client) GetMeasurementForStation(stationId int) ([]Measurement, error) {
-	url := fmt.Sprintf("%s/open-meteo-data-rs/stations/%d/measurements", Hostname, stationId)
+	url := fmt.Sprintf("%s/stations/%d/measurements", Hostname, stationId)
 	return apiclient.FetchData[Measurement](url)
 }
