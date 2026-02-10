@@ -26,9 +26,7 @@ func (s *Service) GetStations(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch stations", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"data": stations,
-	})
+	writeJSON(w, http.StatusOK, stations)
 }
 
 func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
@@ -37,9 +35,7 @@ func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to fetch parameters", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusNotImplemented, map[string]any{
-		"data": parameters,
-	})
+	writeJSON(w, http.StatusOK, parameters)
 }
 
 func (s *Service) GetMeasurementsByStation(w http.ResponseWriter, r *http.Request, id int32) {
@@ -48,9 +44,7 @@ func (s *Service) GetMeasurementsByStation(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Failed to fetch measurements", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"data": measurements,
-	})
+	writeJSON(w, http.StatusOK, measurements)
 }
 
 func writeJSON(rw http.ResponseWriter, status int, v any) error {

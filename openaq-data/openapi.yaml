@@ -21,12 +21,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Station"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Station"
         "500":
           description: Failed to fetch stations
 
@@ -43,12 +40,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Parameter"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Parameter"
         "400":
           description: Invalid request
         "404":
@@ -76,12 +70,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Measurement"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Measurement"
         "400":
           description: Invalid station ID
         "404":
