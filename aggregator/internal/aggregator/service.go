@@ -49,7 +49,7 @@ func NewService(openmeteoClient *openmeteo.Client, openaqClient *openaq.Client) 
 	return s, nil
 }
 
-func (s Service) initStationsMapping() error {
+func (s *Service) initStationsMapping() error {
 	openMeteoMap, err := s.groupOpenMeteoStations()
 	if err != nil {
 
@@ -67,19 +67,19 @@ func (s Service) initStationsMapping() error {
 
 type Map[T any] map[Voivodeship][]T
 
-func (s Service) groupOpenMeteoStations() (Map[openmeteo.Station], error) {
+func (s *Service) groupOpenMeteoStations() (Map[openmeteo.Station], error) {
 	stations, err := s.openmeteoClient.GetStations()
 	if err != nil {
-		slog.Info("Error getting open meteo stations")
+		slog.Error("Error getting open meteo stations")
 		return nil, err
 	}
 	return groupStationsByVoivodeship(stations)
 }
 
-func (s Service) groupOpenaqStations() (Map[openaq.Station], error) {
+func (s *Service) groupOpenaqStations() (Map[openaq.Station], error) {
 	stations, err := s.openaqClient.GetStations()
 	if err != nil {
-		slog.Info("Error getting openaq stations")
+		slog.Error("Error getting openaq stations")
 		return nil, err
 	}
 	return groupStationsByVoivodeship(stations)
@@ -127,9 +127,6 @@ func groupStationsByVoivodeship[T locatable](stations []T) (Map[T], error) {
 	for v, b := range voivodeshipBounds() {
 		for _, s := range stations {
 			if stationInVoivodeship(s, b) {
-				slog.Info("Station assigned to Voivodeship",
-					"station", s.StationName(),
-					"Voivodeship", v)
 				vm[v] = append(vm[v], s)
 			}
 		}
@@ -149,45 +146,54 @@ func (s *Service) AggregateOpenMeteo(voivodeship api.Voivodeship) (api.Aggregate
 	measurements := make([]openmeteo.Measurement, 0)
 	mappedVoivodeship, err := mapVoivodeship(voivodeship)
 	if err != nil {
-		slog.Info("Error mapping open meteo Voivodeship: ", err)
+		slog.Error("Error mapping open meteo Voivodeship: ", err)
 		return api.AggregatedData{}, err
 	}
 	for _, station := range s.openMeteoMap[mappedVoivodeship] {
 		m, err := s.openmeteoClient.GetMeasurementForStation(station.Id)
 		if err != nil {
-			slog.Info("Error getting open meteo measurements: ", err)
+			slog.Error("Error getting open meteo measurements: ", err)
 			return api.AggregatedData{}, err
 		}
 		measurements = append(measurements, m...)
 	}
-	result := api.AggregatedData{
+	results := api.AggregatedData{
 		Voivodeship: voivodeship,
 		Parameters:  calculateAverage(groupByParamId(slice(measurements))),
 	}
-	return result, nil
+	parameters, err := s.openmeteoClient.GetParameters()
+	if err != nil {
+		return results, fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
+	}
+	results.AddOpenMeteoParamInfo(parameters)
+	return results, nil
 }
 
 func (s *Service) AggregateOpenaq(voivodeship api.Voivodeship) (api.AggregatedData, error) {
 	measurements := make([]openaq.Measurement, 0)
 	mappedVoivodeship, err := mapVoivodeship(voivodeship)
 	if err != nil {
-		slog.Info("Error mapping open meteo Voivodeship: ", err)
+		slog.Error("Error mapping open aq Voivodeship: ", err)
 		return api.AggregatedData{}, err
 	}
 	for _, station := range s.openaqMap[mappedVoivodeship] {
 		m, err := s.openaqClient.GetMeasurementForStation(station.Id)
 		if err != nil {
-			slog.Info("Error getting open meteo measurements: ", err)
+			slog.Error("Error getting open aq measurements: ", err)
 			return api.AggregatedData{}, err
 		}
 		measurements = append(measurements, m...)
 	}
-
-	result := api.AggregatedData{
+	results := api.AggregatedData{
 		Voivodeship: voivodeship,
 		Parameters:  calculateAverage(groupByParamId(slice(measurements))),
 	}
-	return result, nil
+	parameters, err := s.openaqClient.GetParameters()
+	if err != nil {
+		return results, fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
+	}
+	results.AddOpenAqParamInfo(parameters)
+	return results, nil
 }
 
 type measurable interface {
