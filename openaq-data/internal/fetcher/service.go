@@ -37,7 +37,7 @@ type Service struct {
 }
 
 func NewService(apiKey string, s store.Storer, l *zap.SugaredLogger) (internal.FetcherService, error) {
-	apiclient, err := apiclient.New(apiKey, l)
+	apiclient, err := apiclient.New(apiKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create API client: %w", err)
 	}

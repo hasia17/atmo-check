@@ -24,6 +24,7 @@ func New(d internal.DataService, l *zap.SugaredLogger) api.ServerInterface {
 func (s *Service) GetStations(w http.ResponseWriter, r *http.Request) {
 	stations, err := s.dataService.Stations(r.Context())
 	if err != nil {
+		s.logger.Errorw("Failed to fetch stations", "error", err)
 		http.Error(w, "Failed to fetch stations", http.StatusInternalServerError)
 		return
 	}
@@ -33,6 +34,7 @@ func (s *Service) GetStations(w http.ResponseWriter, r *http.Request) {
 func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
 	parameters, err := s.dataService.Parameters(r.Context())
 	if err != nil {
+		s.logger.Errorw("Failed to fetch parameters", "error", err)
 		http.Error(w, "Failed to fetch parameters", http.StatusInternalServerError)
 		return
 	}
@@ -42,6 +44,7 @@ func (s *Service) GetParameters(w http.ResponseWriter, r *http.Request) {
 func (s *Service) GetMeasurementsByStation(w http.ResponseWriter, r *http.Request, id int32) {
 	measurements, err := s.dataService.MeasurementsForStation(r.Context(), id)
 	if err != nil {
+		s.logger.Errorw("Failed to fetch measurements", "error", err, "stationId", id)
 		http.Error(w, "Failed to fetch measurements", http.StatusInternalServerError)
 		return
 	}
