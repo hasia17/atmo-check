@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"openaq-data/internal/models"
 
-	"go.uber.org/zap"
 	"resty.dev/v3"
 )
 
@@ -19,17 +18,15 @@ var (
 
 type Service struct {
 	client *resty.Client
-	logger *zap.SugaredLogger
 }
 
-func New(apiKey string, l *zap.SugaredLogger) (*Service, error) {
+func New(apiKey string) (*Service, error) {
 	client, err := buildClient(apiKey)
 	if err != nil {
 		return nil, err
 	}
 	return &Service{
 		client: client,
-		logger: l,
 	}, nil
 }
 
