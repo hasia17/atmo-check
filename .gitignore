@@ -23,3 +23,7 @@ target/
 .vscode/
 
 .env
+
+### CLAUDE ###
+.claude/
+CLAUDE.md
