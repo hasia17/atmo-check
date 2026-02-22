@@ -49,7 +49,7 @@ func (s *Service) GetMeasurementsByStation(w http.ResponseWriter, r *http.Reques
 }
 
 func writeJSON(rw http.ResponseWriter, status int, v any) error {
-	rw.WriteHeader(status)
 	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(status)
 	return json.NewEncoder(rw).Encode(v)
 }
