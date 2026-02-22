@@ -17,6 +17,7 @@ import (
 
 const (
 	locationsUpdateInterval     = 24 * time.Hour
+	parametersUpdateInterval    = 24 * time.Hour
 	measurementsUpdateInterval  = 1 * time.Hour
 	maxFetchMeasurementsRetries = 3
 )
@@ -93,7 +94,7 @@ func (s *Service) loadLocations(ctx context.Context) error {
 }
 
 func (s *Service) updateParametersLoop(ctx context.Context) {
-	ticker := time.NewTicker(locationsUpdateInterval)
+	ticker := time.NewTicker(parametersUpdateInterval)
 	defer ticker.Stop()
 
 	for {
