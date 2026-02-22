@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ErrLocationNotFound = errors.New("Location not found")
+	ErrLocationNotFound = errors.New("location not found")
 )
 
 type Service struct {
