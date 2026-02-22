@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"openaq-data/internal/api"
 	"openaq-data/internal/data"
@@ -16,11 +16,24 @@ import (
 	"openaq-data/internal/store"
 
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
 	listenAddr = ":3000"
 )
+
+func makeLogger() *zap.SugaredLogger {
+	loggerConfig := zap.NewDevelopmentConfig()
+	loggerConfig.EncoderConfig.TimeKey = "timestamp"
+	loggerConfig.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.RFC3339Nano)
+	logger, err := loggerConfig.Build()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return logger.Sugar()
+}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -39,13 +52,11 @@ func main() {
 	}
 	defer db.Close()
 
-	l := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug, // move this to the future config file
-	}))
+	l := makeLogger()
 
 	f, err := fetcher.NewService(apiKey, db, l)
 	if err != nil {
-		l.Error("failed to create fetcher service", "error", err)
+		l.Errorw("failed to create fetcher service", "error", err)
 		os.Exit(1)
 	}
 
@@ -54,7 +65,7 @@ func main() {
 
 	go func() {
 		if err := f.Run(ctx); err != nil {
-			l.Error("fetcher service stopped with error", "error", err)
+			l.Errorw("fetcher service stopped with error", "error", err)
 			cancel()
 			return
 		}
@@ -67,21 +78,21 @@ func main() {
 		Handler: api.Handler(srv),
 	}
 	go func() {
-		l.Info("Starting server", "addr", listenAddr)
+		l.Infow("Starting server", "addr", listenAddr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			l.Error("Server failed", "error", err)
+			l.Errorw("Server failed", "error", err)
 			cancel()
 		}
 	}()
 
 	<-ctx.Done()
-	log.Println("Shutting down...")
+	l.Info("Shutting down...")
 
 	if err := httpServer.Shutdown(context.Background()); err != nil {
-		l.Error("Failed to shut down server", "error", err)
+		l.Errorw("Failed to shut down server", "error", err)
 	}
 
 	if err := db.Close(); err != nil {
-		l.Error("Failed to close data service", "error", err)
+		l.Errorw("Failed to close data service", "error", err)
 	}
 }

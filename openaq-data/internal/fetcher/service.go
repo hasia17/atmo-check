@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"openaq-data/internal"
 	"openaq-data/internal/fetcher/apiclient"
 	"openaq-data/internal/models"
@@ -12,6 +11,8 @@ import (
 	"openaq-data/internal/util"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 type Service struct {
 	client *apiclient.Service
 	store  store.Storer
-	logger *slog.Logger
+	logger *zap.SugaredLogger
 
 	locationsLoadedOnce  sync.Once
 	locationsLoaded      chan struct{}
@@ -34,7 +35,7 @@ type Service struct {
 	parametersLoaded     chan struct{}
 }
 
-func NewService(apiKey string, s store.Storer, l *slog.Logger) (internal.FetcherService, error) {
+func NewService(apiKey string, s store.Storer, l *zap.SugaredLogger) (internal.FetcherService, error) {
 	apiclient, err := apiclient.New(apiKey, l)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create API client: %w", err)
@@ -64,7 +65,7 @@ func (s *Service) updateLocationsLoop(ctx context.Context) {
 
 	for {
 		if err := s.loadLocations(ctx); err != nil {
-			s.logger.Error("Failed to update locations", slog.Any("error", err))
+			s.logger.Errorw("Failed to update locations", "error", err)
 		}
 
 		select {
@@ -97,7 +98,7 @@ func (s *Service) updateParametersLoop(ctx context.Context) {
 
 	for {
 		if err := s.loadParameters(ctx); err != nil {
-			s.logger.Error("Failed to update parameters", slog.Any("error", err))
+			s.logger.Errorw("Failed to update parameters", "error", err)
 		}
 
 		select {
@@ -135,7 +136,7 @@ func (s *Service) updateMeasurementsLoop(ctx context.Context) {
 	defer ticker.Stop()
 	for {
 		if err := s.updateMeasurements(ctx); err != nil {
-			s.logger.Error("Failed to update measurements", slog.Any("error", err))
+			s.logger.Errorw("Failed to update measurements", "error", err)
 		}
 
 		select {
@@ -156,9 +157,9 @@ func (s *Service) updateMeasurements(ctx context.Context) error {
 	}
 	for _, loc := range locations {
 		if err := s.updateMeasurementsForLocation(ctx, loc); err != nil {
-			s.logger.Error(
+			s.logger.Errorw(
 				"Failed to update measurements for location",
-				slog.Any("error", err),
+				"error", err,
 			)
 		}
 	}

@@ -1,7 +1,6 @@
 package data
 
 import (
-	"log/slog"
 	"openaq-data/internal/api"
 	"openaq-data/internal/mock"
 	"openaq-data/internal/models"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 var initModelLocation = models.Location{
@@ -135,7 +135,7 @@ func TestStations(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := slog.Default()
+			l := zap.NewNop().Sugar()
 			db := &mock.Store{
 				Locations: test.giveLocations,
 			}
@@ -167,7 +167,7 @@ func TestParameters(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			l := slog.Default()
+			l := zap.NewNop().Sugar()
 			db := &mock.Store{
 				Parameters: test.giveParameters,
 			}
@@ -230,7 +230,7 @@ func TestMeasurements(t *testing.T) {
 				Locations:    tests.giveLocations,
 				Measurements: tests.giveMeasurements,
 			}
-			l := slog.Default()
+			l := zap.NewNop().Sugar()
 			s := NewService(&db, l)
 
 			measurements, err := s.MeasurementsForStation(t.Context(), 1)

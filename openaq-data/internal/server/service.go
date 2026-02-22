@@ -2,18 +2,19 @@ package server
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"openaq-data/internal"
 	"openaq-data/internal/api"
+
+	"go.uber.org/zap"
 )
 
 type Service struct {
 	dataService internal.DataService
-	logger      *slog.Logger
+	logger      *zap.SugaredLogger
 }
 
-func New(d internal.DataService, l *slog.Logger) api.ServerInterface {
+func New(d internal.DataService, l *zap.SugaredLogger) api.ServerInterface {
 	return &Service{
 		dataService: d,
 		logger:      l,

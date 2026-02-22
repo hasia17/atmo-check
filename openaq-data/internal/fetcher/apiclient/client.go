@@ -3,9 +3,9 @@ package apiclient
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"openaq-data/internal/models"
 
+	"go.uber.org/zap"
 	"resty.dev/v3"
 )
 
@@ -19,10 +19,10 @@ var (
 
 type Service struct {
 	client *resty.Client
-	logger *slog.Logger
+	logger *zap.SugaredLogger
 }
 
-func New(apiKey string, l *slog.Logger) (*Service, error) {
+func New(apiKey string, l *zap.SugaredLogger) (*Service, error) {
 	client, err := buildClient(apiKey)
 	if err != nil {
 		return nil, err
