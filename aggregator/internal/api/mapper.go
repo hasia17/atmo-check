@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func MapParameter(parameter openmeteo.Parameter) (Parameter, error) {
+func MapOpenMeteoParameter(parameter openmeteo.Parameter) (Parameter, error) {
 	paramType, err := MapOpenMeteoParamName(parameter.Name)
 	if err != nil {
 		return Parameter{}, fmt.Errorf("unsupported paramName: %s", parameter.Name)
@@ -14,6 +14,7 @@ func MapParameter(parameter openmeteo.Parameter) (Parameter, error) {
 		Description: parameter.Description,
 		Unit:        parameter.Unit,
 		Type:        paramType,
+		Id:          validParamTypes[paramType],
 	}, nil
 }
 

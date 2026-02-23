@@ -148,22 +148,22 @@ func (s *Service) AggregateData(voivodeship api.Voivodeship) (api.AggregatedData
 
 	openMeteoParameters, err := s.openmeteoClient.GetParameters()
 	if err != nil {
-		return results, fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
+		return api.AggregatedData{}, fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
 	}
 	openMeteoAverages, err := s.calculateOpenMeteoAverages(openMeteoParameters, voivodeship)
 	if err != nil {
-		return results, fmt.Errorf("failed to calculate averages for open meteo parameters: %w", err)
+		return api.AggregatedData{}, fmt.Errorf("failed to calculate averages for open meteo parameters: %w", err)
 	}
 	openAqAverages, err := s.calculateOpenAqAverages(voivodeship)
 	if err != nil {
-		return results, fmt.Errorf("failed to calculate averages for open aq parameters: %w", err)
+		return api.AggregatedData{}, fmt.Errorf("failed to calculate averages for open aq parameters: %w", err)
 	}
 	aggregatedParameters := mergeAverages(openMeteoAverages, openAqAverages)
 	// take additional param info only from open-meteo
-	err = results.AddParamInfo(openMeteoParameters, aggregatedParameters)
-	if err != nil {
-		return results, fmt.Errorf("failed to add param info: %w", err)
+	if err := results.AddParamInfoFromOpenMeteo(openMeteoParameters); err != nil {
+		return api.AggregatedData{}, fmt.Errorf("failed to add param info: %w", err)
 	}
+	results.AddParamValues(aggregatedParameters)
 	return results, nil
 }
 
@@ -187,7 +187,7 @@ func (s *Service) calculateOpenMeteoAverages(parameters []openmeteo.Parameter, v
 func (s *Service) calculateOpenAqAverages(voivodeship api.Voivodeship) (map[api.ParamType]float32, error) {
 	parameters, err := s.openaqClient.GetParameters()
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
+		return nil, fmt.Errorf("failed to fetch parameters from open aq: %w", err)
 	}
 	measurements := make([]openaq.Measurement, 0)
 	mappedVoivodeship, err := mapVoivodeship(voivodeship)
