@@ -75,7 +75,7 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - MONGO_URI={MONGO_URI}
+      - MONGO_URI=${MONGO_URI}
       - OPENAQ_API_KEY=${OPENAQ_API_KEY}
     depends_on:
       - mongodb
