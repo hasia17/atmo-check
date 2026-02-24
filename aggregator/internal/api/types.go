@@ -1,50 +1,19 @@
 package api
 
 import (
-	"aggregator/internal/openaq"
 	"aggregator/internal/openmeteo"
+	"time"
 )
 
-type AggregatedData struct {
-	Voivodeship Voivodeship `json:"voivodeship"`
-	Parameters  []Parameter `json:"parameters"`
-	Timestamp   string      `json:"timestamp"`
-}
-
-func (ad *AggregatedData) AddOpenAqParamInfo(parameters []openaq.Parameter) {
-	pMap := make(map[int]openaq.Parameter, len(parameters))
-	for _, param := range parameters {
-		pMap[param.Id] = param
-	}
-	for i := range ad.Parameters {
-		if param, exists := pMap[ad.Parameters[i].Id]; exists {
-			ad.Parameters[i].Name = param.Name
-			ad.Parameters[i].Unit = param.Units
-			ad.Parameters[i].Description = param.Description
-		}
-	}
-}
-
-func (ad *AggregatedData) AddOpenMeteoParamInfo(parameters []openmeteo.Parameter) {
-	pMap := make(map[int]openmeteo.Parameter, len(parameters))
-	for _, param := range parameters {
-		pMap[param.Id] = param
-	}
-	for i := range ad.Parameters {
-		if param, exists := pMap[ad.Parameters[i].Id]; exists {
-			ad.Parameters[i].Name = param.Name
-			ad.Parameters[i].Unit = param.Unit
-			ad.Parameters[i].Description = param.Description
-		}
-	}
-}
-
-type Parameter struct {
-	Id          int     `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Unit        string  `json:"unit"`
-	Value       float32 `json:"value"`
+var validParamTypes = map[ParamType]int{
+	"PM10":  1,
+	"PM2_5": 2,
+	"CO":    3,
+	"CO2":   4,
+	"NO2":   5,
+	"SO2":   6,
+	"O3":    7,
+	"CH4":   8,
 }
 
 type Voivodeship string
@@ -67,3 +36,54 @@ const (
 	Wielkopolskie      Voivodeship = "wielkopolskie"
 	Zachodniopomorskie Voivodeship = "zachodniopomorskie"
 )
+
+type ParamType string
+
+const (
+	PM10  ParamType = "PM10"
+	PM2_5 ParamType = "PM2_5"
+	CO    ParamType = "CO"
+	CO2   ParamType = "CO2"
+	NO2   ParamType = "NO2"
+	SO2   ParamType = "SO2"
+	O3    ParamType = "O3"
+	CH4   ParamType = "CH4"
+)
+
+type Parameter struct {
+	Id          int       `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Unit        string    `json:"unit"`
+	Value       float32   `json:"value"`
+	Type        ParamType `json:"type"`
+}
+
+type AggregatedData struct {
+	Voivodeship Voivodeship `json:"voivodeship"`
+	Parameters  []Parameter `json:"parameters"`
+	Timestamp   string      `json:"timestamp"`
+}
+
+func (ad *AggregatedData) AddParamInfoFromOpenMeteo(parameters []openmeteo.Parameter) error {
+	params := make([]Parameter, len(validParamTypes))
+	for _, p := range parameters {
+		param, err := MapOpenMeteoParameter(p)
+		if err != nil {
+			continue
+		}
+		params[param.Id-1] = param
+	}
+	ad.Parameters = params
+	return nil
+}
+
+func (ad *AggregatedData) AddParamValues(averages map[ParamType]float32) {
+	for i := range ad.Parameters {
+		p := &ad.Parameters[i]
+		if value, exists := averages[p.Type]; exists {
+			ad.Parameters[i].Value = value
+		}
+	}
+	ad.Timestamp = time.Now().UTC().Format(time.RFC3339)
+}
