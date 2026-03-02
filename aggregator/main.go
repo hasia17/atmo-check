@@ -5,20 +5,24 @@ import (
 	"aggregator/internal/api"
 	"aggregator/internal/openaq"
 	"aggregator/internal/openmeteo"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func main() {
-	http.HandleFunc("/aggregate/", getAggregatedData)
+	http.HandleFunc("/aggregatedData/", getAggregatedData)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func getAggregatedData(w http.ResponseWriter, r *http.Request) {
 	log.Print("Request to get aggregated data started")
-	voivodeshipStr := strings.TrimPrefix(r.URL.Path, "/aggregate/")
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	voivodeshipStr := strings.TrimPrefix(r.URL.Path, "/aggregatedData/")
 	if voivodeshipStr == "" {
 		http.Error(w, "Voivodeship parameter is required", http.StatusBadRequest)
 		return
@@ -30,17 +34,16 @@ func getAggregatedData(w http.ResponseWriter, r *http.Request) {
 	}
 	opmClient := openmeteo.NewClient()
 	oaqClient := openaq.NewClient()
-	service, err := aggregator.NewService(opmClient, oaqClient)
+	service, err := aggregator.NewService(ctx, opmClient, oaqClient)
 	if err != nil {
 		http.Error(w, "Aggregator initialization failed", http.StatusInternalServerError)
 		return
 	}
-	results, err := service.AggregateData(voivodeship)
+	results, err := service.AggregateData(ctx, voivodeship)
 	if err != nil {
 		http.Error(w, "Aggregating data for voivodeship failed", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(results); err != nil {
 		http.Error(w, "Encoding json response failed", http.StatusInternalServerError)
 		return
