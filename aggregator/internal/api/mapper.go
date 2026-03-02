@@ -3,6 +3,7 @@ package api
 import (
 	"aggregator/internal/openmeteo"
 	"fmt"
+	"strings"
 )
 
 func MapOpenMeteoParameter(parameter openmeteo.Parameter) (Parameter, error) {
@@ -61,5 +62,18 @@ func MapOpenAqParamName(paramName string) (ParamType, error) {
 		return CH4, nil
 	default:
 		return "", fmt.Errorf("unsupported paramName: %s", paramName)
+	}
+}
+
+func MapVoivodeship(s string) (Voivodeship, error) {
+	v := Voivodeship(strings.ToLower(s))
+	switch v {
+	case Dolnoslaskie, KujawskoPomorskie, Lubelskie, Lubuskie, Lodzkie,
+		Malopolskie, Mazowieckie, Opolskie, Podkarpackie, Podlaskie,
+		Pomorskie, Slaskie, Swietokrzyskie, WarminskoMazurskie,
+		Wielkopolskie, Zachodniopomorskie:
+		return v, nil
+	default:
+		return "", fmt.Errorf("unknown voivodeship: %s", s)
 	}
 }

@@ -52,7 +52,6 @@ const (
 
 type Parameter struct {
 	Id          int       `json:"id"`
-	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Unit        string    `json:"unit"`
 	Value       float32   `json:"value"`
