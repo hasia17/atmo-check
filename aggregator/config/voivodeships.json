@@ -1,0 +1,18 @@
+{
+  "zachodniopomorskie":  { "minLat": 52.6, "maxLat": 54.9, "minLon": 14.0, "maxLon": 16.5 },
+  "pomorskie":           { "minLat": 53.3, "maxLat": 54.9, "minLon": 16.5, "maxLon": 19.0 },
+  "warminsko-mazurskie": { "minLat": 53.3, "maxLat": 54.9, "minLon": 19.0, "maxLon": 22.0 },
+  "podlaskie":           { "minLat": 53.3, "maxLat": 54.9, "minLon": 22.0, "maxLon": 24.2 },
+  "lubuskie":            { "minLat": 51.0, "maxLat": 52.6, "minLon": 14.0, "maxLon": 16.5 },
+  "wielkopolskie":       { "minLat": 51.0, "maxLat": 53.3, "minLon": 16.5, "maxLon": 18.5 },
+  "kujawsko-pomorskie":  { "minLat": 52.0, "maxLat": 53.3, "minLon": 18.5, "maxLon": 20.0 },
+  "mazowieckie":         { "minLat": 51.0, "maxLat": 53.3, "minLon": 20.0, "maxLon": 22.5 },
+  "lubelskie":           { "minLat": 51.0, "maxLat": 53.3, "minLon": 22.5, "maxLon": 24.2 },
+  "dolnoslaskie":        { "minLat": 49.0, "maxLat": 51.0, "minLon": 14.0, "maxLon": 16.8 },
+  "opolskie":            { "minLat": 49.0, "maxLat": 51.0, "minLon": 16.8, "maxLon": 18.2 },
+  "slaskie":             { "minLat": 49.0, "maxLat": 51.0, "minLon": 18.2, "maxLon": 19.5 },
+  "malopolskie":         { "minLat": 49.0, "maxLat": 51.0, "minLon": 19.5, "maxLon": 21.0 },
+  "podkarpackie":        { "minLat": 49.0, "maxLat": 51.0, "minLon": 21.0, "maxLon": 24.2 },
+  "lodzkie":             { "minLat": 50.8, "maxLat": 52.0, "minLon": 18.9, "maxLon": 20.5 },
+  "swietokrzyskie":      { "minLat": 50.1, "maxLat": 51.3, "minLon": 20.5, "maxLon": 21.8 }
+}
