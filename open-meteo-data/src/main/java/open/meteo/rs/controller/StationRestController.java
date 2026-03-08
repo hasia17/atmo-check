@@ -9,14 +9,12 @@ import open.meteo.rs.mapper.MeasurementMapper;
 import open.meteo.rs.mapper.StationMapper;
 import open.meteo.service.MeasurementService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-//@RequestMapping("/open-meteo-data-rs")
 public class StationRestController implements StationsApi {
 
     private final StationRepository stationRepository;

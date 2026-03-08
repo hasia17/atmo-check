@@ -15,7 +15,7 @@ import (
 
 func main() {
 	http.HandleFunc("/aggregatedData/", getAggregatedData)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8082", nil))
 }
 
 func getAggregatedData(w http.ResponseWriter, r *http.Request) {
