@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+const defaultHostName = "http://localhost:3001"
+
 type Client struct {
 	hostname string
 }
@@ -14,7 +16,7 @@ type Client struct {
 func NewClient() *Client {
 	hostname := os.Getenv("OPENAQ_URL")
 	if hostname == "" {
-		hostname = "http://localhost:3001"
+		hostname = defaultHostName
 	}
 	return &Client{hostname: hostname}
 }
