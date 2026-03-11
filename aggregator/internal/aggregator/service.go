@@ -9,13 +9,15 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+
+	"golang.org/x/sync/errgroup"
 )
 
 type Service struct {
-	openmeteoClient  *openmeteo.Client
-	openaqClient     *openaq.Client
-	openMeteoMap     Map[openmeteo.Station]
-	openaqMap        Map[openaq.Station]
+	openmeteoClient   *openmeteo.Client
+	openaqClient      *openaq.Client
+	openMeteoMap      Map[openmeteo.Station]
+	openaqMap         Map[openaq.Station]
 	voivodeshipBounds map[api.Voivodeship]geographicalBounds
 }
 
@@ -152,12 +154,26 @@ func (s *Service) AggregateData(ctx context.Context, voivodeship api.Voivodeship
 }
 
 func (s *Service) calculateOpenMeteoAverages(ctx context.Context, parameters []openmeteo.Parameter, voivodeship api.Voivodeship) (map[api.ParamType]float32, error) {
+	stations := s.openMeteoMap[voivodeship]
+	results := make([][]openmeteo.Measurement, len(stations))
+
+	g, ctx := errgroup.WithContext(ctx)
+	for i, station := range stations {
+		g.Go(func() error {
+			m, err := s.openmeteoClient.GetMeasurementForStation(ctx, station.Id)
+			if err != nil {
+				return fmt.Errorf("fetching open meteo measurements for station %d: %w", station.Id, err)
+			}
+			results[i] = m
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
 	measurements := make([]openmeteo.Measurement, 0)
-	for _, station := range s.openMeteoMap[voivodeship] {
-		m, err := s.openmeteoClient.GetMeasurementForStation(ctx, station.Id)
-		if err != nil {
-			return nil, fmt.Errorf("fetching measurements for station %d: %w", station.Id, err)
-		}
+	for _, m := range results {
 		measurements = append(measurements, m...)
 	}
 	parameterMap := buildOpenMeteoParameterMap(parameters)
@@ -169,12 +185,26 @@ func (s *Service) calculateOpenAqAverages(ctx context.Context, voivodeship api.V
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch parameters from open aq: %w", err)
 	}
+	stations := s.openaqMap[voivodeship]
+	results := make([][]openaq.Measurement, len(stations))
+
+	g, ctx := errgroup.WithContext(ctx)
+	for i, station := range stations {
+		g.Go(func() error {
+			m, err := s.openaqClient.GetMeasurementForStation(ctx, station.Id)
+			if err != nil {
+				return fmt.Errorf("fetching open aq measurements for station %d: %w", station.Id, err)
+			}
+			results[i] = m
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
 	measurements := make([]openaq.Measurement, 0)
-	for _, station := range s.openaqMap[voivodeship] {
-		m, err := s.openaqClient.GetMeasurementForStation(ctx, station.Id)
-		if err != nil {
-			return nil, fmt.Errorf("fetching measurements for station %d: %w", station.Id, err)
-		}
+	for _, m := range results {
 		measurements = append(measurements, m...)
 	}
 	parameterMap := buildOpenAqParameterMap(parameters)
