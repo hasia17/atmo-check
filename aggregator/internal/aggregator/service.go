@@ -21,14 +21,14 @@ type Service struct {
 	voivodeshipBounds map[api.Voivodeship]geographicalBounds
 }
 
-func NewService(ctx context.Context, openmeteoClient *openmeteo.Client, openaqClient *openaq.Client) (*Service, error) {
+func NewService(ctx context.Context) (*Service, error) {
 	bounds, err := loadVoivodeshipBounds("config/voivodeships.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load voivodeship bounds: %w", err)
 	}
 	s := &Service{
-		openmeteoClient:   openmeteoClient,
-		openaqClient:      openaqClient,
+		openmeteoClient:   openmeteo.NewClient(),
+		openaqClient:      openaq.NewClient(),
 		voivodeshipBounds: bounds,
 	}
 	err = s.initStationsMapping(ctx)
@@ -129,27 +129,45 @@ func (s *Service) AggregateData(ctx context.Context, voivodeship api.Voivodeship
 		return api.AggregatedData{}, fmt.Errorf("context cancelled before aggregation: %w", err)
 	}
 
-	results := api.AggregatedData{
-		Voivodeship: voivodeship,
+	g, ctx := errgroup.WithContext(ctx)
+
+	var openMeteoParameters []openmeteo.Parameter
+	var openMeteoAverages map[api.ParamType]float32
+	var openAqAverages map[api.ParamType]float32
+
+	g.Go(func() error {
+		params, err := s.openmeteoClient.GetParameters(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
+		}
+		averages, err := s.calculateOpenMeteoAverages(ctx, params, voivodeship)
+		if err != nil {
+			return fmt.Errorf("failed to calculate averages for open meteo parameters: %w", err)
+		}
+		openMeteoParameters = params
+		openMeteoAverages = averages
+		return nil
+	})
+
+	g.Go(func() error {
+		averages, err := s.calculateOpenAqAverages(ctx, voivodeship)
+		if err != nil {
+			return fmt.Errorf("failed to calculate averages for open aq parameters: %w", err)
+		}
+		openAqAverages = averages
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return api.AggregatedData{}, err
 	}
-	openMeteoParameters, err := s.openmeteoClient.GetParameters(ctx)
-	if err != nil {
-		return api.AggregatedData{}, fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
-	}
-	openMeteoAverages, err := s.calculateOpenMeteoAverages(ctx, openMeteoParameters, voivodeship)
-	if err != nil {
-		return api.AggregatedData{}, fmt.Errorf("failed to calculate averages for open meteo parameters: %w", err)
-	}
-	openAqAverages, err := s.calculateOpenAqAverages(ctx, voivodeship)
-	if err != nil {
-		return api.AggregatedData{}, fmt.Errorf("failed to calculate averages for open aq parameters: %w", err)
-	}
-	aggregatedParameters := mergeAverages(openMeteoAverages, openAqAverages)
+
+	results := api.AggregatedData{Voivodeship: voivodeship}
 	// take additional param info only from open-meteo
 	if err := results.AddParamInfoFromOpenMeteo(openMeteoParameters); err != nil {
 		return api.AggregatedData{}, fmt.Errorf("failed to add param info: %w", err)
 	}
-	results.AddParamValues(aggregatedParameters)
+	results.AddParamValues(mergeAverages(openMeteoAverages, openAqAverages))
 	return results, nil
 }
 
