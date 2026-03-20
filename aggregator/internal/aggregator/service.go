@@ -42,7 +42,6 @@ func NewService(ctx context.Context) (*Service, error) {
 func (s *Service) initStationsMapping(ctx context.Context) error {
 	openMeteoMap, err := s.groupOpenMeteoStations(ctx)
 	if err != nil {
-
 		return fmt.Errorf("failed to group open meteo stations: %w", err)
 	}
 	s.openMeteoMap = openMeteoMap
