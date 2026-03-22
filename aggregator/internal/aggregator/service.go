@@ -9,70 +9,139 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
 
+type cache struct {
+	openMeteoMap        Map[openmeteo.Station]
+	openaqMap           Map[openaq.Station]
+	openMeteoParameters []openmeteo.Parameter
+	openaqParameters    []openaq.Parameter
+	err                 error
+}
+
+const cacheRefreshInterval = 24 * time.Hour
+
 type Service struct {
 	openmeteoClient   *openmeteo.Client
 	openaqClient      *openaq.Client
-	openMeteoMap      Map[openmeteo.Station]
-	openaqMap         Map[openaq.Station]
 	voivodeshipBounds map[api.Voivodeship]geographicalBounds
+	mu                sync.RWMutex
+	cache             cache
 }
 
-func NewService(ctx context.Context) (*Service, error) {
+func NewService(ctx context.Context) *Service {
+	s := &Service{
+		openmeteoClient: openmeteo.NewClient(),
+		openaqClient:    openaq.NewClient(),
+	}
 	bounds, err := loadVoivodeshipBounds("config/voivodeships.json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load voivodeship bounds: %w", err)
+		s.updateCacheErr(fmt.Errorf("failed to load voivodeship bounds: %w", err))
+	} else {
+		s.voivodeshipBounds = bounds
 	}
-	s := &Service{
-		openmeteoClient:   openmeteo.NewClient(),
-		openaqClient:      openaq.NewClient(),
-		voivodeshipBounds: bounds,
-	}
-	err = s.initStationsMapping(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to init stations maps: %w", err)
-	}
-
-	return s, nil
+	go s.refreshCacheInLoop(ctx)
+	return s
 }
 
-func (s *Service) initStationsMapping(ctx context.Context) error {
-	openMeteoMap, err := s.groupOpenMeteoStations(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to group open meteo stations: %w", err)
+func (s *Service) refreshCacheInLoop(ctx context.Context) {
+	ticker := time.NewTicker(cacheRefreshInterval)
+	defer ticker.Stop()
+	for {
+		if err := s.refreshCache(ctx); err != nil {
+			slog.Error("Failed to refresh cache", "error", err)
+			s.updateCacheErr(err)
+		}
+		select {
+		case <-ticker.C:
+		case <-ctx.Done():
+			return
+		}
 	}
-	s.openMeteoMap = openMeteoMap
+}
 
-	openaqMap, err := s.groupOpenaqStations(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to group open aq stations: %w", err)
+func (s *Service) refreshCache(ctx context.Context) error {
+	var (
+		openMeteoMap        Map[openmeteo.Station]
+		openaqMap           Map[openaq.Station]
+		openMeteoParameters []openmeteo.Parameter
+		openaqParameters    []openaq.Parameter
+	)
+
+	g, gctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		stations, err := s.openmeteoClient.GetStations(gctx)
+		if err != nil {
+			return fmt.Errorf("fetching openmeteo stations: %w", err)
+		}
+		openMeteoMap = groupStationsByVoivodeship(stations, s.voivodeshipBounds)
+		return nil
+	})
+
+	g.Go(func() error {
+		stations, err := s.openaqClient.GetStations(gctx)
+		if err != nil {
+			return fmt.Errorf("fetching openaq stations: %w", err)
+		}
+		openaqMap = groupStationsByVoivodeship(stations, s.voivodeshipBounds)
+		return nil
+	})
+
+	g.Go(func() error {
+		params, err := s.openmeteoClient.GetParameters(gctx)
+		if err != nil {
+			return fmt.Errorf("fetching openmeteo parameters: %w", err)
+		}
+		openMeteoParameters = params
+		return nil
+	})
+
+	g.Go(func() error {
+		params, err := s.openaqClient.GetParameters(gctx)
+		if err != nil {
+			return fmt.Errorf("fetching openaq parameters: %w", err)
+		}
+		openaqParameters = params
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		return err
 	}
-	s.openaqMap = openaqMap
+
+	s.updateCache(cache{
+		openMeteoMap:        openMeteoMap,
+		openaqMap:           openaqMap,
+		openMeteoParameters: openMeteoParameters,
+		openaqParameters:    openaqParameters,
+	})
 	return nil
 }
 
+func (s *Service) readCache() cache {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.cache
+}
+
+func (s *Service) updateCache(c cache) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.cache = c
+}
+
+func (s *Service) updateCacheErr(err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.cache.err = err
+}
+
 type Map[T any] map[api.Voivodeship][]T
-
-func (s *Service) groupOpenMeteoStations(ctx context.Context) (Map[openmeteo.Station], error) {
-	stations, err := s.openmeteoClient.GetStations(ctx)
-	if err != nil {
-		slog.Error("Failed to get openmeteo stations", "error", err)
-		return nil, fmt.Errorf("fetching openmeteo stations: %w", err)
-	}
-	return groupStationsByVoivodeship(stations, s.voivodeshipBounds)
-}
-
-func (s *Service) groupOpenaqStations(ctx context.Context) (Map[openaq.Station], error) {
-	stations, err := s.openaqClient.GetStations(ctx)
-	if err != nil {
-		slog.Error("Failed to get openaq stations", "error", err)
-		return nil, fmt.Errorf("fetching openaq stations: %w", err)
-	}
-	return groupStationsByVoivodeship(stations, s.voivodeshipBounds)
-}
 
 type geographicalBounds struct {
 	MaxLatitude  float64 `json:"maxLat"`
@@ -103,9 +172,8 @@ type locatable interface {
 	StationName() string
 }
 
-func groupStationsByVoivodeship[T locatable](stations []T, bounds map[api.Voivodeship]geographicalBounds) (Map[T], error) {
+func groupStationsByVoivodeship[T locatable](stations []T, bounds map[api.Voivodeship]geographicalBounds) Map[T] {
 	vm := make(map[api.Voivodeship][]T)
-
 	for v, b := range bounds {
 		for _, s := range stations {
 			if stationInVoivodeship(s, b) {
@@ -113,7 +181,7 @@ func groupStationsByVoivodeship[T locatable](stations []T, bounds map[api.Voivod
 			}
 		}
 	}
-	return vm, nil
+	return vm
 }
 
 func stationInVoivodeship[T locatable](s T, b geographicalBounds) bool {
@@ -128,28 +196,27 @@ func (s *Service) AggregateData(ctx context.Context, voivodeship api.Voivodeship
 		return api.AggregatedData{}, fmt.Errorf("context cancelled before aggregation: %w", err)
 	}
 
+	c := s.readCache()
+	if c.err != nil {
+		return api.AggregatedData{}, fmt.Errorf("service initialization failed: %w", c.err)
+	}
+
 	g, ctx := errgroup.WithContext(ctx)
 
-	var openMeteoParameters []openmeteo.Parameter
 	var openMeteoAverages map[api.ParamType]float32
 	var openAqAverages map[api.ParamType]float32
 
 	g.Go(func() error {
-		params, err := s.openmeteoClient.GetParameters(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to fetch parameters from open meteo: %w", err)
-		}
-		averages, err := s.calculateOpenMeteoAverages(ctx, params, voivodeship)
+		averages, err := s.calculateOpenMeteoAverages(ctx, c.openMeteoParameters, c.openMeteoMap[voivodeship])
 		if err != nil {
 			return fmt.Errorf("failed to calculate averages for open meteo parameters: %w", err)
 		}
-		openMeteoParameters = params
 		openMeteoAverages = averages
 		return nil
 	})
 
 	g.Go(func() error {
-		averages, err := s.calculateOpenAqAverages(ctx, voivodeship)
+		averages, err := s.calculateOpenAqAverages(ctx, c.openaqParameters, c.openaqMap[voivodeship])
 		if err != nil {
 			return fmt.Errorf("failed to calculate averages for open aq parameters: %w", err)
 		}
@@ -162,16 +229,14 @@ func (s *Service) AggregateData(ctx context.Context, voivodeship api.Voivodeship
 	}
 
 	results := api.AggregatedData{Voivodeship: voivodeship}
-	// take additional param info only from open-meteo
-	if err := results.AddParamInfoFromOpenMeteo(openMeteoParameters); err != nil {
+	if err := results.AddParamInfoFromOpenMeteo(c.openMeteoParameters); err != nil {
 		return api.AggregatedData{}, fmt.Errorf("failed to add param info: %w", err)
 	}
 	results.AddParamValues(mergeAverages(openMeteoAverages, openAqAverages))
 	return results, nil
 }
 
-func (s *Service) calculateOpenMeteoAverages(ctx context.Context, parameters []openmeteo.Parameter, voivodeship api.Voivodeship) (map[api.ParamType]float32, error) {
-	stations := s.openMeteoMap[voivodeship]
+func (s *Service) calculateOpenMeteoAverages(ctx context.Context, parameters []openmeteo.Parameter, stations []openmeteo.Station) (map[api.ParamType]float32, error) {
 	results := make([][]openmeteo.Measurement, len(stations))
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -197,12 +262,7 @@ func (s *Service) calculateOpenMeteoAverages(ctx context.Context, parameters []o
 	return calculateAverage(groupByParamId(measurements, parameterMap)), nil
 }
 
-func (s *Service) calculateOpenAqAverages(ctx context.Context, voivodeship api.Voivodeship) (map[api.ParamType]float32, error) {
-	parameters, err := s.openaqClient.GetParameters(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch parameters from open aq: %w", err)
-	}
-	stations := s.openaqMap[voivodeship]
+func (s *Service) calculateOpenAqAverages(ctx context.Context, parameters []openaq.Parameter, stations []openaq.Station) (map[api.ParamType]float32, error) {
 	results := make([][]openaq.Measurement, len(stations))
 
 	g, ctx := errgroup.WithContext(ctx)

@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
+
+var client = &http.Client{Timeout: 10 * time.Second}
 
 func FetchData[T any](ctx context.Context, url string) ([]T, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -14,11 +17,15 @@ func FetchData[T any](ctx context.Context, url string) ([]T, error) {
 		return nil, fmt.Errorf("creating request %s failed: %v", url, err)
 	}
 
-	response, err := http.DefaultClient.Do(req)
+	response, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request %s failed: %v", url, err)
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("request %s returned status %d", url, response.StatusCode)
+	}
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
