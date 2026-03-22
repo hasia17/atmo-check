@@ -13,14 +13,10 @@ import (
 
 func main() {
 	ctx := context.Background()
-	service, err := aggregator.NewService(ctx)
-	if err != nil {
-		slog.Error("Failed to initialize aggregator service", "error", err)
-		os.Exit(1)
-	}
+	service := aggregator.NewService(ctx)
 
 	http.HandleFunc("/aggregatedData/{voivodeship}", getAggregatedData(service))
-	if err = http.ListenAndServe(":8082", nil); err != nil {
+	if err := http.ListenAndServe(":8082", nil); err != nil {
 		slog.Error("Server failed", "error", err)
 		os.Exit(1)
 	}

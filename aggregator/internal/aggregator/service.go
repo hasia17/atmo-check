@@ -20,7 +20,10 @@ type cache struct {
 	openaqMap           Map[openaq.Station]
 	openMeteoParameters []openmeteo.Parameter
 	openaqParameters    []openaq.Parameter
+	err                 error
 }
+
+const cacheRefreshInterval = 24 * time.Hour
 
 type Service struct {
 	openmeteoClient   *openmeteo.Client
@@ -30,32 +33,31 @@ type Service struct {
 	cache             cache
 }
 
-func NewService(ctx context.Context) (*Service, error) {
+func NewService(ctx context.Context) *Service {
+	s := &Service{
+		openmeteoClient: openmeteo.NewClient(),
+		openaqClient:    openaq.NewClient(),
+	}
 	bounds, err := loadVoivodeshipBounds("config/voivodeships.json")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load voivodeship bounds: %w", err)
+		s.updateCacheErr(fmt.Errorf("failed to load voivodeship bounds: %w", err))
+	} else {
+		s.voivodeshipBounds = bounds
 	}
-	s := &Service{
-		openmeteoClient:   openmeteo.NewClient(),
-		openaqClient:      openaq.NewClient(),
-		voivodeshipBounds: bounds,
-	}
-	if err = s.refreshCache(ctx); err != nil {
-		return nil, fmt.Errorf("failed to init cache: %w", err)
-	}
-	go s.startRefreshLoop(ctx)
-	return s, nil
+	go s.refreshCacheInLoop(ctx)
+	return s
 }
 
-func (s *Service) startRefreshLoop(ctx context.Context) {
-	ticker := time.NewTicker(24 * time.Hour)
+func (s *Service) refreshCacheInLoop(ctx context.Context) {
+	ticker := time.NewTicker(cacheRefreshInterval)
 	defer ticker.Stop()
 	for {
+		if err := s.refreshCache(ctx); err != nil {
+			slog.Error("Failed to refresh cache", "error", err)
+			s.updateCacheErr(err)
+		}
 		select {
 		case <-ticker.C:
-			if err := s.refreshCache(ctx); err != nil {
-				slog.Error("Failed to refresh cache", "error", err)
-			}
 		case <-ctx.Done():
 			return
 		}
@@ -63,10 +65,12 @@ func (s *Service) startRefreshLoop(ctx context.Context) {
 }
 
 func (s *Service) refreshCache(ctx context.Context) error {
-	var openMeteoMap Map[openmeteo.Station]
-	var openaqMap Map[openaq.Station]
-	var openMeteoParameters []openmeteo.Parameter
-	var openaqParameters []openaq.Parameter
+	var (
+		openMeteoMap        Map[openmeteo.Station]
+		openaqMap           Map[openaq.Station]
+		openMeteoParameters []openmeteo.Parameter
+		openaqParameters    []openaq.Parameter
+	)
 
 	g, gctx := errgroup.WithContext(ctx)
 
@@ -110,15 +114,31 @@ func (s *Service) refreshCache(ctx context.Context) error {
 		return err
 	}
 
-	s.mu.Lock()
-	s.cache = cache{
+	s.updateCache(cache{
 		openMeteoMap:        openMeteoMap,
 		openaqMap:           openaqMap,
 		openMeteoParameters: openMeteoParameters,
 		openaqParameters:    openaqParameters,
-	}
-	s.mu.Unlock()
+	})
 	return nil
+}
+
+func (s *Service) readCache() cache {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.cache
+}
+
+func (s *Service) updateCache(c cache) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.cache = c
+}
+
+func (s *Service) updateCacheErr(err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.cache.err = err
 }
 
 type Map[T any] map[api.Voivodeship][]T
@@ -176,9 +196,10 @@ func (s *Service) AggregateData(ctx context.Context, voivodeship api.Voivodeship
 		return api.AggregatedData{}, fmt.Errorf("context cancelled before aggregation: %w", err)
 	}
 
-	s.mu.RLock()
-	c := s.cache
-	s.mu.RUnlock()
+	c := s.readCache()
+	if c.err != nil {
+		return api.AggregatedData{}, fmt.Errorf("service initialization failed: %w", c.err)
+	}
 
 	g, ctx := errgroup.WithContext(ctx)
 
