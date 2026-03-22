@@ -5,9 +5,9 @@ import (
 	"aggregator/internal/api"
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
-	"strings"
+	"os"
 	"time"
 )
 
@@ -15,23 +15,24 @@ func main() {
 	ctx := context.Background()
 	service, err := aggregator.NewService(ctx)
 	if err != nil {
-		log.Fatal("Failed to initialize aggregator service: ", err)
+		slog.Error("Failed to initialize aggregator service", "error", err)
+		os.Exit(1)
 	}
 
-	http.HandleFunc("/aggregatedData/", getAggregatedData(service))
-	log.Fatal(http.ListenAndServe(":8082", nil))
+	http.HandleFunc("/aggregatedData/{voivodeship}", getAggregatedData(service))
+	if err = http.ListenAndServe(":8082", nil); err != nil {
+		slog.Error("Server failed", "error", err)
+		os.Exit(1)
+	}
 }
 
 func getAggregatedData(service *aggregator.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("Request to get aggregated data started")
+		slog.Info("Request to get aggregated data started")
 		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		defer cancel()
-		voivodeshipStr := strings.TrimPrefix(r.URL.Path, "/aggregatedData/")
-		if voivodeshipStr == "" {
-			http.Error(w, "Voivodeship parameter is required", http.StatusBadRequest)
-			return
-		}
+
+		voivodeshipStr := r.PathValue("voivodeship")
 		voivodeship, err := api.MapVoivodeship(voivodeshipStr)
 		if err != nil {
 			http.Error(w, "Unknown voivodeship: "+voivodeshipStr, http.StatusBadRequest)
@@ -39,13 +40,15 @@ func getAggregatedData(service *aggregator.Service) http.HandlerFunc {
 		}
 		results, err := service.AggregateData(ctx, voivodeship)
 		if err != nil {
+			slog.Error("Aggregating data failed", "voivodeship", voivodeshipStr, "error", err)
 			http.Error(w, "Aggregating data for voivodeship failed", http.StatusInternalServerError)
 			return
 		}
 		if err = json.NewEncoder(w).Encode(results); err != nil {
+			slog.Error("Encoding json response failed", "error", err)
 			http.Error(w, "Encoding json response failed", http.StatusInternalServerError)
 			return
 		}
-		log.Print("Request to get aggregated data finished successfully")
+		slog.Info("Request to get aggregated data finished successfully")
 	}
 }
