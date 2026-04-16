@@ -21,6 +21,10 @@ func NewClient() *Client {
 	return &Client{hostname: hostname}
 }
 
+func NewClientWithURL(url string) *Client {
+	return &Client{hostname: url}
+}
+
 func (c *Client) GetStations(ctx context.Context) ([]Station, error) {
 	return apiclient.FetchData[Station](ctx, c.hostname+"/stations")
 }
