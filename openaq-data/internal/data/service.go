@@ -107,13 +107,13 @@ func (s *Service) buildMeasurements(
 	for _, m := range measurements {
 		parsedTime, err := util.StringToTime(m.Date.Utc)
 		if err != nil {
-			s.logger.Debugf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err)
+			s.logger.Warnf("Failed to parse time for measurement (UTC: %s): %v", m.Date.Utc, err)
 			continue
 		}
 
 		paramId, err := exctractParameterId(m.SensorId, loc)
 		if err != nil {
-			s.logger.Debugf("Failed to extract parameter ID for sensor ID %d: %v", m.SensorId, err)
+			s.logger.Warnf("Failed to extract parameter ID for sensor ID %d: %v", m.SensorId, err)
 			continue
 		}
 

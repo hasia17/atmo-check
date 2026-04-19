@@ -10,6 +10,11 @@ type Store struct {
 	Locations    []models.Location
 	Measurements []models.Measurement
 	Parameters   []models.Parameter
+
+	GetLocationsErr              error
+	GetLocationByIDErr           error
+	GetMeasurementsByLocationErr error
+	GetParametersErr             error
 }
 
 func New() store.Storer {
@@ -26,10 +31,16 @@ func (s *Store) StoreLocations(_ context.Context, locations []models.Location) e
 }
 
 func (s *Store) GetLocations(_ context.Context) ([]models.Location, error) {
+	if s.GetLocationsErr != nil {
+		return nil, s.GetLocationsErr
+	}
 	return s.Locations, nil
 }
 
 func (s *Store) GetLocationByID(_ context.Context, id int32) (*models.Location, error) {
+	if s.GetLocationByIDErr != nil {
+		return nil, s.GetLocationByIDErr
+	}
 	for _, loc := range s.Locations {
 		if loc.Id == id {
 			return &loc, nil
@@ -55,6 +66,9 @@ func (s *Store) DeleteMeasurementsForLocation(_ context.Context, locId int32) er
 }
 
 func (s *Store) GetMeasurementsByLocation(_ context.Context, locationId int32) ([]models.Measurement, error) {
+	if s.GetMeasurementsByLocationErr != nil {
+		return nil, s.GetMeasurementsByLocationErr
+	}
 	var result []models.Measurement
 	for _, m := range s.Measurements {
 		if m.LocationId == locationId {
@@ -70,6 +84,9 @@ func (s *Store) StoreParameters(_ context.Context, parameters []models.Parameter
 }
 
 func (s *Store) GetParameters(_ context.Context) ([]models.Parameter, error) {
+	if s.GetParametersErr != nil {
+		return nil, s.GetParametersErr
+	}
 	return s.Parameters, nil
 }
 
