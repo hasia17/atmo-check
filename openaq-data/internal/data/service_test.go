@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"openaq-data/internal/api"
 	"openaq-data/internal/mock"
 	"openaq-data/internal/models"
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
+
+var errStore = errors.New("store failure")
 
 var initModelLocation = models.Location{
 	Id:       1,
@@ -95,6 +98,7 @@ func TestStations(t *testing.T) {
 	tests := []struct {
 		name          string
 		giveLocations []models.Location
+		giveStoreErr  error
 		wantStations  []api.Station
 		wantErr       error
 	}{
@@ -132,12 +136,25 @@ func TestStations(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		{
+			name:          "No locations",
+			giveLocations: nil,
+			wantStations:  nil,
+			wantErr:       nil,
+		},
+		{
+			name:         "Store error is propagated",
+			giveStoreErr: errStore,
+			wantStations: nil,
+			wantErr:      errStore,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := zap.NewNop().Sugar()
 			db := &mock.Store{
-				Locations: test.giveLocations,
+				Locations:       test.giveLocations,
+				GetLocationsErr: test.giveStoreErr,
 			}
 			s := NewService(db, l)
 
@@ -152,6 +169,7 @@ func TestParameters(t *testing.T) {
 	tests := []struct {
 		name           string
 		giveParameters []models.Parameter
+		giveStoreErr   error
 		wantParameters []api.Parameter
 		wantErr        error
 	}{
@@ -164,12 +182,24 @@ func TestParameters(t *testing.T) {
 				initApiParameter,
 			},
 		},
+		{
+			name:           "No parameters",
+			giveParameters: nil,
+			wantParameters: nil,
+		},
+		{
+			name:           "Store error is propagated",
+			giveStoreErr:   errStore,
+			wantParameters: nil,
+			wantErr:        errStore,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			l := zap.NewNop().Sugar()
 			db := &mock.Store{
-				Parameters: test.giveParameters,
+				Parameters:       test.giveParameters,
+				GetParametersErr: test.giveStoreErr,
 			}
 			s := NewService(db, l)
 
@@ -182,11 +212,13 @@ func TestParameters(t *testing.T) {
 
 func TestMeasurements(t *testing.T) {
 	tests := []struct {
-		name             string
-		giveLocations    []models.Location
-		giveMeasurements []models.Measurement
-		wantMeasurements []api.Measurement
-		wantErr          error
+		name                string
+		giveLocations       []models.Location
+		giveMeasurements    []models.Measurement
+		giveLocationByIDErr error
+		giveMeasurementsErr error
+		wantMeasurements    []api.Measurement
+		wantErr             error
 	}{
 		{
 			name: "All good",
@@ -223,12 +255,92 @@ func TestMeasurements(t *testing.T) {
 			wantMeasurements: nil,
 			wantErr:          ErrLocationNotFound,
 		},
+		{
+			name: "Bad timestamp is skipped",
+			giveLocations: []models.Location{
+				initModelLocation,
+			},
+			giveMeasurements: []models.Measurement{
+				func() models.Measurement {
+					m := initModelMeasurement
+					m.Date.Utc = "not-a-timestamp"
+					return m
+				}(),
+			},
+			wantMeasurements: nil,
+			wantErr:          nil,
+		},
+		{
+			name: "Sensor not in location is skipped",
+			giveLocations: []models.Location{
+				initModelLocation,
+			},
+			giveMeasurements: []models.Measurement{
+				func() models.Measurement {
+					m := initModelMeasurement
+					m.SensorId = 999
+					return m
+				}(),
+			},
+			wantMeasurements: nil,
+			wantErr:          nil,
+		},
+		{
+			name: "Mix of valid and invalid returns only valid ones",
+			giveLocations: []models.Location{
+				initModelLocation,
+			},
+			giveMeasurements: []models.Measurement{
+				func() models.Measurement {
+					m := initModelMeasurement
+					m.Date.Utc = "not-a-timestamp"
+					return m
+				}(),
+				initModelMeasurement,
+				func() models.Measurement {
+					m := initModelMeasurement
+					m.SensorId = 999
+					return m
+				}(),
+				func() models.Measurement {
+					m := initModelMeasurement
+					m.SensorId = 2
+					return m
+				}(),
+			},
+			wantMeasurements: []api.Measurement{
+				initApiMeasurement,
+				func() api.Measurement {
+					am := initApiMeasurement
+					am.ParameterId = 200
+					return am
+				}(),
+			},
+			wantErr: nil,
+		},
+		{
+			name:                "GetLocationByID error is propagated",
+			giveLocationByIDErr: errStore,
+			wantMeasurements:    nil,
+			wantErr:             errStore,
+		},
+		{
+			name: "GetMeasurementsByLocation error is propagated",
+			giveLocations: []models.Location{
+				initModelLocation,
+			},
+			giveMeasurementsErr: errStore,
+			wantMeasurements:    nil,
+			wantErr:             errStore,
+		},
 	}
 	for _, tests := range tests {
 		t.Run(tests.name, func(t *testing.T) {
 			db := mock.Store{
-				Locations:    tests.giveLocations,
-				Measurements: tests.giveMeasurements,
+				Locations:                    tests.giveLocations,
+				Measurements:                 tests.giveMeasurements,
+				GetLocationByIDErr:           tests.giveLocationByIDErr,
+				GetMeasurementsByLocationErr: tests.giveMeasurementsErr,
 			}
 			l := zap.NewNop().Sugar()
 			s := NewService(&db, l)
