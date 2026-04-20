@@ -191,7 +191,33 @@ func stationInVoivodeship[T locatable](s T, b geographicalBounds) bool {
 		s.Longitude() <= b.MaxLongitude
 }
 
-func (s *Service) AggregateData(ctx context.Context, voivodeship api.Voivodeship) (api.AggregatedData, error) {
+func (s *Service) AggregateAll(ctx context.Context) ([]api.AggregatedData, error) {
+	voivodeships := []api.Voivodeship{
+		api.Dolnoslaskie, api.KujawskoPomorskie, api.Lubelskie, api.Lubuskie,
+		api.Lodzkie, api.Malopolskie, api.Mazowieckie, api.Opolskie,
+		api.Podkarpackie, api.Podlaskie, api.Pomorskie, api.Slaskie,
+		api.Swietokrzyskie, api.WarminskoMazurskie, api.Wielkopolskie, api.Zachodniopomorskie,
+	}
+
+	results := make([]api.AggregatedData, len(voivodeships))
+	g, ctx := errgroup.WithContext(ctx)
+	for i, v := range voivodeships {
+		g.Go(func() error {
+			data, err := s.AggregateForVoivodeship(ctx, v)
+			if err != nil {
+				return fmt.Errorf("aggregating %s: %w", v, err)
+			}
+			results[i] = data
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (s *Service) AggregateForVoivodeship(ctx context.Context, voivodeship api.Voivodeship) (api.AggregatedData, error) {
 	if err := ctx.Err(); err != nil {
 		return api.AggregatedData{}, fmt.Errorf("context cancelled before aggregation: %w", err)
 	}
