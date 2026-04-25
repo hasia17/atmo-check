@@ -17,10 +17,17 @@ func main() {
 
 	http.HandleFunc("/aggregatedData", getAllAggregatedData(service))
 	http.HandleFunc("/aggregatedData/{voivodeship}", getAggregatedData(service))
-	if err := http.ListenAndServe(":8082", nil); err != nil {
+	if err := http.ListenAndServe(":8082", corsMiddleware(http.DefaultServeMux)); err != nil {
 		slog.Error("Server failed", "error", err)
 		os.Exit(1)
 	}
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func getAllAggregatedData(service *aggregator.Service) http.HandlerFunc {
