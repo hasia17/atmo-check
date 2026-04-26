@@ -39,7 +39,7 @@ func TestAggregateData(t *testing.T) {
 		},
 	}
 
-	result, err := s.AggregateData(t.Context(), api.Malopolskie)
+	result, err := s.AggregateForVoivodeship(t.Context(), api.Malopolskie)
 	assert.NoError(t, err)
 	assert.Equal(t, float32(25), result.Parameters[0].Value)
 }
@@ -50,7 +50,7 @@ func TestAggregateDataWithCacheError(t *testing.T) {
 			err: fmt.Errorf("initialization failed"),
 		},
 	}
-	_, err := s.AggregateData(t.Context(), api.Malopolskie)
+	_, err := s.AggregateForVoivodeship(t.Context(), api.Malopolskie)
 	assert.ErrorContains(t, err, "initialization failed")
 }
 
