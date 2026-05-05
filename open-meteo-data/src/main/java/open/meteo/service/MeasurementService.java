@@ -85,7 +85,7 @@ public class MeasurementService {
         // get only latest value for each parameter
         valuesMap.forEach((parameter, values) -> {
             if (values != null && !values.isEmpty() && !TIME_PARAM.equals(parameter)) {
-                Object latestValue = values.getLast();
+                Object latestValue = values.getFirst();
                 log.info("Latest value for parameter {} at station {}: {}", parameter, station.getName(), latestValue);
                 latestValues.put(ParameterType.fromName(parameter), latestValue);
             }
