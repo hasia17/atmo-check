@@ -27,6 +27,8 @@ public class OpenMeteoClient {
                         .queryParam("latitude", latitude)
                         .queryParam("longitude", longitude)
                         .queryParam("hourly", hourlyParams)
+                        .queryParam("past_hours", 1)
+                        .queryParam("forecast_hours", 0)
                         .build())
                 .retrieve()
                 .bodyToMono(OpenMeteoAirQualityResponse.class)
