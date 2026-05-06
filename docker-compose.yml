@@ -14,7 +14,7 @@ services:
   open-meteo-data:
     ports:
       - "8083:8083"
-      - "5006:5006" 
+      - "5006:5006"
     build:
       context: ./open-meteo-data
       dockerfile: Dockerfile
@@ -62,6 +62,18 @@ services:
       - OPENAQ_API_KEY=${OPENAQ_API_KEY}
     depends_on:
       - mongodb
+    networks:
+      - app-network
+
+  ui:
+    build:
+      context: ./atmo-check-page
+    container_name: ui-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - aggregator
     networks:
       - app-network
 
