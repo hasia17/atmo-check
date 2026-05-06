@@ -1,0 +1,23 @@
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o aggregator .
+
+FROM alpine:3.21
+
+WORKDIR /app
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser:appgroup
+
+COPY --from=builder /app/aggregator .
+COPY --from=builder /app/config ./config
+
+EXPOSE 8082
+
+ENTRYPOINT ["./aggregator"]
