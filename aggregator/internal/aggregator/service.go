@@ -55,6 +55,24 @@ func (s *Service) refreshCacheInLoop(ctx context.Context) {
 		if err := s.refreshCache(ctx); err != nil {
 			slog.Error("Failed to refresh cache", "error", err)
 			s.updateCacheErr(err)
+
+			retryDelay := 5 * time.Second
+			for {
+				select {
+				case <-time.After(retryDelay):
+				case <-ctx.Done():
+					return
+				}
+				if err = s.refreshCache(ctx); err == nil {
+					break
+				}
+				slog.Error("Retry failed, will retry", "error", err, "next_in", retryDelay)
+				s.updateCacheErr(err)
+				if retryDelay < 5*time.Minute {
+					retryDelay *= 2
+				}
+			}
+			ticker.Reset(cacheRefreshInterval)
 		}
 		select {
 		case <-ticker.C:
