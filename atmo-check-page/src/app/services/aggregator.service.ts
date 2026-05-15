@@ -5,7 +5,7 @@ import { AggregatedData } from '../models/aggregated-data.model';
 
 @Injectable({ providedIn: 'root' })
 export class AggregatorService {
-  private readonly apiUrl = 'http://localhost:8082/aggregatedData';
+  private readonly apiUrl = '/aggregatedData';
 
   constructor(private http: HttpClient) {}
 

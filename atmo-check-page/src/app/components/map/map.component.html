@@ -1,0 +1,71 @@
+<div class="page-content">
+
+  <mat-card class="controls-card">
+    <mat-card-content>
+      <div class="controls-row">
+        <span class="controls-label">Parametr</span>
+        <mat-button-toggle-group
+          [value]="selectedParam()"
+          (change)="onParamChange($event.value)"
+          hideSingleSelectionIndicator>
+          @for (p of params; track p) {
+            <mat-button-toggle [value]="p">{{ p }}</mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+      </div>
+
+      @if (selectedParamInfo()) {
+        <p class="param-description">
+          <mat-icon class="info-icon">info_outline</mat-icon>
+          {{ selectedParamInfo()!.description }}
+          <span class="param-unit">[{{ selectedParamInfo()!.unit }}]</span>
+        </p>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  @if (loading()) {
+    <mat-card class="map-card spinner-card">
+      <mat-card-content>
+        <mat-spinner diameter="56" />
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (!loading()) {
+  <mat-card class="map-card">
+    <mat-card-content>
+      <svg viewBox="0 0 2061 1925" class="poland-map">
+        @for (v of voivodeships; track v.id) {
+          <use [attr.href]="'poland.svg#' + v.id" [style.color]="getColor(v.id)">
+            <title>{{ v.name }}: {{ getValue(v.id) || 'brak danych' }}</title>
+          </use>
+          @if (v.islandIds) {
+            @for (islandId of v.islandIds; track islandId) {
+              <use [attr.href]="'poland.svg#' + islandId" [style.color]="getColor(v.id)" />
+            }
+          }
+          @if (getValue(v.id) !== '') {
+            <text [attr.x]="v.cx" [attr.y]="v.cy"
+                  class="voivodeship-value"
+                  fill="black"
+                  stroke="rgba(255,255,255,0.85)"
+                  stroke-width="8"
+                  stroke-linejoin="round"
+                  paint-order="stroke fill">
+              {{ getValue(v.id) }}
+            </text>
+          }
+        }
+      </svg>
+
+      <div class="legend">
+        <span class="legend-label">{{ legendRange().min.toFixed(1) }}</span>
+        <div class="legend-gradient"></div>
+        <span class="legend-label">{{ legendRange().max.toFixed(1) }}</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  }
+
+</div>

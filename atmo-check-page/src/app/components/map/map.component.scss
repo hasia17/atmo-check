@@ -1,0 +1,97 @@
+.page-content {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.controls-card {
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .controls-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant);
+    white-space: nowrap;
+  }
+
+  .param-description {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0 0;
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+
+    .info-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .param-unit {
+      font-weight: 500;
+      color: var(--mat-sys-primary);
+    }
+  }
+}
+
+.map-card {
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.spinner-card mat-card-content {
+  min-height: 300px;
+  justify-content: center;
+}
+
+.poland-map {
+  width: 100%;
+  max-width: 720px;
+
+  .voivodeship-value {
+    font-size: 48px;
+    font-weight: 700;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+  }
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+
+  .legend-gradient {
+    width: 220px;
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(to right, #4caf50, #ffeb3b, #f44336);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .legend-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--mat-sys-on-surface-variant);
+    min-width: 40px;
+
+    &:last-child {
+      text-align: right;
+    }
+  }
+}
