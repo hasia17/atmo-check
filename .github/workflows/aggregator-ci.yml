@@ -1,19 +1,26 @@
-name: CI
+name: Aggregator CI
 
 on:
   push:
     branches: ["**"]
+    paths:
+      - "aggregator/**"
   pull_request:
+    paths:
+      - "aggregator/**"
 
 jobs:
   ci:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aggregator
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: aggregator/go.mod
 
       - name: Build
         run: go build ./...
@@ -23,6 +30,8 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: aggregator
 
       - name: Vulnerabilities
         run: |
