@@ -5,9 +5,11 @@ on:
     branches: ["**"]
     paths:
       - "aggregator/**"
+      - ".github/workflows/aggregator-ci.yml"
   pull_request:
     paths:
       - "aggregator/**"
+      - ".github/workflows/aggregator-ci.yml"
 
 jobs:
   ci:
