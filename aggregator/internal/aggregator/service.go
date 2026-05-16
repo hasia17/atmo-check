@@ -44,23 +44,29 @@ func NewService(ctx context.Context) *Service {
 	} else {
 		s.voivodeshipBounds = bounds
 	}
-	go s.refreshCacheInLoop(ctx)
+	go s.refreshCacheLoop(ctx)
 	return s
 }
 
-func (s *Service) refreshCacheInLoop(ctx context.Context) {
-	ticker := time.NewTicker(cacheRefreshInterval)
-	defer ticker.Stop()
+func (s *Service) refreshCacheLoop(ctx context.Context) {
+	delay := time.Duration(0)
 	for {
-		if err := s.refreshCache(ctx); err != nil {
-			slog.Error("Failed to refresh cache", "error", err)
-			s.updateCacheErr(err)
-		}
 		select {
-		case <-ticker.C:
+		case <-time.After(delay):
 		case <-ctx.Done():
 			return
 		}
+		if err := s.refreshCache(ctx); err != nil {
+			slog.Error("Failed to refresh cache", "error", err)
+			s.updateCacheErr(err)
+			if delay < 5*time.Second {
+				delay = 5 * time.Second
+			} else if delay < 5*time.Minute {
+				delay *= 2
+			}
+			continue
+		}
+		delay = cacheRefreshInterval
 	}
 }
 
