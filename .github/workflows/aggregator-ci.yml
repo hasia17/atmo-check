@@ -1,0 +1,37 @@
+name: Aggregator CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "aggregator/**"
+      - ".github/workflows/aggregator-ci.yml"
+  pull_request:
+    paths:
+      - "aggregator/**"
+      - ".github/workflows/aggregator-ci.yml"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: aggregator
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: aggregator/go.mod
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -race ./...
+
+
+      - name: Vulnerabilities
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
