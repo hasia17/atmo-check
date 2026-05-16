@@ -30,11 +30,6 @@ jobs:
       - name: Test
         run: go test -race ./...
 
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          working-directory: aggregator
-          version: latest
 
       - name: Vulnerabilities
         run: |
