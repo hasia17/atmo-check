@@ -32,6 +32,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           working-directory: aggregator
+          version: latest
 
       - name: Vulnerabilities
         run: |
